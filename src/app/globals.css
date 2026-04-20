@@ -7,8 +7,8 @@
   --gold: #F59E0B;
   --gold-light: #FCD34D;
   --gold-dark: #D97706;
-  --surface: #1E293B;
-  --surface-2: #334155;
+  --navy-surface: #1E293B;
+  --navy-surface-2: #334155;
   --text-primary: #F8FAFC;
   --text-secondary: #94A3B8;
 }
@@ -21,5 +21,5 @@ body {
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--surface); }
-::-webkit-scrollbar-thumb { background: var(--surface-2); border-radius: 3px; }
+::-webkit-scrollbar-track { background: var(--navy-surface); }
+::-webkit-scrollbar-thumb { background: var(--navy-surface-2); border-radius: 3px; }
