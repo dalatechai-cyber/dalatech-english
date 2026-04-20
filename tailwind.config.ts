@@ -15,6 +15,8 @@ const config: Config = {
         gold: '#F59E0B',
         'gold-light': '#FCD34D',
         'gold-dark': '#D97706',
+        'text-primary': 'var(--text-primary)',
+        'text-secondary': 'var(--text-secondary)',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in-out',
