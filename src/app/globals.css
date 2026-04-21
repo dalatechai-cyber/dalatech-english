@@ -10,7 +10,8 @@
   --navy-surface: #1E293B;
   --navy-surface-2: #334155;
   --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
+  --text-secondary: #CBD5E1;
+  --text-muted: #64748B;
 }
 
 html {
@@ -19,6 +20,7 @@ html {
 
 body {
   background-color: var(--navy);
+  background-image: radial-gradient(ellipse 80% 60% at 50% 0%, #1a2744 0%, #0F172A 70%);
   color: var(--text-primary);
   font-family: 'Inter', system-ui, sans-serif;
   font-size: 16px;
@@ -30,19 +32,18 @@ body {
 ::-webkit-scrollbar-track { background: var(--navy-surface); }
 ::-webkit-scrollbar-thumb { background: var(--navy-surface-2); border-radius: 3px; }
 
-
 /* Input area: base padding + iOS/Android safe area inset */
 .pb-input-area {
   padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
 }
 
-/* Dynamic viewport height — shrinks when iOS keyboard opens */
+/* Dynamic viewport height */
 .h-dvh {
   height: 100vh;
   height: 100dvh;
 }
 
-/* Page fade-in */
+/* Page fade-in (existing) */
 .page-enter {
   animation: pageFadeIn 0.25s ease-out both;
 }
@@ -50,4 +51,41 @@ body {
 @keyframes pageFadeIn {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Premium page fade-in-up */
+.page-enter-up {
+  animation: pageFadeInUp 0.4s ease-out both;
+}
+
+@keyframes pageFadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Gold glow shadow */
+.shadow-gold {
+  box-shadow: 0 8px 32px rgba(245, 158, 11, 0.15);
+}
+
+.shadow-gold-sm {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+}
+
+/* Gold gradient border card */
+.card-gold-border {
+  background: linear-gradient(#1E293B, #1E293B) padding-box,
+              linear-gradient(135deg, #F59E0B, #FCD34D) border-box;
+  border: 1px solid transparent;
+  border-radius: 16px;
+}
+
+/* Pulsing orb animation */
+@keyframes orbPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.4; }
+  50%       { transform: translate(-50%, -50%) scale(1.08); opacity: 0.6; }
+}
+
+.orb-pulse {
+  animation: orbPulse 6s ease-in-out infinite;
 }
