@@ -3,33 +3,31 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { LevelCode } from '@/lib/types'
 import { getQuizSystemPrompt } from '@/lib/prompts'
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
   const { level } = await req.json() as { level: LevelCode }
-
   const systemPrompt = getQuizSystemPrompt(level)
 
   try {
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 2048,
+      max_tokens: 3000,
       system: systemPrompt,
-      messages: [{ role: 'user', content: `Generate 10 multiple choice questions for ${level} level English grammar.` }],
+      messages: [{ role: 'user', content: `Generate the full quiz for ${level} level.` }],
     })
 
     const text = response.content[0].type === 'text' ? response.content[0].text : ''
-
-    // Extract JSON from response (Claude sometimes wraps it in ```json blocks)
     const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
-      return NextResponse.json({ error: 'Invalid response format' }, { status: 500 })
+    if (!jsonMatch) return NextResponse.json({ error: 'Invalid response format' }, { status: 500 })
+
+    const parsed = JSON.parse(jsonMatch[0]) as {
+      mc_questions: unknown[]
+      reading: { passage: string; questions: unknown[] }
+      writing: { prompt: string; grammar_focus: string }
     }
 
-    const parsed = JSON.parse(jsonMatch[0]) as { questions: unknown[] }
-    if (!parsed.questions || !Array.isArray(parsed.questions)) {
+    if (!parsed.mc_questions || !Array.isArray(parsed.mc_questions) || parsed.mc_questions.length < 10) {
       return NextResponse.json({ error: 'Invalid quiz structure' }, { status: 500 })
     }
 
