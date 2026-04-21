@@ -16,9 +16,25 @@ export interface IELTSQuestion {
   correct: number
 }
 
+// New: a single speaker turn in the listening conversation
+export interface IELTSConversationTurn {
+  speaker: 'A' | 'B'
+  text: string
+}
+
+// New: 4-criteria writing feedback
+export interface IELTSWritingFeedback {
+  taskAchievement: number
+  coherenceCohesion: number
+  lexicalResource: number
+  grammaticalRange: number
+  band: number
+  feedbackMn: string
+}
+
 export interface IELTSContent {
   listening: {
-    transcript: string
+    conversation: IELTSConversationTurn[]
     questions: IELTSQuestion[]
   }
   reading: {
