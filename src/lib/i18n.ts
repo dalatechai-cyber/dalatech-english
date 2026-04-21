@@ -65,6 +65,17 @@ export const UI: Record<string, string> = {
   step2desc: 'Та англиар бичиж, AI алдааг монгол хэлээр тайлбарлан засна.',
   step3: 'Ахина',
   step3desc: 'Тест өгөөд 7/10 аваас гэрчилгээ авна.',
+  quizReading: 'Уншлага',
+  quizWriting: 'Бичих',
+  quizGrading: 'Үнэлж байна...',
+  quizMC: 'Тест',
+  quizWritingPlaceholder: 'Энд бичнэ үү...',
+  quizSubmitWriting: 'Хариулт илгээх',
+  quizScoreMC: 'Тест',
+  quizScoreReading: 'Уншлага',
+  quizScoreWriting: 'Бичих',
+  quizScoreTotal: 'Нийт',
+  quizWritingFeedback: 'Бичлэгийн үнэлгээ',
 }
 
 export function t(key: string): string {
