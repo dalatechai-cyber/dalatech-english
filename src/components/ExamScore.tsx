@@ -48,7 +48,7 @@ export function parseExamResult(text: string): ParsedResult | null {
   }
 }
 
-export function ExamScore({ content, level, onPassConfirmed }: ExamScoreProps) {
+export function ExamScore({ content, level: _level, onPassConfirmed }: ExamScoreProps) {
   const result = parseExamResult(content)
   if (!result || result.score === undefined) return null
 
