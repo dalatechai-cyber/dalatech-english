@@ -193,7 +193,7 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
         <div ref={bottomRef} />
       </div>
 
-      <div className="px-4 pt-3 pb-input-area bg-navy-surface border-t border-navy-surface-2">
+      <div className="px-4 pt-3 pb-input-area bg-navy border-t border-navy-surface-2">
         <div className="flex items-end gap-2 bg-navy rounded-2xl px-4 py-2 border border-navy-surface-2">
           <textarea
             ref={inputRef}
@@ -202,13 +202,14 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
             onKeyDown={handleKeyDown}
             placeholder="Энд бичнэ үү... (Enter = илгээх, Shift+Enter = шинэ мөр)"
             rows={1}
-            className="flex-1 bg-transparent text-text-primary text-[16px] sm:text-sm resize-none outline-none placeholder:text-text-secondary py-1 max-h-[120px]"
+            className="flex-1 bg-transparent text-text-primary text-[16px] sm:text-sm resize-none outline-none placeholder:text-text-secondary py-1 max-h-[120px] focus:border-gold/50 focus:ring-1 focus:ring-gold/20"
             disabled={isLoading}
           />
           <button
             onClick={sendMessage}
             disabled={isLoading || !input.trim()}
-            className="w-9 h-9 bg-gold hover:bg-gold-dark disabled:opacity-40 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors"
+            className="flex-shrink-0 w-11 h-11 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed text-navy font-bold transition-all hover:-translate-y-0.5 flex items-center justify-center text-lg"
+            style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)' }}
           >
             <svg className="w-4 h-4 text-navy" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />

@@ -22,16 +22,28 @@ export function ChatBubble({ message }: ChatBubbleProps) {
   return (
     <div className={`flex ${isAI ? 'justify-start' : 'justify-end'} mb-3 animate-fade-in`}>
       {isAI && (
-        <div className="w-8 h-8 rounded-full bg-gold flex items-center justify-center text-navy text-xs font-bold mr-2 flex-shrink-0 mt-1">
+        <div
+          className="w-9 h-9 rounded-full flex items-center justify-center text-navy text-xs font-bold mr-2 flex-shrink-0 mt-1"
+          style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)' }}
+        >
           AI
         </div>
       )}
       <div
-        className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 ${
+        className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 ${isAI ? 'rounded-tl-sm' : 'rounded-tr-sm'}`}
+        style={
           isAI
-            ? 'bg-navy-surface text-text-primary rounded-tl-sm'
-            : 'bg-gold text-navy font-medium rounded-tr-sm'
-        }`}
+            ? {
+                background: '#1E293B',
+                borderLeft: '3px solid #F59E0B',
+                color: '#F8FAFC',
+              }
+            : {
+                background: 'linear-gradient(135deg, #F59E0B, #D97706)',
+                color: '#0F172A',
+                fontWeight: 500,
+              }
+        }
       >
         {isAI && hasEnglish && (
           <div className="flex justify-end mb-1">
