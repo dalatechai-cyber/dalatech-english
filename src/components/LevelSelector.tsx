@@ -8,8 +8,8 @@ export function LevelSelector() {
   const { getLevelProgress } = useProgress()
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {LEVELS.map(level => {
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      {LEVELS.map((level, idx) => {
         const lp = getLevelProgress(level.code as LevelCode)
         const completed = lp.completedLessons.length
         const pct = Math.round((completed / 10) * 100)
@@ -18,46 +18,64 @@ export function LevelSelector() {
           <Link
             key={level.code}
             href={`/level/${level.code}`}
-            className="group relative rounded-2xl overflow-hidden border border-navy-surface-2 hover:border-gold/60 transition-all duration-300 hover:shadow-[0_0_24px_rgba(245,158,11,0.15)] active:scale-[0.98]"
+            className="group relative rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-gold"
+            style={{ animationDelay: `${idx * 0.05}s` }}
           >
-            <div className={`bg-gradient-to-br ${level.color} p-0.5 rounded-2xl h-full`}>
-              <div className="bg-navy rounded-[14px] p-5 h-full flex flex-col">
-                {/* Header row */}
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <div
-                      className="text-3xl font-extrabold text-gold leading-none"
-                      style={{ textShadow: '0 0 20px rgba(245,158,11,0.3)' }}
-                    >
-                      {level.code}
-                    </div>
-                    <div className="text-sm font-semibold text-text-primary mt-1">
-                      {level.label.split(' — ')[1]}
-                    </div>
-                  </div>
-                  <div className="text-2xl">{lp.examPassed ? '🏆' : '📖'}</div>
+            <div
+              style={{
+                background: lp.examPassed
+                  ? 'linear-gradient(#1E293B, #1E293B) padding-box, linear-gradient(135deg, #F59E0B, #FCD34D) border-box'
+                  : undefined,
+                border: lp.examPassed ? '1px solid transparent' : '1px solid rgba(245,158,11,0.12)',
+                borderRadius: 16,
+              }}
+              className={`h-full ${!lp.examPassed ? 'bg-navy-surface' : ''}`}
+            >
+              <div className="p-4 flex flex-col h-full relative overflow-hidden">
+                {/* Subtle diagonal pattern */}
+                <div
+                  className="absolute inset-0 opacity-[0.03] pointer-events-none"
+                  style={{
+                    backgroundImage: `repeating-linear-gradient(45deg, #F59E0B 0, #F59E0B 1px, transparent 0, transparent 50%)`,
+                    backgroundSize: '12px 12px',
+                  }}
+                />
+
+                {/* Level code */}
+                <div
+                  className="text-4xl font-extrabold leading-none mb-1 relative"
+                  style={{
+                    background: 'linear-gradient(135deg, #F59E0B, #FCD34D)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  {level.code}
                 </div>
 
-                {/* Description */}
-                <p className="text-xs text-text-secondary leading-relaxed mb-4 flex-1">
-                  {level.description}
-                </p>
+                {/* Level name */}
+                <div className="text-xs font-semibold text-text-primary mb-3 leading-tight relative">
+                  {level.label.split(' — ')[1]}
+                </div>
 
-                {/* Lesson count badge */}
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-text-secondary/70 bg-navy-surface rounded-full px-2.5 py-0.5 border border-navy-surface-2">
-                    10 хичээл
+                {/* Badge row */}
+                <div className="flex items-center justify-between mb-2 relative">
+                  <span className="text-xs" style={{ color: '#64748B' }}>
+                    {completed}/10
                   </span>
-                  <span className="text-xs font-semibold text-gold">
-                    {completed}/10 дууссан
-                  </span>
+                  <span className="text-xl">{lp.examPassed ? '🏆' : '📖'}</span>
                 </div>
 
                 {/* Progress bar */}
-                <div className="w-full h-2 bg-navy-surface-2 rounded-full overflow-hidden">
+                <div className="w-full h-1.5 bg-navy-surface-2 rounded-full overflow-hidden relative">
                   <div
-                    className="h-full bg-gradient-to-r from-gold to-gold-light rounded-full transition-all duration-700"
-                    style={{ width: `${pct}%` }}
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{
+                      width: `${pct}%`,
+                      background: 'linear-gradient(90deg, #F59E0B, #FCD34D)',
+                    }}
                   />
                 </div>
               </div>

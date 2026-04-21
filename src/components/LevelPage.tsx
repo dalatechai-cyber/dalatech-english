@@ -21,12 +21,25 @@ export function LevelPage({ levelCode }: LevelPageProps) {
   return (
     <div className="min-h-screen bg-navy">
       <NavBar levelCode={levelCode} />
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        {/* Level header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gold mb-1">{meta.label}</h1>
-          <p className="text-text-secondary text-sm">{meta.description}</p>
-          <div className="mt-4">
+      <div className="max-w-2xl mx-auto px-4 py-8 page-enter-up">
+
+        {/* Level hero */}
+        <div className="text-center mb-8">
+          <div
+            className="text-7xl font-extrabold leading-none mb-2"
+            style={{
+              background: 'linear-gradient(135deg, #F59E0B, #FCD34D)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              letterSpacing: '-0.03em',
+            }}
+          >
+            {levelCode}
+          </div>
+          <h1 className="text-xl font-bold text-text-primary mb-1">{meta.label.split(' — ')[1]}</h1>
+          <p className="text-sm mb-4" style={{ color: '#CBD5E1' }}>{meta.description}</p>
+          <div className="max-w-xs mx-auto">
             <ProgressBar
               completed={lp.completedLessons.length}
               total={10}
@@ -35,44 +48,61 @@ export function LevelPage({ levelCode }: LevelPageProps) {
           </div>
         </div>
 
-        {/* Mode selection cards */}
+        {/* Mode cards */}
         <div className="grid sm:grid-cols-2 gap-4 mb-8">
-          {/* Free Chat Card */}
+          {/* Free Chat */}
           <Link
             href={`/level/${levelCode}/chat`}
-            className="group block bg-navy-surface border border-navy-surface-2 hover:border-gold/50 hover:shadow-[0_0_20px_rgba(245,158,11,0.1)] rounded-2xl p-6 transition-all duration-200"
+            className="group block rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-gold"
+            style={{
+              background: 'linear-gradient(#1E293B, #1E293B) padding-box, linear-gradient(135deg, #F59E0B44, #F59E0B22) border-box',
+              border: '1px solid transparent',
+            }}
           >
-            <div className="text-3xl mb-3">💬</div>
-            <h2 className="text-lg font-bold text-gold mb-2 group-hover:text-gold-light transition-colors">
+            <div className="text-4xl mb-3">💬</div>
+            <h2 className="text-lg font-bold text-gold mb-2 group-hover:text-gold-light transition-colors" style={{ letterSpacing: '-0.02em' }}>
               {t('freeChat')}
             </h2>
-            <p className="text-text-secondary text-sm leading-relaxed">
+            <p className="text-sm leading-relaxed mb-4" style={{ color: '#CBD5E1' }}>
               {t('freeChatDesc')}
             </p>
-            <div className="mt-4 text-gold text-sm font-medium flex items-center gap-1">
+            <div
+              className="inline-flex items-center gap-2 font-semibold text-sm py-2 px-4 rounded-xl transition-all group-hover:-translate-y-0.5"
+              style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}
+            >
               Эхлэх <span className="group-hover:translate-x-1 transition-transform">→</span>
             </div>
           </Link>
 
-          {/* Quiz Card */}
+          {/* Quiz */}
           <Link
             href={`/level/${levelCode}/quiz`}
-            className="group block bg-navy-surface border border-navy-surface-2 hover:border-gold/50 hover:shadow-[0_0_20px_rgba(245,158,11,0.1)] rounded-2xl p-6 transition-all duration-200"
+            className="group block rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-gold"
+            style={{
+              background: 'linear-gradient(#1E293B, #1E293B) padding-box, linear-gradient(135deg, #F59E0B44, #F59E0B22) border-box',
+              border: '1px solid transparent',
+            }}
           >
-            <div className="text-3xl mb-3">📝</div>
-            <h2 className="text-lg font-bold text-gold mb-2 group-hover:text-gold-light transition-colors">
+            <div className="text-4xl mb-3">📝</div>
+            <h2 className="text-lg font-bold text-gold mb-2 group-hover:text-gold-light transition-colors" style={{ letterSpacing: '-0.02em' }}>
               {t('quiz')}
             </h2>
-            <p className="text-text-secondary text-sm leading-relaxed">
+            <p className="text-sm leading-relaxed mb-1" style={{ color: '#CBD5E1' }}>
               {t('quizDesc')}
             </p>
-            <div className="mt-4 text-gold text-sm font-medium flex items-center gap-1">
+            <p className="text-xs mb-4" style={{ color: '#64748B' }}>
+              15 тест · 2 уншлага · 1 бичих · 18/25 тэнцэх
+            </p>
+            <div
+              className="inline-flex items-center gap-2 font-semibold text-sm py-2 px-4 rounded-xl transition-all group-hover:-translate-y-0.5"
+              style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}
+            >
               Тест өгөх <span className="group-hover:translate-x-1 transition-transform">→</span>
             </div>
           </Link>
         </div>
 
-        {/* Lesson list (collapsed reference) */}
+        {/* Lesson list */}
         <details className="bg-navy-surface border border-navy-surface-2 rounded-xl overflow-hidden">
           <summary className="px-4 py-3 cursor-pointer text-sm font-medium text-text-secondary hover:text-text-primary transition-colors list-none flex items-center justify-between">
             <span>📚 {t('lessons')} ({lp.completedLessons.length}/10 дууссан)</span>
