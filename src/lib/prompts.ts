@@ -266,32 +266,55 @@ export function getQuizSystemPrompt(level: LevelCode): string {
     A2: 'Present Continuous, Was/Were, Past Simple, Future (will/going to), Comparatives/Superlatives, adverbs of frequency, prepositions of place, modal verbs (should/must), object pronouns',
     B1: 'Present Perfect vs Past Simple, Past Continuous, First Conditional, Second Conditional, Passive Voice, Used To, Relative Clauses (who/which/where), Modals of Deduction (must/might/can\'t), Gerunds & Infinitives',
     B2: 'Present Perfect Continuous, Past Perfect, Third Conditional, Causative Have/Get, Reported Speech, Past Modals (must have/should have/can\'t have), Linking words (despite/although/in spite of), Wishes & Regrets, Phrasal Verbs',
-    C1: 'Inversion (negative adverbs), Mixed Conditionals, Cleft Sentences (it was...who/what...is), Participle Clauses, Advanced Passive (said/believed/thought + to-inf), Subjunctive Mood, Nuanced Modals, Academic Linking (albeit/notwithstanding), C1 Collocations',
+    C1: 'Inversion (negative adverbs), Mixed Conditionals, Cleft Sentences, Participle Clauses, Advanced Passive (said/believed/thought + to-inf), Subjunctive Mood, Nuanced Modals, Academic Linking (albeit/notwithstanding), C1 Collocations',
   }
 
   return `You are an English grammar quiz generator for Mongolian learners at ${level} level.
 
-Generate EXACTLY 10 multiple choice questions testing these grammar topics: ${GRAMMAR_TOPICS[level]}
+Generate a quiz with EXACTLY this structure:
+- 15 multiple-choice questions (each tests ONE grammar point from: ${GRAMMAR_TOPICS[level]})
+- 1 reading comprehension passage (3-4 sentences, ${level}-appropriate vocabulary) with 2 questions
+- 1 writing task prompt
 
-Rules:
-- Each question tests ONE specific grammar point
-- 4 options per question (A, B, C, D)
-- Only one correct answer
-- Correct index is 0-based (0=A, 1=B, 2=C, 3=D)
+Rules for MC questions:
+- 4 options per question (strings only, not labelled A/B/C/D)
+- Only one correct answer; "correct" is the 0-based index in the options array
 - All explanations MUST be in Mongolian (Cyrillic script)
-- Questions should be clear fill-in-the-blank or selection sentences
-- Cover different grammar topics across the 10 questions
-- Difficulty should match ${level} level exactly
+- Cover different grammar topics; difficulty matches ${level} exactly
 
-Return ONLY valid JSON in this exact format with no extra text:
+Rules for reading section:
+- Passage: 3-4 sentences, natural English, ${level} vocabulary
+- 2 comprehension questions with 4 options each; same "correct" index convention
+- Explanations in Mongolian
+
+Rules for writing task:
+- One clear prompt in Mongolian asking the student to write ${level === 'A1' || level === 'A2' ? '2-3' : '3-5'} sentences using specific grammar from this level
+- Field "grammar_focus": one short English phrase naming the key grammar point (e.g. "Past Simple", "Third Conditional")
+
+Return ONLY valid JSON, no extra text:
 {
-  "questions": [
+  "mc_questions": [
     {
       "question": "I ___ a student.",
       "options": ["am", "is", "are", "be"],
       "correct": 0,
-      "explanation": "'I'-тай хамт 'am' хэрэглэнэ — To Be-ийн 1-р биеийн хэлбэр."
+      "explanation": "'I'-тай хамт 'am' хэрэглэнэ."
     }
-  ]
+  ],
+  "reading": {
+    "passage": "Sarah works at a hospital. She starts at 7 am every day.",
+    "questions": [
+      {
+        "question": "Where does Sarah work?",
+        "options": ["A hospital", "A school", "A bank", "A restaurant"],
+        "correct": 0,
+        "explanation": "Уншлагаас 'works at a hospital' гэж байна."
+      }
+    ]
+  },
+  "writing": {
+    "prompt": "Өнгөрсөн амралтынхаа талаар 3 өгүүлбэр бич. Past Simple цаг ашигла.",
+    "grammar_focus": "Past Simple"
+  }
 }`
 }
