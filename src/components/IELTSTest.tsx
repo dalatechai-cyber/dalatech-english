@@ -12,8 +12,6 @@ import {
   getSpeechRecognition,
 } from '@/lib/tts'
 
-type Phase = 'intro' | 'loading' | 'listening' | 'reading' | 'writing' | 'speaking' | 'grading' | 'results'
-
 interface GradeResult {
   overall: number
   listening: number
@@ -43,6 +41,41 @@ function bandLabel(band: number): string {
 
 function wordCount(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length
+}
+
+// ─── Shared loading spinner ───
+function Spinner({ label }: { label: string }) {
+  return (
+    <div className="min-h-screen bg-navy flex flex-col">
+      <NavBar lessonTitle="IELTS" />
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <div className="flex gap-1.5 justify-center mb-4">
+            {[0, 1, 2].map(i => (
+              <span key={i} className="w-3 h-3 rounded-full animate-bounce" style={{ background: '#F59E0B', animationDelay: `${i * 0.15}s` }} />
+            ))}
+          </div>
+          <p className="text-sm" style={{ color: '#64748B' }}>{label}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Progress bar across sections ───
+type Phase = 'intro' | 'loading' | 'listening' | 'reading' | 'writing' | 'speaking' | 'grading' | 'results'
+
+function SectionProgress({ sectionIdx }: { sectionIdx: number }) {
+  const sectionOrder: Phase[] = ['listening', 'reading', 'writing', 'speaking']
+  return (
+    <div className="flex gap-1 mb-4">
+      {sectionOrder.map((s, i) => (
+        <div key={s} className="flex-1 h-1.5 rounded-full" style={{
+          background: i < sectionIdx ? '#F59E0B' : i === sectionIdx ? '#F59E0B88' : '#334155'
+        }} />
+      ))}
+    </div>
+  )
 }
 
 export function IELTSTest() {
@@ -91,16 +124,12 @@ export function IELTSTest() {
     if (!content || isPlaying) return
     setIsPlaying(true)
     playingRef.current = true
-    const voices = ttsSupported ? window.speechSynthesis.getVoices() : []
-    const voiceA = voices.find(v => v.voiceURI.includes('Google US English')) ?? voices.find(v => v.lang.startsWith('en-US')) ?? voices[0] ?? null
-    const voiceAIndex = voiceA ? voices.indexOf(voiceA) : -1
-    const voiceB = voices.find(v => v.voiceURI.includes('Google UK English Female')) ?? voices.find((v, i) => v.lang.startsWith('en') && i !== voiceAIndex) ?? voiceA
 
     for (const turn of content.listening.conversation) {
       if (!playingRef.current) break
       setActiveSpeaker(turn.speaker)
       const pitchA = 1.0
-      const pitchB = voiceA === voiceB ? 1.3 : 1.2
+      const pitchB = 1.2
       await speakTurn(turn.text, {
         pitch: turn.speaker === 'A' ? pitchA : pitchB,
         rate: (turn.speaker === 'A' ? 0.9 : 0.85) * playSpeed,
@@ -110,7 +139,7 @@ export function IELTSTest() {
     setActiveSpeaker(null)
     setIsPlaying(false)
     playingRef.current = false
-  }, [content, isPlaying, ttsSupported, playSpeed])
+  }, [content, isPlaying, playSpeed])
 
   const pauseConversation = () => {
     playingRef.current = false
@@ -233,6 +262,7 @@ export function IELTSTest() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content, answers }),
       })
+      if (!res.ok) throw new Error('Grading failed')
       const result = await res.json() as GradeResult
       setGradeResult(result)
       saveIELTSResult({
@@ -245,42 +275,16 @@ export function IELTSTest() {
         feedback: result.writingFeedback,
       })
       saveTestResult({ type: 'ielts', ieltsBand: result.overall })
+      setPhase('results')
     } catch {
       setError('Үнэлгээ хийхэд алдаа гарлаа.')
+      setPhase('intro')
     }
-    setPhase('results')
   }
 
-  // ─── Shared loading spinner ───
-  const Spinner = ({ label }: { label: string }) => (
-    <div className="min-h-screen bg-navy flex flex-col">
-      <NavBar lessonTitle="IELTS" />
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <div className="flex gap-1.5 justify-center mb-4">
-            {[0, 1, 2].map(i => (
-              <span key={i} className="w-3 h-3 rounded-full animate-bounce" style={{ background: '#F59E0B', animationDelay: `${i * 0.15}s` }} />
-            ))}
-          </div>
-          <p className="text-sm" style={{ color: '#64748B' }}>{label}</p>
-        </div>
-      </div>
-    </div>
-  )
-
-  // ─── Progress bar across sections ───
+  // ─── Section progress ───
   const sectionOrder: Phase[] = ['listening', 'reading', 'writing', 'speaking']
   const sectionIdx = sectionOrder.indexOf(phase)
-
-  const SectionProgress = () => (
-    <div className="flex gap-1 mb-4">
-      {sectionOrder.map((s, i) => (
-        <div key={s} className="flex-1 h-1.5 rounded-full" style={{
-          background: i < sectionIdx ? '#F59E0B' : i === sectionIdx ? '#F59E0B88' : '#334155'
-        }} />
-      ))}
-    </div>
-  )
 
   // ─── Intro ───
   if (phase === 'intro') {
@@ -329,7 +333,7 @@ export function IELTSTest() {
       <div className="min-h-screen bg-navy flex flex-col">
         <NavBar lessonTitle={`Listening — ${listenIndex + 1}/${content.listening.questions.length}`} />
         <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
-          <SectionProgress />
+          <SectionProgress sectionIdx={sectionIdx} />
 
           {/* Conversation player */}
           <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 mb-4">
@@ -452,7 +456,7 @@ export function IELTSTest() {
       <div className="min-h-screen bg-navy flex flex-col">
         <NavBar lessonTitle={`Reading — ${readIndex + 1}/${content.reading.questions.length}`} />
         <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
-          <SectionProgress />
+          <SectionProgress sectionIdx={sectionIdx} />
 
           <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 mb-4">
             <div className="text-xs font-semibold text-gold uppercase tracking-wide mb-2">📖 Нийтлэл</div>
@@ -517,7 +521,7 @@ export function IELTSTest() {
       <div className="min-h-screen bg-navy flex flex-col">
         <NavBar lessonTitle={`Writing — Task ${writingTaskView}/2`} />
         <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
-          <SectionProgress />
+          <SectionProgress sectionIdx={sectionIdx} />
 
           {/* Tabs */}
           <div className="flex gap-2 mb-4">
@@ -627,7 +631,7 @@ export function IELTSTest() {
       <div className="min-h-screen bg-navy flex flex-col">
         <NavBar lessonTitle={`Speaking — Part ${speakPart}/3`} />
         <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
-          <SectionProgress />
+          <SectionProgress sectionIdx={sectionIdx} />
 
           {/* STT notice */}
           {!sttSupported && (
