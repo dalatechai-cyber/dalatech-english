@@ -17,7 +17,10 @@ export async function POST(req: NextRequest) {
   const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')
   if (lastUserMessage && isContentBlocked(lastUserMessage.content)) {
     return new Response(BLOCKED_RESPONSE, {
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'X-Content-Type-Options': 'nosniff',
+      },
     })
   }
 
