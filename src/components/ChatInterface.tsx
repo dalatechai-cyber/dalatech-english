@@ -107,7 +107,7 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
 
       if (fullContent.includes('<exam-result>')) {
         setLastExamContent(fullContent)
-        const result = parseExamResult(fullContent)
+        parseExamResult(fullContent)
         if (!lessonMeta?.isExam) {
           completeLesson(level, lessonId)
           setIsComplete(true)
