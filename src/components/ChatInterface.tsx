@@ -16,7 +16,7 @@ interface ChatInterfaceProps {
 
 export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
   const router = useRouter()
-  const { completeLesson, passExam, getLevelProgress } = useProgress()
+  const { completeLesson, passExam, getLevelProgress, progress } = useProgress()
   const lessonMeta = getLessonMeta(level, lessonId)
   const levelMeta = getLevelMeta(level)
   const lp = getLevelProgress(level)
@@ -135,7 +135,7 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
     e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`
   }
 
-  const progressCount = lp.completedLessons.length
+  const progressCount = (progress.levels[level]?.completedLessons.length) ?? lp.completedLessons.length
 
   return (
     <div className="flex flex-col h-screen bg-navy">
