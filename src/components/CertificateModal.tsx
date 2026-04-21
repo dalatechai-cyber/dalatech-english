@@ -11,6 +11,8 @@ interface CertificateModalProps {
   onClose: () => void
 }
 
+const DIAGONAL_PATTERN = `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 40L40 0M10 40L40 10M0 30L30 0M20 40L40 20M0 20L20 0M30 40L40 30M0 10L10 0' stroke='%23F59E0B' stroke-width='0.5' stroke-opacity='0.06'/%3E%3C/svg%3E")`
+
 export function CertificateModal({ level, score, total, onClose }: CertificateModalProps) {
   const certRef = useRef<HTMLDivElement>(null)
   const today = new Date().toISOString().slice(0, 10)
@@ -45,80 +47,109 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 sm:p-6 overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm sm:max-w-md my-auto"
+        className="w-full max-w-[520px] my-auto"
         onClick={e => e.stopPropagation()}
       >
-        {/* Certificate */}
+        {/* Outer double-border frame */}
         <div
           ref={certRef}
-          className="bg-[#0F172A] rounded-2xl p-6 sm:p-8 text-center relative"
           style={{
-            border: '2px solid #F59E0B',
-            boxShadow: '0 0 40px rgba(245,158,11,0.15), inset 0 0 60px rgba(245,158,11,0.03)',
+            background: '#0F172A',
+            backgroundImage: DIAGONAL_PATTERN,
+            border: '3px solid #F59E0B',
+            borderRadius: '16px',
+            padding: '8px',
+            minHeight: '600px',
             fontFamily: 'Inter, sans-serif',
           }}
         >
-          {/* Corner decorations */}
-          <div className="absolute top-3 left-3 w-8 h-8 border-t-2 border-l-2 border-[#F59E0B] rounded-tl-lg opacity-70" />
-          <div className="absolute top-3 right-3 w-8 h-8 border-t-2 border-r-2 border-[#F59E0B] rounded-tr-lg opacity-70" />
-          <div className="absolute bottom-3 left-3 w-8 h-8 border-b-2 border-l-2 border-[#F59E0B] rounded-bl-lg opacity-70" />
-          <div className="absolute bottom-3 right-3 w-8 h-8 border-b-2 border-r-2 border-[#F59E0B] rounded-br-lg opacity-70" />
-
-          {/* Trophy icon */}
-          <div className="text-5xl mb-2">🏆</div>
-
-          {/* Brand */}
-          <div className="text-[#F59E0B] text-base font-bold tracking-widest uppercase mb-1">
-            CORE ENGLISH
-          </div>
-
-          {/* Top separator */}
-          <div className="flex items-center gap-2 my-3">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent to-[#F59E0B]/60" />
-            <div className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]" />
-            <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[#F59E0B]/60" />
-          </div>
-
-          {/* Certificate title */}
-          <div className="text-white text-2xl sm:text-3xl font-extrabold tracking-widest mb-4">
-            {t('certificate')}
-          </div>
-
-          {/* Level */}
+          {/* Inner border container */}
           <div
-            className="text-[#F59E0B] text-5xl sm:text-6xl font-extrabold mb-2 leading-none"
-            style={{ textShadow: '0 0 30px rgba(245,158,11,0.5)' }}
+            style={{
+              border: '1px solid rgba(245,158,11,0.6)',
+              borderRadius: '10px',
+              background: '#1E293B',
+              padding: '32px 28px',
+              minHeight: '580px',
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+            }}
           >
-            {level}
-          </div>
-          <div className="text-white text-sm font-medium mb-4">
-            түвшинг амжилттай дүүргэлээ
-          </div>
+            {/* Corner ornaments */}
+            <div style={{ position:'absolute', top:12, left:12, width:16, height:16, border:'2px solid #F59E0B', transform:'rotate(45deg)', opacity:0.8 }} />
+            <div style={{ position:'absolute', top:12, right:12, width:16, height:16, border:'2px solid #F59E0B', transform:'rotate(45deg)', opacity:0.8 }} />
+            <div style={{ position:'absolute', bottom:12, left:12, width:16, height:16, border:'2px solid #F59E0B', transform:'rotate(45deg)', opacity:0.8 }} />
+            <div style={{ position:'absolute', bottom:12, right:12, width:16, height:16, border:'2px solid #F59E0B', transform:'rotate(45deg)', opacity:0.8 }} />
 
-          {/* Bottom separator */}
-          <div className="flex items-center gap-2 my-3">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent to-[#F59E0B]/60" />
-            <div className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]" />
-            <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[#F59E0B]/60" />
+            {/* Brand */}
+            <div style={{ color:'#F59E0B', letterSpacing:'0.3em', fontSize:'12px', fontWeight:700, textTransform:'uppercase', marginBottom:'8px' }}>
+              CORE ENGLISH
+            </div>
+
+            {/* Top ornament line */}
+            <div style={{ color:'#F59E0B', fontSize:'11px', letterSpacing:'0.15em', marginBottom:'16px', opacity:0.9 }}>
+              ◆───────────────◆
+            </div>
+
+            {/* "АКАДЕМИК АМЖИЛТЫН" */}
+            <div style={{ color:'#F59E0B', letterSpacing:'0.2em', fontSize:'11px', fontWeight:600, textTransform:'uppercase', marginBottom:'6px', opacity:0.8 }}>
+              АКАДЕМИК АМЖИЛТЫН
+            </div>
+
+            {/* "ГЭРЧИЛГЭЭ" */}
+            <div style={{ color:'#FFFFFF', fontSize:'36px', fontWeight:800, letterSpacing:'0.1em', marginBottom:'20px' }}>
+              {t('certificate')}
+            </div>
+
+            {/* Trophy */}
+            <div style={{ fontSize:'48px', marginBottom:'16px', lineHeight:1 }}>🏆</div>
+
+            {/* Level */}
+            <div style={{
+              color:'#F59E0B',
+              fontSize:'72px',
+              fontWeight:900,
+              lineHeight:1,
+              marginBottom:'8px',
+              textShadow: '0 0 40px rgba(245,158,11,0.5), 0 0 80px rgba(245,158,11,0.2)',
+            }}>
+              {level}
+            </div>
+
+            <div style={{ color:'#FFFFFF', fontSize:'16px', marginBottom:'20px', opacity:0.9 }}>
+              түвшний тестийг амжилттай өглөө
+            </div>
+
+            {/* Score */}
+            <div style={{ color:'#F59E0B', fontSize:'18px', fontWeight:600, marginBottom:'12px' }}>
+              Оноо: {score}/{total}
+            </div>
+
+            {/* Bottom ornament */}
+            <div style={{ color:'#F59E0B', fontSize:'11px', letterSpacing:'0.15em', marginBottom:'12px', opacity:0.9 }}>
+              ◆───────────────◆
+            </div>
+
+            {/* Date */}
+            <div style={{ color:'rgba(248,250,252,0.6)', fontSize:'13px', marginBottom:'12px' }}>
+              {formatMongolianDate(today)}
+            </div>
+
+            {/* Attribution */}
+            <div style={{ color:'rgba(245,158,11,0.45)', fontSize:'11px', letterSpacing:'0.1em', marginTop:'auto', paddingTop:'8px' }}>
+              Powered by Dalatech.ai
+            </div>
           </div>
-
-          {/* Score */}
-          <div className="text-[#F59E0B] text-xl font-bold mb-2">
-            Оноо: {score}/{total}
-          </div>
-
-          {/* Date */}
-          <p className="text-gray-400 text-xs mb-4">{formatMongolianDate(today)}</p>
-
-          {/* Attribution */}
-          <div className="text-[#F59E0B]/50 text-xs tracking-wide">Powered by Dalatech.ai</div>
         </div>
 
-        {/* Action buttons — stacked vertically */}
+        {/* Action buttons */}
         <div className="flex flex-col gap-2 mt-4">
           <button
             onClick={handleDownload}
