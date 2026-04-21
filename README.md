@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dalatech English — AI English Tutor for Mongolian Speakers
 
-## Getting Started
+A1 to C1 level English tutoring powered by Claude claude-sonnet-4-6, built for Mongolian native speakers.
 
-First, run the development server:
+## Deploy to Vercel (Free)
+
+1. Push this repo to GitHub
+2. Go to [vercel.com](https://vercel.com) → New Project → Import your repo
+3. Add environment variable: `ANTHROPIC_API_KEY` = your Anthropic API key
+4. Deploy — you get a free URL like `dalatech-english.vercel.app`
+
+## Local Development
 
 ```bash
+cp .env.local.example .env.local
+# Edit .env.local and add your ANTHROPIC_API_KEY
+
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Open http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- 5 levels: A1, A2, B1, B2, C1
+- 10 lessons per level + vocabulary practice in every lesson
+- Level 10 exam required to unlock next level (pass mark: 10/15)
+- Grammar corrections shown in Mongolian with yellow highlight
+- All progress stored in localStorage — no sign-up required
+- Streaming AI responses via Claude claude-sonnet-4-6
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## App Structure
 
-## Learn More
+- Landing page: level selector with lock/unlock status and progress bars
+- Level page: 10 lessons grid with sequential unlock
+- Lesson page: WhatsApp-style chat with AI tutor
+- Exam (lesson 10): scored 0–15, pass unlocks next level
 
-To learn more about Next.js, take a look at the following resources:
+## Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Next.js 14 (App Router)
+- TypeScript + Tailwind CSS
+- Anthropic SDK (streaming)
+- localStorage for progress (no database)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Environment Variables
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Variable | Description |
+|---|---|
+| `ANTHROPIC_API_KEY` | Your Anthropic API key from console.anthropic.com |
