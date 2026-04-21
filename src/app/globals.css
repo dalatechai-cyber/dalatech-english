@@ -35,6 +35,11 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* Input area: base padding + iOS/Android safe area inset */
+.pb-input-area {
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+}
+
 /* Dynamic viewport height — shrinks when iOS keyboard opens */
 .h-dvh {
   height: 100vh;

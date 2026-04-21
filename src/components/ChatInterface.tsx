@@ -193,7 +193,7 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
         <div ref={bottomRef} />
       </div>
 
-      <div className="px-4 pt-3 pb-3 pb-safe bg-navy-surface border-t border-navy-surface-2">
+      <div className="px-4 pt-3 pb-input-area bg-navy-surface border-t border-navy-surface-2">
         <div className="flex items-end gap-2 bg-navy rounded-2xl px-4 py-2 border border-navy-surface-2">
           <textarea
             ref={inputRef}
