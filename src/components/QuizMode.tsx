@@ -97,6 +97,7 @@ export function QuizMode({ level }: QuizModeProps) {
     setWritingAnswer('')
     setWritingScore(0)
     setWritingFeedback('')
+    setAlreadyHasCert(false)
     setShowCertificate(false)
 
     try {
