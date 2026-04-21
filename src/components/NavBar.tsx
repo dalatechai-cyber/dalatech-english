@@ -52,6 +52,9 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
             </span>
           )}
           {/* Desktop nav links */}
+          <Link href="/ielts" className="text-text-secondary hover:text-text-primary text-xs transition-colors hidden sm:block">
+            IELTS
+          </Link>
           <Link href="/mistakes" className="text-text-secondary hover:text-text-primary text-xs transition-colors hidden sm:block">
             {t('mistakes')}
           </Link>
@@ -80,6 +83,13 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
       {/* Mobile dropdown menu */}
       {menuOpen && (
         <div className="sm:hidden absolute top-full left-0 right-0 bg-navy-surface border-b border-navy-surface-2 py-2 z-50">
+          <Link
+            href="/ielts"
+            className="flex items-center gap-3 px-4 py-3 text-text-secondary hover:text-text-primary hover:bg-navy-surface-2/30 transition-colors text-sm"
+            onClick={() => setMenuOpen(false)}
+          >
+            📝 IELTS
+          </Link>
           <Link
             href="/mistakes"
             className="flex items-center gap-3 px-4 py-3 text-text-secondary hover:text-text-primary hover:bg-navy-surface-2/30 transition-colors text-sm"
