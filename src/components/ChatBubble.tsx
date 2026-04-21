@@ -30,7 +30,7 @@ export function ChatBubble({ message }: ChatBubbleProps) {
         </div>
       )}
       <div
-        className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 ${isAI ? 'rounded-tl-sm' : 'rounded-tr-sm'}`}
+        className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 ${isAI ? 'rounded-tl-sm' : 'rounded-tr-sm font-medium'}`}
         style={
           isAI
             ? {
@@ -41,7 +41,6 @@ export function ChatBubble({ message }: ChatBubbleProps) {
             : {
                 background: 'linear-gradient(135deg, #F59E0B, #D97706)',
                 color: '#0F172A',
-                fontWeight: 500,
               }
         }
       >
