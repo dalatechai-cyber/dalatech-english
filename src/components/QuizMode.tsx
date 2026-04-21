@@ -6,6 +6,7 @@ import { CertificateModal } from './CertificateModal'
 import { StreakPopup } from './StreakPopup'
 import { recordStudySession } from '@/lib/streak'
 import { t } from '@/lib/i18n'
+import { hasEverPassedLevel } from '@/lib/certificates'
 
 interface QuizQuestion {
   question: string
@@ -29,6 +30,7 @@ export function QuizMode({ level }: QuizModeProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   const [showCertificate, setShowCertificate] = useState(false)
   const [streakData, setStreakData] = useState<{ current: number; isNewDay: boolean } | null>(null)
+  const [alreadyHasCert, setAlreadyHasCert] = useState(false)
 
   const loadQuiz = async () => {
     setState('loading')
@@ -73,6 +75,7 @@ export function QuizMode({ level }: QuizModeProps) {
     } else {
       const data = recordStudySession()
       setStreakData({ current: data.current, isNewDay: data.isNewDay })
+      setAlreadyHasCert(hasEverPassedLevel(level))
       setState('results')
     }
   }
@@ -181,13 +184,19 @@ export function QuizMode({ level }: QuizModeProps) {
           </div>
 
           <div className="flex flex-col gap-3">
-            {passed && (
+            {passed && !alreadyHasCert && (
               <button
                 onClick={() => setShowCertificate(true)}
                 className="w-full bg-gold hover:bg-gold-dark text-navy font-bold py-3 min-h-[48px] rounded-xl transition-colors"
               >
                 🎓 Гэрчилгээ авах
               </button>
+            )}
+            {passed && alreadyHasCert && (
+              <div className="w-full bg-emerald-500/10 border border-emerald-500/30 rounded-xl py-4 px-4 text-center">
+                <div className="text-emerald-400 font-semibold text-sm mb-1">🏆 Амжилттай давлаа!</div>
+                <div className="text-text-secondary text-xs">Та өмнө нь энэ түвшний гэрчилгээ авсан байна.</div>
+              </div>
             )}
             <button
               onClick={loadQuiz}
