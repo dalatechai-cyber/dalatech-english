@@ -46,3 +46,7 @@ export function formatMongolianDate(isoDate: string): string {
   ]
   return `${y} оны ${months[parseInt(m) - 1]}ын ${parseInt(d)}`
 }
+
+export function hasEverPassedLevel(level: LevelCode): boolean {
+  return loadCertificates().some(c => c.level === level && c.type === 'quiz')
+}
