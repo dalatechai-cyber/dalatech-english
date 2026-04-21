@@ -37,11 +37,9 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
   const handleShare = () => {
     const appUrl = 'https://core-english.vercel.app'
     const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(appUrl)}`
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-    if (isMobile) {
+    const popup = window.open(shareUrl, 'fb-share-dialog', 'width=626,height=436,toolbar=0,status=0,menubar=0,scrollbars=yes,resizable=yes')
+    if (!popup || popup.closed || typeof popup.closed === 'undefined') {
       window.location.href = shareUrl
-    } else {
-      window.open(shareUrl, 'fb-share-dialog', 'width=626,height=436,toolbar=0,status=0,menubar=0,scrollbars=yes,resizable=yes')
     }
   }
 
