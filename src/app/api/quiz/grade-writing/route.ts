@@ -5,14 +5,15 @@ import type { LevelCode } from '@/lib/types'
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
-  const { level, prompt, answer, grammarFocus } = await req.json() as {
-    level: LevelCode
-    prompt: string
-    answer: string
-    grammarFocus: string
-  }
+  try {
+    const { level, prompt, answer, grammarFocus } = await req.json() as {
+      level: LevelCode
+      prompt: string
+      answer: string
+      grammarFocus: string
+    }
 
-  const systemPrompt = `You are an English writing evaluator for Mongolian learners at ${level} level.
+    const systemPrompt = `You are an English writing evaluator for Mongolian learners at ${level} level.
 
 The student was asked: "${prompt}"
 The target grammar: ${grammarFocus}
@@ -32,10 +33,9 @@ Return ONLY valid JSON, no extra text:
   "feedback": "Монгол хэлээр 1-2 өгүүлбэрт хариу үнэлгээ."
 }`
 
-  try {
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 256,
+      max_tokens: 512,
       system: systemPrompt,
       messages: [{ role: 'user', content: answer || '(no answer provided)' }],
     })

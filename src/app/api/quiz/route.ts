@@ -6,10 +6,9 @@ import { getQuizSystemPrompt } from '@/lib/prompts'
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
-  const { level } = await req.json() as { level: LevelCode }
-  const systemPrompt = getQuizSystemPrompt(level)
-
   try {
+    const { level } = await req.json() as { level: LevelCode }
+    const systemPrompt = getQuizSystemPrompt(level)
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 3000,
