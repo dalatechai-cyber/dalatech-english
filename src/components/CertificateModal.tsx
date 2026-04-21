@@ -35,11 +35,14 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
   }
 
   const handleShare = () => {
-    const text = encodeURIComponent(`Core English ${level} түвшний тестийг ${score}/${total} оноотойгоор амжилттай дууслаа! 🎓`)
-    window.open(
-      `https://www.facebook.com/sharer/sharer.php?quote=${text}&u=${encodeURIComponent('https://core-english.vercel.app')}`,
-      '_blank'
-    )
+    const appUrl = 'https://core-english.vercel.app'
+    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(appUrl)}`
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+    if (isMobile) {
+      window.location.href = shareUrl
+    } else {
+      window.open(shareUrl, 'fb-share-dialog', 'width=626,height=436,toolbar=0,status=0,menubar=0,scrollbars=yes,resizable=yes')
+    }
   }
 
   return (
