@@ -2,15 +2,14 @@ import type { AppProgress, LevelCode, LevelProgress } from './types'
 
 const STORAGE_KEY = 'dalatech-progress'
 
+const ALL_LEVELS: LevelCode[] = ['A1', 'A2', 'B1', 'B2', 'C1']
+const ALL_LESSONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
 const DEFAULT_PROGRESS: AppProgress = {
-  unlockedLevels: ['A1'],
-  levels: {
-    A1: {
-      unlockedLessons: [1],
-      completedLessons: [],
-      examPassed: false,
-    },
-  },
+  unlockedLevels: [...ALL_LEVELS],
+  levels: Object.fromEntries(
+    ALL_LEVELS.map(code => [code, { unlockedLessons: [...ALL_LESSONS], completedLessons: [], examPassed: false }])
+  ) as Partial<Record<LevelCode, LevelProgress>>,
 }
 
 export function loadProgress(): AppProgress {
@@ -29,26 +28,21 @@ export function saveProgress(progress: AppProgress): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(progress))
 }
 
-export function isLevelUnlocked(levelCode: LevelCode): boolean {
-  const p = loadProgress()
-  return p.unlockedLevels.includes(levelCode)
+export function isLevelUnlocked(_levelCode: LevelCode): boolean {
+  return true
 }
 
-export function isLessonUnlocked(levelCode: LevelCode, lessonId: number): boolean {
-  const p = loadProgress()
-  return p.levels[levelCode]?.unlockedLessons.includes(lessonId) ?? false
+export function isLessonUnlocked(_levelCode: LevelCode, _lessonId: number): boolean {
+  return true
 }
 
 export function markLessonComplete(levelCode: LevelCode, lessonId: number): void {
   const p = loadProgress()
   if (!p.levels[levelCode]) {
-    p.levels[levelCode] = { unlockedLessons: [lessonId], completedLessons: [], examPassed: false }
+    p.levels[levelCode] = { unlockedLessons: [...ALL_LESSONS], completedLessons: [], examPassed: false }
   }
   const lp = p.levels[levelCode]!
   if (!lp.completedLessons.includes(lessonId)) lp.completedLessons.push(lessonId)
-  if (lessonId < 10 && !lp.unlockedLessons.includes(lessonId + 1)) {
-    lp.unlockedLessons.push(lessonId + 1)
-  }
   saveProgress(p)
 }
 

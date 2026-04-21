@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest } from 'next/server'
 import type { LevelCode } from '@/lib/types'
-import { getSystemPrompt } from '@/lib/prompts'
+import { getFreeChatSystemPrompt } from '@/lib/prompts'
 import { isContentBlocked, BLOCKED_RESPONSE } from '@/lib/contentFilter'
 
 const client = new Anthropic({
@@ -9,10 +9,9 @@ const client = new Anthropic({
 })
 
 export async function POST(req: NextRequest) {
-  const { messages, level, lessonId } = await req.json() as {
+  const { messages, level } = await req.json() as {
     messages: Array<{ role: 'user' | 'assistant'; content: string }>
     level: LevelCode
-    lessonId: number
   }
 
   const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')
@@ -22,7 +21,7 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  const systemPrompt = getSystemPrompt(level, lessonId)
+  const systemPrompt = getFreeChatSystemPrompt(level)
 
   const stream = await client.messages.stream({
     model: 'claude-sonnet-4-6',
