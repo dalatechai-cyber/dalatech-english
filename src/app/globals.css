@@ -30,10 +30,6 @@ body {
 ::-webkit-scrollbar-track { background: var(--navy-surface); }
 ::-webkit-scrollbar-thumb { background: var(--navy-surface-2); border-radius: 3px; }
 
-/* Safe-area padding for iOS notch/home indicator */
-.pb-safe {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
 
 /* Input area: base padding + iOS/Android safe area inset */
 .pb-input-area {
