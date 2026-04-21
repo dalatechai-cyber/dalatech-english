@@ -15,7 +15,8 @@
       "Bash(claude doctor *)",
       "Bash(mkdir -p \"/c/Users/x86/OneDrive/Desktop/online book/src/app/level/[level]/chat\")",
       "Bash(mkdir -p \"/c/Users/x86/OneDrive/Desktop/online book/src/app/level/[level]/quiz\")",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(git push *)"
     ]
   }
 }
