@@ -4,10 +4,9 @@ import type { IELTSContent, IELTSAnswers } from '@/lib/ielts'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-function scoreListeningReading(answers: (number | null)[], questions: { correct: number }[]): number {
+function scoreObjective(answers: (number | null)[], questions: { correct: number }[]): number {
   const correct = answers.filter((a, i) => a === questions[i]?.correct).length
-  const total = questions.length
-  const pct = correct / total
+  const pct = correct / questions.length
   if (pct >= 0.9) return 9
   if (pct >= 0.8) return 8
   if (pct >= 0.7) return 7
@@ -23,62 +22,90 @@ export async function POST(req: NextRequest) {
   try {
     const { content, answers } = await req.json() as { content: IELTSContent; answers: IELTSAnswers }
 
-    const listeningBand = scoreListeningReading(answers.listeningAnswers, content.listening.questions)
-    const readingBand = scoreListeningReading(answers.readingAnswers, content.reading.questions)
+    const listeningBand = scoreObjective(answers.listeningAnswers, content.listening.questions)
+    const readingBand = scoreObjective(answers.readingAnswers, content.reading.questions)
 
     const speakingText = [
-      'PART 1:\n' + answers.speakingPart1.filter(Boolean).join('\n'),
-      'PART 2:\n' + (answers.speakingPart2 || '(no answer)'),
-      'PART 3:\n' + answers.speakingPart3.filter(Boolean).join('\n'),
-    ].join('\n\n')
+      'PART 1 QUESTIONS AND ANSWERS:\n' + content.speaking.part1Questions.map((q, i) =>
+        `Q: ${q}\nA: ${answers.speakingPart1[i] || '(no answer)'}`
+      ).join('\n\n'),
+      `PART 2 TOPIC CARD:\n${content.speaking.part2Card}\nSTUDENT ANSWER:\n${answers.speakingPart2 || '(no answer)'}`,
+      'PART 3 QUESTIONS AND ANSWERS:\n' + content.speaking.part3Questions.map((q, i) =>
+        `Q: ${q}\nA: ${answers.speakingPart3[i] || '(no answer)'}`
+      ).join('\n\n'),
+    ].join('\n\n---\n\n')
 
-    const gradingPrompt = `You are an IELTS examiner. Grade the following writing and speaking responses.
+    const gradingPrompt = `You are a certified IELTS examiner. Grade the Writing and Speaking sections using official IELTS criteria. Return ONLY valid JSON.
 
-WRITING TASK 1 PROMPT: ${content.writing.task1Prompt}
-WRITING TASK 1 ANSWER: ${answers.writingTask1 || '(no answer)'}
+=== WRITING TASK 1 ===
+Prompt: ${content.writing.task1Prompt}
+Answer: ${answers.writingTask1 || '(no answer provided)'}
 
-WRITING TASK 2 PROMPT: ${content.writing.task2Prompt}
-WRITING TASK 2 ANSWER: ${answers.writingTask2 || '(no answer)'}
+=== WRITING TASK 2 ===
+Prompt: ${content.writing.task2Prompt}
+Answer: ${answers.writingTask2 || '(no answer provided)'}
 
-SPEAKING PROMPTS AND ANSWERS:
+=== SPEAKING ===
 ${speakingText}
 
-Give a band score (1-9) for Writing and Speaking separately based on IELTS criteria.
-Then write 2-3 sentences of feedback in Mongolian (Cyrillic) for each.
-
-Return ONLY valid JSON:
+Score each criterion 1-9. Return this JSON:
 {
-  "writingBand": 6,
-  "speakingBand": 6,
-  "writingFeedback": "Монгол хэлээр тайлбар.",
-  "speakingFeedback": "Монгол хэлээр тайлбар."
+  "writing": {
+    "taskAchievement": 6,
+    "coherenceCohesion": 6,
+    "lexicalResource": 6,
+    "grammaticalRange": 6,
+    "band": 6,
+    "feedbackMn": "Монгол хэлээр 2-3 өгүүлбэр тайлбар."
+  },
+  "speaking": {
+    "fluencyCohesion": 6,
+    "lexicalResource": 6,
+    "grammaticalRange": 6,
+    "pronunciation": 6,
+    "band": 6,
+    "feedbackMn": "Монгол хэлээр 2-3 өгүүлбэр тайлбар."
+  }
 }`
 
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 512,
-      system: 'You are an IELTS examiner. Return only valid JSON.',
+      max_tokens: 800,
+      system: 'You are a certified IELTS examiner. Return only valid JSON.',
       messages: [{ role: 'user', content: gradingPrompt }],
     })
 
     const text = response.content[0].type === 'text' ? response.content[0].text : ''
     const jsonMatch = text.match(/\{[\s\S]*\}/)
+
     let writingBand = 5
     let speakingBand = 5
     let writingFeedback = ''
     let speakingFeedback = ''
+    let writingCriteria = { taskAchievement: 5, coherenceCohesion: 5, lexicalResource: 5, grammaticalRange: 5 }
+    let speakingCriteria = { fluencyCohesion: 5, lexicalResource: 5, grammaticalRange: 5, pronunciation: 5 }
 
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]) as {
-        writingBand: number
-        speakingBand: number
-        writingFeedback: string
-        speakingFeedback: string
+        writing: { taskAchievement: number; coherenceCohesion: number; lexicalResource: number; grammaticalRange: number; band: number; feedbackMn: string }
+        speaking: { fluencyCohesion: number; lexicalResource: number; grammaticalRange: number; pronunciation: number; band: number; feedbackMn: string }
       }
-      writingBand = Math.min(9, Math.max(1, parsed.writingBand))
-      speakingBand = Math.min(9, Math.max(1, parsed.speakingBand))
-      writingFeedback = parsed.writingFeedback
-      speakingFeedback = parsed.speakingFeedback
+      writingBand = Math.min(9, Math.max(1, parsed.writing.band))
+      speakingBand = Math.min(9, Math.max(1, parsed.speaking.band))
+      writingFeedback = parsed.writing.feedbackMn
+      speakingFeedback = parsed.speaking.feedbackMn
+      writingCriteria = {
+        taskAchievement: Math.min(9, Math.max(1, parsed.writing.taskAchievement)),
+        coherenceCohesion: Math.min(9, Math.max(1, parsed.writing.coherenceCohesion)),
+        lexicalResource: Math.min(9, Math.max(1, parsed.writing.lexicalResource)),
+        grammaticalRange: Math.min(9, Math.max(1, parsed.writing.grammaticalRange)),
+      }
+      speakingCriteria = {
+        fluencyCohesion: Math.min(9, Math.max(1, parsed.speaking.fluencyCohesion)),
+        lexicalResource: Math.min(9, Math.max(1, parsed.speaking.lexicalResource)),
+        grammaticalRange: Math.min(9, Math.max(1, parsed.speaking.grammaticalRange)),
+        pronunciation: Math.min(9, Math.max(1, parsed.speaking.pronunciation)),
+      }
     }
 
     const overall = Math.round((listeningBand + readingBand + writingBand + speakingBand) / 4 * 2) / 2
@@ -91,6 +118,8 @@ Return ONLY valid JSON:
       speaking: speakingBand,
       writingFeedback,
       speakingFeedback,
+      writingCriteria,
+      speakingCriteria,
     })
   } catch (e) {
     console.error('IELTS grade error:', e)
