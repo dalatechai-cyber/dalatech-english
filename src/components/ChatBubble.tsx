@@ -1,5 +1,8 @@
+'use client'
 import type { Message } from '@/lib/types'
 import { ErrorCorrection } from './ErrorCorrection'
+import { PronunciationHint } from './PronunciationHint'
+import { speakText } from '@/lib/pronunciation'
 
 interface ChatBubbleProps {
   message: Message
@@ -14,6 +17,8 @@ export function ChatBubble({ message }: ChatBubbleProps) {
     .replace(/<exam-result>[\s\S]*?<\/exam-result>/g, '')
     .trim()
 
+  const hasEnglish = /[a-zA-Z]{3,}/.test(cleanContent)
+
   return (
     <div className={`flex ${isAI ? 'justify-start' : 'justify-end'} mb-3 animate-fade-in`}>
       {isAI && (
@@ -22,16 +27,30 @@ export function ChatBubble({ message }: ChatBubbleProps) {
         </div>
       )}
       <div
-        className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+        className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 ${
           isAI
             ? 'bg-navy-surface text-text-primary rounded-tl-sm'
             : 'bg-gold text-navy font-medium rounded-tr-sm'
         }`}
       >
+        {isAI && hasEnglish && (
+          <div className="flex justify-end mb-1">
+            <button
+              onClick={() => speakText(cleanContent)}
+              className="text-text-secondary hover:text-gold transition-colors text-sm"
+              title="Англиар уншуулах"
+            >
+              🔊
+            </button>
+          </div>
+        )}
         {isAI && hasCorrection ? (
           <ErrorCorrection content={message.content} />
         ) : (
           <p className="text-sm whitespace-pre-wrap leading-relaxed">{cleanContent || message.content}</p>
+        )}
+        {isAI && hasEnglish && (
+          <PronunciationHint content={cleanContent} />
         )}
       </div>
     </div>

@@ -1,48 +1,45 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import type { Message, LevelCode } from '@/lib/types'
-import { getLessonMeta, getLevelMeta } from '@/lib/levels'
-import { useProgress } from '@/hooks/useProgress'
+import { getLevelMeta } from '@/lib/levels'
 import { ChatBubble } from './ChatBubble'
-import { ExamScore, parseExamResult } from './ExamScore'
-import { ProgressBar } from './ProgressBar'
 import { NavBar } from './NavBar'
 import { StreakPopup } from './StreakPopup'
 import { parseCorrectionsFromContent, saveMistake } from '@/lib/mistakes'
 import { recordStudySession } from '@/lib/streak'
 
-interface ChatInterfaceProps {
+interface FreeChatInterfaceProps {
   level: LevelCode
-  lessonId: number
 }
 
-export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
-  const router = useRouter()
-  const { completeLesson, passExam, getLevelProgress, progress } = useProgress()
-  const lessonMeta = getLessonMeta(level, lessonId)
+export function FreeChatInterface({ level }: FreeChatInterfaceProps) {
   const levelMeta = getLevelMeta(level)
-  const lp = getLevelProgress(level)
+  const searchParams = useSearchParams()
+  const drillTopic = searchParams.get('drill')
 
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [isComplete, setIsComplete] = useState(lp.completedLessons.includes(lessonId))
-  const [lastExamContent, setLastExamContent] = useState<string | null>(null)
   const [streakData, setStreakData] = useState<{ current: number; isNewDay: boolean } | null>(null)
   const [hasRecordedStreak, setHasRecordedStreak] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
-    if (messages.length === 0) {
-      const greeting: Message = {
-        id: 'init',
-        role: 'assistant',
-        content: `Сайн байна уу! Тавтай морилно уу — **${levelMeta?.label} · Хичээл ${lessonId}: ${lessonMeta?.titleMn}**\n\n${lessonMeta?.description}\n\nЭхэлцгээе! 🌟`,
-        timestamp: Date.now(),
-      }
-      setMessages([greeting])
+    const greeting = drillTopic
+      ? `Сайн байна уу! Өнөөдөр бид "${drillTopic}" зөв хэлбэрийг дадлагажуулах болно.\n\nЭнэ граммарын сэдвийг дахин дадлагажуулахад бэлэн үү? Эхэлцгээе! 💪`
+      : `Сайн байна уу! **${levelMeta?.label}** түвшний чөлөөт яриа хичээлд тавтай морилно уу!\n\nЯмар сэдвээр ярилцмаар байна вэ? Гэр бүл, сонирхол, аялал, хоол — аль ч сэдэв сайн. Англиар бичиж эхэлнэ үү! 😊`
+
+    setMessages([{
+      id: 'init',
+      role: 'assistant',
+      content: greeting,
+      timestamp: Date.now(),
+    }])
+
+    if (drillTopic && inputRef.current) {
+      inputRef.current.focus()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -77,10 +74,10 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
 
     try {
       const apiMessages = newMessages.map(m => ({ role: m.role, content: m.content }))
-      const res = await fetch('/api/chat', {
+      const res = await fetch('/api/free-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages, level, lessonId }),
+        body: JSON.stringify({ messages: apiMessages, level }),
       })
 
       if (!res.body) throw new Error('No stream body')
@@ -98,44 +95,20 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
         )
       }
 
-      // Save corrections to mistake diary
       const corrections = parseCorrectionsFromContent(fullContent, level)
       corrections.forEach(c => saveMistake(c))
-
-      if (fullContent.includes('<exam-result>')) {
-        setLastExamContent(fullContent)
-        const result = parseExamResult(fullContent)
-        if (result?.passed) {
-          // handled by onPassConfirmed button click
-        } else if (!lessonMeta?.isExam) {
-          completeLesson(level, lessonId)
-          setIsComplete(true)
-        }
-      } else {
-        if (!lessonMeta?.isExam && !isComplete && newMessages.filter(m => m.role === 'user').length >= 1) {
-          completeLesson(level, lessonId)
-          setIsComplete(true)
-        }
-      }
-    } catch (err: unknown) {
-      if ((err as Error).name !== 'AbortError') {
-        setMessages(prev =>
-          prev.map(m =>
-            m.id === aiMsgId
-              ? { ...m, content: 'Уучлаарай, алдаа гарлаа. Дахин оролдоно уу.' }
-              : m
-          )
+    } catch {
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === aiMsgId
+            ? { ...m, content: 'Уучлаарай, алдаа гарлаа. Дахин оролдоно уу.' }
+            : m
         )
-      }
+      )
     } finally {
       setIsLoading(false)
     }
-  }, [input, isLoading, messages, level, lessonId, lessonMeta, isComplete, completeLesson, hasRecordedStreak])
-
-  const handlePassConfirmed = useCallback((score: number) => {
-    passExam(level, score)
-    router.push(`/level/${level}`)
-  }, [passExam, level, router])
+  }, [input, isLoading, messages, level, hasRecordedStreak])
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -150,15 +123,9 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
     e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`
   }
 
-  const progressCount = (progress.levels[level]?.completedLessons.length) ?? lp.completedLessons.length
-
   return (
     <div className="flex flex-col h-dvh bg-navy">
-      <NavBar levelCode={level} lessonId={lessonId} lessonTitle={lessonMeta?.titleMn} />
-
-      <div className="px-4 py-2 bg-navy-surface border-b border-navy-surface-2">
-        <ProgressBar completed={progressCount} total={10} label={`${level} дэвшил`} />
-      </div>
+      <NavBar levelCode={level} lessonTitle="Чөлөөт яриа" />
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
         {messages.map(msg => (
@@ -170,22 +137,11 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
             <div className="bg-navy-surface rounded-2xl rounded-tl-sm px-4 py-3">
               <div className="flex gap-1 items-center h-5">
                 {[0, 1, 2].map(i => (
-                  <span
-                    key={i}
-                    className="w-2 h-2 bg-gold rounded-full animate-bounce"
-                    style={{ animationDelay: `${i * 0.15}s` }}
-                  />
+                  <span key={i} className="w-2 h-2 bg-gold rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
                 ))}
               </div>
             </div>
           </div>
-        )}
-        {lastExamContent && !isLoading && (
-          <ExamScore
-            content={lastExamContent}
-            level={level}
-            onPassConfirmed={handlePassConfirmed}
-          />
         )}
         <div ref={bottomRef} />
       </div>
@@ -197,7 +153,7 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder="Энд бичнэ үү... (Enter = илгээх, Shift+Enter = шинэ мөр)"
+            placeholder="Англиар бичнэ үү... (Enter = илгээх, Shift+Enter = шинэ мөр)"
             rows={1}
             className="flex-1 bg-transparent text-text-primary text-[16px] sm:text-sm resize-none outline-none placeholder:text-text-secondary py-1 max-h-[120px]"
             disabled={isLoading}
@@ -212,16 +168,10 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
             </svg>
           </button>
         </div>
-        <p className="text-xs text-text-secondary text-center mt-1.5">
-          Vocabulary дасгалын хувьд: &quot;Make a sentence with [word]&quot; гэж бичнэ үү
-        </p>
       </div>
 
       {streakData && streakData.isNewDay && (
-        <StreakPopup
-          streak={streakData.current}
-          onClose={() => setStreakData(null)}
-        />
+        <StreakPopup streak={streakData.current} onClose={() => setStreakData(null)} />
       )}
     </div>
   )
