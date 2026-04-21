@@ -127,11 +127,6 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
               түвшний тестийг амжилттай өглөө
             </div>
 
-            {/* Score */}
-            <div style={{ color:'#F59E0B', fontSize:'18px', fontWeight:600, marginBottom:'12px' }}>
-              Оноо: {score}/{total}
-            </div>
-
             {/* Bottom ornament */}
             <div style={{ color:'#F59E0B', fontSize:'11px', letterSpacing:'0.15em', marginBottom:'12px', opacity:0.9 }}>
               ◆───────────────◆
