@@ -5,7 +5,7 @@ import { NavBar } from './NavBar'
 import { CertificateModal } from './CertificateModal'
 import { StreakPopup } from './StreakPopup'
 import { recordStudySession } from '@/lib/streak'
-import { useLanguage } from '@/lib/i18n'
+import { t } from '@/lib/i18n'
 
 interface QuizQuestion {
   question: string
@@ -21,7 +21,6 @@ interface QuizModeProps {
 type QuizState = 'loading' | 'question' | 'answered' | 'results'
 
 export function QuizMode({ level }: QuizModeProps) {
-  const { t } = useLanguage()
   const [questions, setQuestions] = useState<QuizQuestion[]>([])
   const [state, setState] = useState<QuizState>('loading')
   const [error, setError] = useState<string | null>(null)
