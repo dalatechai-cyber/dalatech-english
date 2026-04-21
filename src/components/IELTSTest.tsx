@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { NavBar } from './NavBar'
 import type { IELTSContent, IELTSAnswers } from '@/lib/ielts'
 import { saveIELTSResult } from '@/lib/ielts'
+import { saveTestResult } from '@/lib/testHistory'
 
 type Phase = 'intro' | 'loading' | 'listening' | 'reading' | 'writing' | 'speaking' | 'grading' | 'results'
 
@@ -100,6 +101,7 @@ export function IELTSTest() {
         speaking: result.speaking,
         feedback: result.writingFeedback,
       })
+      saveTestResult({ type: 'ielts', ieltsBand: result.overall })
     } catch {
       setError('Үнэлгээ хийхэд алдаа гарлаа.')
     }

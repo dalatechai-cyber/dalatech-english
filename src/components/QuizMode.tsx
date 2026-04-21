@@ -7,6 +7,7 @@ import { StreakPopup } from './StreakPopup'
 import { recordStudySession } from '@/lib/streak'
 import { hasEverPassedLevel } from '@/lib/certificates'
 import { t } from '@/lib/i18n'
+import { saveTestResult } from '@/lib/testHistory'
 
 interface MCQuestion {
   question: string
@@ -185,6 +186,10 @@ export function QuizMode({ level }: QuizModeProps) {
       const result = await res.json() as { score: number; feedback: string }
       setWritingScore(result.score)
       setWritingFeedback(result.feedback)
+      const currentMcScore = mcAnswers.filter((a, i) => a === mcQuestions[i]?.correctIndex).length
+      const currentReadingScore = readingAnswers.filter((a, i) => a === readingQuestions[i]?.correctIndex).length * 2
+      const currentTotal = currentMcScore + currentReadingScore + result.score
+      saveTestResult({ type: 'quiz', level, score: currentTotal, total: 25, passed: currentTotal >= 18 })
     } catch {
       setWritingScore(0)
       setWritingFeedback('Үнэлгээ хийхэд алдаа гарлаа.')
