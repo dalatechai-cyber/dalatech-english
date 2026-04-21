@@ -1,5 +1,6 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { flushSync } from 'react-dom'
 import { useSearchParams } from 'next/navigation'
 import type { Message, LevelCode } from '@/lib/types'
 import { getLevelMeta } from '@/lib/levels'
@@ -90,9 +91,11 @@ export function FreeChatInterface({ level }: FreeChatInterfaceProps) {
         if (done) break
         const chunk = decoder.decode(value, { stream: true })
         fullContent += chunk
-        setMessages(prev =>
-          prev.map(m => (m.id === aiMsgId ? { ...m, content: fullContent } : m))
-        )
+        flushSync(() => {
+          setMessages(prev =>
+            prev.map(m => (m.id === aiMsgId ? { ...m, content: fullContent } : m))
+          )
+        })
       }
 
       const corrections = parseCorrectionsFromContent(fullContent, level)

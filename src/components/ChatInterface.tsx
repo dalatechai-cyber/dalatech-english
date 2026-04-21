@@ -1,5 +1,6 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { flushSync } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import type { Message, LevelCode } from '@/lib/types'
 import { getLessonMeta, getLevelMeta } from '@/lib/levels'
@@ -93,9 +94,11 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
         if (done) break
         const chunk = decoder.decode(value, { stream: true })
         fullContent += chunk
-        setMessages(prev =>
-          prev.map(m => (m.id === aiMsgId ? { ...m, content: fullContent } : m))
-        )
+        flushSync(() => {
+          setMessages(prev =>
+            prev.map(m => (m.id === aiMsgId ? { ...m, content: fullContent } : m))
+          )
+        })
       }
 
       // Save corrections to mistake diary
