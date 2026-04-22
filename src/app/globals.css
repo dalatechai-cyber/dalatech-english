@@ -89,3 +89,52 @@ body {
 .orb-pulse {
   animation: orbPulse 6s ease-in-out infinite;
 }
+
+/* ─── IELTS Waveform bars ─── */
+@keyframes waveBar {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+/* ─── Speaking Orb: idle breathing ─── */
+@keyframes orbIdleBreath {
+  0%, 100% { transform: scale(1); opacity: 0.2; }
+  50% { transform: scale(1.06); opacity: 0.4; }
+}
+
+/* ─── Speaking Orb: speaking (gold ripple) ─── */
+@keyframes orbSpeakInner {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+@keyframes orbSpeakMiddle {
+  0%, 100% { transform: scale(1); opacity: 0.45; }
+  50% { transform: scale(1.4); opacity: 0; }
+}
+@keyframes orbSpeakOuter {
+  0%, 100% { transform: scale(1); opacity: 0.2; }
+  50% { transform: scale(1.6); opacity: 0; }
+}
+
+/* ─── Speaking Orb: recording (blue pulse) ─── */
+@keyframes orbRecordRing {
+  0%, 100% { transform: scale(1); opacity: 0.35; }
+  50% { transform: scale(1.45); opacity: 0; }
+}
+@keyframes orbRecordInner {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+
+/* Orb ring & inner animation classes */
+.orb-ring-outer.orb-idle   { animation: orbIdleBreath 3s ease-in-out infinite; }
+.orb-ring-middle.orb-idle  { animation: orbIdleBreath 2.5s ease-in-out infinite 0.5s; }
+.orb-inner.orb-idle        { animation: orbIdleBreath 2s ease-in-out infinite 1s; }
+
+.orb-ring-outer.orb-speaking  { animation: orbSpeakOuter 2.5s ease-in-out infinite 0.6s; }
+.orb-ring-middle.orb-speaking { animation: orbSpeakMiddle 2s ease-in-out infinite 0.3s; }
+.orb-inner.orb-speaking       { animation: orbSpeakInner 1.5s ease-in-out infinite; }
+
+.orb-ring-outer.orb-recording  { animation: orbRecordRing 1.5s ease-in-out infinite 0.3s; }
+.orb-ring-middle.orb-recording { animation: orbRecordRing 1.2s ease-in-out infinite; }
+.orb-inner.orb-recording       { animation: orbRecordInner 0.9s ease-in-out infinite; }

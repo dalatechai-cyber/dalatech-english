@@ -2,7 +2,6 @@
 import type { Message } from '@/lib/types'
 import { ErrorCorrection } from './ErrorCorrection'
 import { PronunciationHint } from './PronunciationHint'
-import { speakText } from '@/lib/pronunciation'
 
 interface ChatBubbleProps {
   message: Message
@@ -16,8 +15,6 @@ export function ChatBubble({ message }: ChatBubbleProps) {
     .replace(/<correction>[\s\S]*?<\/correction>/g, '')
     .replace(/<exam-result>[\s\S]*?<\/exam-result>/g, '')
     .trim()
-
-  const hasEnglish = /[a-zA-Z]{3,}/.test(cleanContent)
 
   return (
     <div className={`flex ${isAI ? 'justify-start' : 'justify-end'} mb-3 animate-fade-in`}>
@@ -44,23 +41,12 @@ export function ChatBubble({ message }: ChatBubbleProps) {
               }
         }
       >
-        {isAI && hasEnglish && (
-          <div className="flex justify-end mb-1">
-            <button
-              onClick={() => speakText(cleanContent)}
-              className="text-text-secondary hover:text-gold transition-colors text-sm"
-              title="Англиар уншуулах"
-            >
-              🔊
-            </button>
-          </div>
-        )}
         {isAI && hasCorrection ? (
           <ErrorCorrection content={message.content} />
         ) : (
           <p className="text-sm whitespace-pre-wrap leading-relaxed">{cleanContent || message.content}</p>
         )}
-        {isAI && hasEnglish && (
+        {isAI && (
           <PronunciationHint content={cleanContent} />
         )}
       </div>

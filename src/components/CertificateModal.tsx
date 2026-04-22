@@ -36,12 +36,18 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
     }
   }
 
-  const handleShare = () => {
-    const appUrl = 'https://core-english.vercel.app'
-    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(appUrl)}`
-    const popup = window.open(shareUrl, 'fb-share-dialog', 'width=626,height=436,toolbar=0,status=0,menubar=0,scrollbars=yes,resizable=yes')
-    if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-      window.location.href = shareUrl
+  const handleCopy = async () => {
+    if (!certRef.current) return
+    try {
+      const { default: html2canvas } = await import('html2canvas')
+      const canvas = await html2canvas(certRef.current, { backgroundColor: '#0F172A', scale: 2 })
+      canvas.toBlob(async blob => {
+        if (!blob) return
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+      })
+    } catch {
+      const text = `Core English — ${level} гэрчилгээ — ${formatMongolianDate(today)}`
+      await navigator.clipboard.writeText(text).catch(() => {})
     }
   }
 
@@ -153,10 +159,10 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
             📥 {t('download')}
           </button>
           <button
-            onClick={handleShare}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 min-h-[48px] rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
+            onClick={handleCopy}
+            className="w-full bg-navy-surface border border-navy-surface-2 text-text-primary hover:border-gold/40 font-semibold py-3 min-h-[48px] rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
           >
-            <span className="font-bold">f</span> {t('share')}
+            📋 Хуулах
           </button>
           <button
             onClick={onClose}
@@ -164,6 +170,9 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
           >
             {t('close')} ✕
           </button>
+          <p className="text-center text-xs mt-1" style={{ color: '#64748B' }}>
+            Гэрчилгээгээ татаж аваад Facebook-т хуваалцаарай
+          </p>
         </div>
       </div>
     </div>

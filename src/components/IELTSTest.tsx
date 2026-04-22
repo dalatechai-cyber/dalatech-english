@@ -10,6 +10,8 @@ import {
   isSpeechSupported,
   isSpeechRecognitionSupported,
   getSpeechRecognition,
+  selectSpeakerA,
+  selectSpeakerB,
 } from '@/lib/tts'
 
 interface GradeResult {
@@ -78,6 +80,107 @@ function SectionProgress({ sectionIdx }: { sectionIdx: number }) {
   )
 }
 
+// ─── Waveform animation for listening ───
+function ListeningWaveform() {
+  return (
+    <div className="flex items-end justify-center gap-1 h-10 my-2">
+      {[0, 1, 2, 3, 4].map(i => (
+        <div
+          key={i}
+          style={{
+            width: 4,
+            background: '#F59E0B',
+            borderRadius: 2,
+            height: `${14 + i * 6}px`,
+            transformOrigin: 'bottom',
+            animation: `waveBar ${0.6 + i * 0.1}s ease-in-out infinite alternate`,
+            animationDelay: `${i * 0.12}s`,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+// ─── Animated orb for speaking ───
+function OrbAnimation({ state }: { state: 'idle' | 'speaking' | 'recording' }) {
+  const gold = '#F59E0B'
+  const blue = '#0EA5E9'
+  const color = state === 'recording' ? blue : gold
+
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: 160, height: 160 }}>
+      {/* Outer ring */}
+      <div
+        className={`absolute rounded-full orb-ring-outer orb-${state}`}
+        style={{ width: 160, height: 160, border: `2px solid ${color}`, opacity: 0.2 }}
+      />
+      {/* Middle ring */}
+      <div
+        className={`absolute rounded-full orb-ring-middle orb-${state}`}
+        style={{ width: 110, height: 110, border: `2px solid ${color}`, opacity: 0.35 }}
+      />
+      {/* Inner orb */}
+      <div
+        className={`orb-inner orb-${state} rounded-full flex items-center justify-center text-2xl`}
+        style={{
+          width: 70,
+          height: 70,
+          background: `radial-gradient(circle, ${color}55 0%, ${color}22 70%)`,
+          border: `2px solid ${color}88`,
+        }}
+      >
+        {state === 'recording' ? '🎤' : '🔊'}
+      </div>
+    </div>
+  )
+}
+
+// ─── Task 1 prompt renderer with <data-table> support ───
+function Task1Prompt({ prompt }: { prompt: string }) {
+  const tableMatch = prompt.match(/<data-table>([\s\S]*?)<\/data-table>/)
+  if (!tableMatch) {
+    return <p className="text-sm text-text-primary leading-relaxed whitespace-pre-line">{prompt}</p>
+  }
+
+  const before = prompt.slice(0, prompt.indexOf('<data-table>')).trim()
+  const after = prompt.slice(prompt.indexOf('</data-table>') + '</data-table>'.length).trim()
+  const rows = tableMatch[1].trim().split('\n').map(r => r.split('|'))
+  const headers = rows[0]
+  const dataRows = rows.slice(1)
+
+  return (
+    <>
+      {before && <p className="text-sm text-text-primary leading-relaxed mb-3">{before}</p>}
+      <div className="overflow-x-auto rounded-xl mb-3">
+        <table className="w-full text-xs border-collapse min-w-[280px]">
+          <thead>
+            <tr>
+              {headers.map((h, i) => (
+                <th key={i} className="px-3 py-2 text-left font-semibold text-navy whitespace-nowrap" style={{ background: '#F59E0B' }}>
+                  {h.trim()}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {dataRows.map((row, ri) => (
+              <tr key={ri} style={{ background: ri % 2 === 0 ? '#1E293B' : '#162032' }}>
+                {row.map((cell, ci) => (
+                  <td key={ci} className="px-3 py-2 text-text-primary whitespace-nowrap" style={{ borderTop: '1px solid #334155' }}>
+                    {cell.trim()}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {after && <p className="text-sm text-text-primary leading-relaxed">{after}</p>}
+    </>
+  )
+}
+
 export function IELTSTest() {
   const [phase, setPhase] = useState<Phase>('intro')
   const [error, setError] = useState<string | null>(null)
@@ -92,6 +195,7 @@ export function IELTSTest() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [activeSpeaker, setActiveSpeaker] = useState<'A' | 'B' | null>(null)
   const [playSpeed, setPlaySpeed] = useState<0.75 | 1 | 1.25>(1)
+  const [showTranscript, setShowTranscript] = useState(false)
   const playingRef = useRef(false)
 
   // Reading state
@@ -107,33 +211,67 @@ export function IELTSTest() {
 
   // Speaking state
   const [speakPart, setSpeakPart] = useState<1 | 2 | 3>(1)
-  const [speakPart1, setSpeakPart1] = useState<string[]>(['', '', ''])
+  const [speakQuestionIdx, setSpeakQuestionIdx] = useState(0)
+  const [speakPart1, setSpeakPart1] = useState<string[]>(['', '', '', '', ''])
   const [speakPart2, setSpeakPart2] = useState('')
-  const [speakPart3, setSpeakPart3] = useState<string[]>(['', '', ''])
+  const [speakPart3, setSpeakPart3] = useState<string[]>(['', '', '', ''])
   const [isRecording, setIsRecording] = useState(false)
-  const [recordingTarget, setRecordingTarget] = useState<{ part: number; idx?: number } | null>(null)
+  const [examinerSpeaking, setExaminerSpeaking] = useState(false)
+  const [liveTranscript, setLiveTranscript] = useState('')
   const [prepCountdown, setPrepCountdown] = useState<number | null>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null)
+  const examinerAbortRef = useRef(false)
 
   const ttsSupported = isSpeechSupported()
   const sttSupported = isSpeechRecognitionSupported()
 
-  // Play full conversation with alternating speakers
+  // ─── Cleanup audio on unmount and phase change ───
+  useEffect(() => {
+    return () => {
+      stopSpeech()
+      examinerAbortRef.current = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (phase !== 'listening' && phase !== 'speaking') {
+      stopSpeech()
+      playingRef.current = false
+      setIsPlaying(false)
+      setActiveSpeaker(null)
+      examinerAbortRef.current = true
+      setExaminerSpeaking(false)
+    }
+  }, [phase])
+
+  // ─── Play conversation (FIX 3: better voices, 300ms pause) ───
   const playConversation = useCallback(async () => {
     if (!content || isPlaying) return
     setIsPlaying(true)
     playingRef.current = true
 
-    for (const turn of content.listening.conversation) {
+    const voiceA = selectSpeakerA()
+    const voiceB = selectSpeakerB()
+    const enVoices = typeof window !== 'undefined'
+      ? window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'))
+      : []
+    const onlyOneVoice = enVoices.length <= 1
+
+    for (let i = 0; i < content.listening.conversation.length; i++) {
       if (!playingRef.current) break
+      const turn = content.listening.conversation[i]
       setActiveSpeaker(turn.speaker)
-      const pitchA = 1.0
-      const pitchB = 1.2
+
+      if (i > 0) {
+        await new Promise<void>(r => setTimeout(r, 300))
+        if (!playingRef.current) break
+      }
+
       await speakTurn(turn.text, {
-        pitch: turn.speaker === 'A' ? pitchA : pitchB,
-        rate: (turn.speaker === 'A' ? 0.9 : 0.85) * playSpeed,
-        preferUri: turn.speaker === 'A' ? 'Google US English' : 'Google UK English Female',
+        voice: turn.speaker === 'A' ? voiceA : voiceB,
+        pitch: turn.speaker === 'A' ? 1.0 : (onlyOneVoice ? 1.3 : 1.15),
+        rate: (turn.speaker === 'A' ? 0.88 : 0.85) * playSpeed,
       })
     }
     setActiveSpeaker(null)
@@ -148,13 +286,42 @@ export function IELTSTest() {
     setActiveSpeaker(null)
   }
 
-  // Speak examiner question aloud
-  const speakQuestion = (text: string) => {
-    speakTurn(text, { preferUri: 'Google UK English', pitch: 1.0, rate: 0.85 })
-  }
+  // ─── Examiner auto-play (FIX 5) ───
+  const autoPlayQuestion = useCallback(async (text: string) => {
+    examinerAbortRef.current = false
+    setExaminerSpeaking(true)
+    const voiceB = selectSpeakerB()
+    await speakTurn(text, { voice: voiceB, pitch: 1.05, rate: 0.85 })
+    if (!examinerAbortRef.current) {
+      setExaminerSpeaking(false)
+    }
+  }, [])
 
-  // Start STT recording
-  const startRecording = (part: number, idx?: number) => {
+  useEffect(() => {
+    if (phase !== 'speaking' || !content) return
+
+    examinerAbortRef.current = true
+    stopSpeech()
+    setExaminerSpeaking(false)
+
+    let text = ''
+    if (speakPart === 1) text = content.speaking.part1Questions[speakQuestionIdx] ?? ''
+    else if (speakPart === 2) text = content.speaking.part2Card
+    else if (speakPart === 3) text = content.speaking.part3Questions[speakQuestionIdx] ?? ''
+
+    if (!text || !ttsSupported) return
+
+    const timer = setTimeout(() => { autoPlayQuestion(text) }, 600)
+    return () => {
+      clearTimeout(timer)
+      examinerAbortRef.current = true
+      stopSpeech()
+      setExaminerSpeaking(false)
+    }
+  }, [phase, speakPart, speakQuestionIdx, content, autoPlayQuestion, ttsSupported])
+
+  // ─── STT recording ───
+  const startRecording = useCallback((part: number, idx?: number) => {
     const SpeechRecognitionCtor = getSpeechRecognition()
     if (!SpeechRecognitionCtor) return
     if (recognitionRef.current) { recognitionRef.current.abort(); recognitionRef.current = null }
@@ -162,43 +329,49 @@ export function IELTSTest() {
     const rec = new (SpeechRecognitionCtor as any)()
     rec.lang = 'en-US'
     rec.continuous = true
-    rec.interimResults = false
+    rec.interimResults = true
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rec.onresult = (e: any) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const transcript = Array.from(e.results as any[]).map((r: any) => r[0].transcript).join(' ')
-      if (part === 1 && idx !== undefined) {
-        setSpeakPart1(prev => { const a = [...prev]; a[idx] = transcript; return a })
-      } else if (part === 2) {
-        setSpeakPart2(transcript)
-      } else if (part === 3 && idx !== undefined) {
-        setSpeakPart3(prev => { const a = [...prev]; a[idx] = transcript; return a })
+      const results = Array.from(e.results as any[])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const allText = results.map((r: any) => r[0].transcript).join(' ')
+      setLiveTranscript(allText)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const finalText = results.filter((r: any) => r.isFinal).map((r: any) => r[0].transcript).join(' ')
+      if (finalText) {
+        if (part === 1 && idx !== undefined) {
+          setSpeakPart1(prev => { const a = [...prev]; a[idx] = finalText; return a })
+        } else if (part === 2) {
+          setSpeakPart2(finalText)
+        } else if (part === 3 && idx !== undefined) {
+          setSpeakPart3(prev => { const a = [...prev]; a[idx] = finalText; return a })
+        }
       }
     }
-    rec.onend = () => { setIsRecording(false); setRecordingTarget(null) }
+    rec.onend = () => { setIsRecording(false); setLiveTranscript('') }
     rec.start()
     recognitionRef.current = rec
     setIsRecording(true)
-    setRecordingTarget({ part, idx })
-  }
+    setLiveTranscript('')
+  }, [])
 
-  const stopRecording = () => {
+  const stopRecording = useCallback(() => {
     recognitionRef.current?.stop()
     recognitionRef.current = null
     setIsRecording(false)
-    setRecordingTarget(null)
-  }
+    setLiveTranscript('')
+  }, [])
 
-  // Part 2 prep countdown
-  const startPrepTimer = () => {
-    setPrepCountdown(60)
-  }
+  // ─── Part 2 prep countdown ───
+  const startPrepTimer = () => { setPrepCountdown(60) }
   useEffect(() => {
     if (prepCountdown === null || prepCountdown <= 0) return
     const t = setTimeout(() => setPrepCountdown(c => (c ?? 1) - 1), 1000)
     return () => clearTimeout(t)
   }, [prepCountdown])
 
+  // ─── Start test ───
   const startTest = async () => {
     setPhase('loading')
     setError(null)
@@ -206,6 +379,7 @@ export function IELTSTest() {
     setListenAnswers(Array(6).fill(null))
     setListenSelected(null)
     setListenAnswered(false)
+    setShowTranscript(false)
     setReadIndex(0)
     setReadAnswers(Array(8).fill(null))
     setReadSelected(null)
@@ -214,22 +388,39 @@ export function IELTSTest() {
     setWritingTask2('')
     setWritingTaskView(1)
     setSpeakPart(1)
-    setSpeakPart1(['', '', ''])
+    setSpeakQuestionIdx(0)
+    setSpeakPart1(['', '', '', '', ''])
     setSpeakPart2('')
-    setSpeakPart3(['', '', ''])
+    setSpeakPart3(['', '', '', ''])
+    setPrepCountdown(null)
     setGradeResult(null)
+
+    const usedTopics = (() => {
+      try { return JSON.parse(localStorage.getItem('core-ielts-used-topics') ?? '[]') as string[] }
+      catch { return [] }
+    })()
 
     try {
       const res = await fetch('/api/ielts/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ seed: Date.now() }),
+        body: JSON.stringify({ seed: Date.now(), usedTopics }),
       })
       if (!res.ok) throw new Error('Failed to generate test')
       const data = await res.json() as IELTSContent
       if (!data.listening?.conversation || !data.reading || !data.writing || !data.speaking) {
         throw new Error('Invalid test data')
       }
+
+      // Save Part 2 topic for future avoidance (FIX 8)
+      const part2Topic = data.speaking.part2Card.split('\n')[0]?.slice(0, 60) ?? ''
+      if (part2Topic) {
+        try {
+          const stored = JSON.parse(localStorage.getItem('core-ielts-used-topics') ?? '[]') as string[]
+          localStorage.setItem('core-ielts-used-topics', JSON.stringify([part2Topic, ...stored].slice(0, 5)))
+        } catch { /* ignore */ }
+      }
+
       setContent(data)
       setListenAnswers(Array(data.listening.questions.length).fill(null))
       setReadAnswers(Array(data.reading.questions.length).fill(null))
@@ -247,6 +438,7 @@ export function IELTSTest() {
     setPhase('grading')
     stopSpeech()
     stopRecording()
+    examinerAbortRef.current = true
     const answers: IELTSAnswers = {
       listeningAnswers: listenAnswers,
       readingAnswers: readAnswers,
@@ -282,7 +474,6 @@ export function IELTSTest() {
     }
   }
 
-  // ─── Section progress ───
   const sectionOrder: Phase[] = ['listening', 'reading', 'writing', 'speaking']
   const sectionIdx = sectionOrder.indexOf(phase)
 
@@ -325,10 +516,12 @@ export function IELTSTest() {
   if (phase === 'loading') return <Spinner label="Тест бэлдэж байна..." />
   if (phase === 'grading') return <Spinner label="Үнэлж байна... (30–60 секунд)" />
 
-  // ─── Listening ───
+  // ─── Listening (FIX 2: hide transcript, show waveform) ───
   if (phase === 'listening' && content) {
     const q = content.listening.questions[listenIndex]
     const conv = content.listening.conversation
+    const allListenAnswered = listenAnswers.every(a => a !== null)
+
     return (
       <div className="min-h-screen bg-navy flex flex-col">
         <NavBar lessonTitle={`Listening — ${listenIndex + 1}/${content.listening.questions.length}`} />
@@ -339,7 +532,6 @@ export function IELTSTest() {
           <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 mb-4">
             <div className="flex items-center justify-between mb-3">
               <div className="text-xs font-semibold text-gold uppercase tracking-wide">🎧 Яриа сонсох</div>
-              {/* Speed control */}
               <div className="flex gap-1">
                 {([0.75, 1, 1.25] as const).map(s => (
                   <button
@@ -353,31 +545,81 @@ export function IELTSTest() {
               </div>
             </div>
 
-            {/* Conversation lines */}
-            <div className="space-y-2 mb-4 max-h-48 overflow-y-auto">
-              {conv.map((turn, i) => (
-                <div
-                  key={i}
-                  className={`flex gap-2 text-sm transition-all duration-300 ${activeSpeaker === turn.speaker ? 'opacity-100' : 'opacity-60'}`}
-                >
-                  <span
-                    className="flex-shrink-0 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center"
-                    style={{
-                      background: turn.speaker === 'A' ? 'linear-gradient(135deg, #F59E0B, #D97706)' : '#334155',
-                      color: turn.speaker === 'A' ? '#0F172A' : '#F8FAFC',
-                    }}
+            {/* Waveform while playing / idle state */}
+            {ttsSupported ? (
+              <div className="mb-3">
+                {isPlaying ? (
+                  <div className="flex flex-col items-center py-2">
+                    <ListeningWaveform />
+                    <p className="text-xs mt-1" style={{ color: '#F59E0B' }}>Яриа тоглуулж байна...</p>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-3">
+                    <div className="flex items-center gap-2 text-xs" style={{ color: '#64748B' }}>
+                      <span>🎧</span>
+                      <span>Яриа сонсоод асуултад хариулна уу</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* No TTS: show transcript as fallback */
+              <div className="space-y-2 mb-4 max-h-48 overflow-y-auto">
+                {conv.map((turn, i) => (
+                  <div key={i} className="flex gap-2 text-sm">
+                    <span
+                      className="flex-shrink-0 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center"
+                      style={{
+                        background: turn.speaker === 'A' ? 'linear-gradient(135deg, #F59E0B, #D97706)' : '#334155',
+                        color: turn.speaker === 'A' ? '#0F172A' : '#F8FAFC',
+                      }}
+                    >
+                      {turn.speaker}
+                    </span>
+                    <p className="flex-1 leading-relaxed text-text-secondary">{turn.text}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Transcript toggle — only after all answers done */}
+            {ttsSupported && allListenAnswered && (
+              <button
+                onClick={() => setShowTranscript(v => !v)}
+                className="w-full mb-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors"
+                style={{ background: '#0F172A', borderColor: '#334155', color: '#94A3B8' }}
+              >
+                {showTranscript ? '🙈 Яриа нуух' : '👁 Яриа харах'}
+              </button>
+            )}
+
+            {/* Transcript content when shown */}
+            {ttsSupported && showTranscript && (
+              <div className="space-y-2 mb-3 max-h-48 overflow-y-auto border-t border-navy-surface-2 pt-3">
+                {conv.map((turn, i) => (
+                  <div
+                    key={i}
+                    className={`flex gap-2 text-sm transition-all duration-300 ${activeSpeaker === turn.speaker ? 'opacity-100' : 'opacity-60'}`}
                   >
-                    {turn.speaker}
-                  </span>
-                  <p className={`flex-1 leading-relaxed ${activeSpeaker === turn.speaker ? 'text-text-primary' : 'text-text-secondary'}`}>
-                    {turn.text}
-                  </p>
-                </div>
-              ))}
-            </div>
+                    <span
+                      className="flex-shrink-0 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center"
+                      style={{
+                        background: turn.speaker === 'A' ? 'linear-gradient(135deg, #F59E0B, #D97706)' : '#334155',
+                        color: turn.speaker === 'A' ? '#0F172A' : '#F8FAFC',
+                      }}
+                    >
+                      {turn.speaker}
+                    </span>
+                    <p className={`flex-1 leading-relaxed ${activeSpeaker === turn.speaker ? 'text-text-primary' : 'text-text-secondary'}`}>
+                      {turn.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Play controls */}
-            {ttsSupported ? (
+            {ttsSupported && (
               <div className="flex gap-2">
                 <button
                   onClick={isPlaying ? pauseConversation : playConversation}
@@ -387,8 +629,6 @@ export function IELTSTest() {
                   {isPlaying ? '⏸ Зогсоох' : '▶ Тоглуулах'}
                 </button>
               </div>
-            ) : (
-              <p className="text-xs text-center" style={{ color: '#64748B' }}>Та дээрх текстийг уншаад асуултуудад хариулна уу.</p>
             )}
           </div>
 
@@ -515,7 +755,7 @@ export function IELTSTest() {
     )
   }
 
-  // ─── Writing ───
+  // ─── Writing (FIX 4: render data-table) ───
   if (phase === 'writing' && content) {
     return (
       <div className="min-h-screen bg-navy flex flex-col">
@@ -523,7 +763,6 @@ export function IELTSTest() {
         <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
           <SectionProgress sectionIdx={sectionIdx} />
 
-          {/* Tabs */}
           <div className="flex gap-2 mb-4">
             {([1, 2] as const).map(task => (
               <button
@@ -543,7 +782,7 @@ export function IELTSTest() {
             <>
               <div className="bg-navy-surface border border-gold/20 rounded-2xl p-4 mb-3">
                 <div className="text-xs font-semibold text-gold uppercase tracking-wide mb-2">✍️ Task 1 — дор хаяж 150 үг</div>
-                <p className="text-sm text-text-primary leading-relaxed whitespace-pre-line">{content.writing.task1Prompt}</p>
+                <Task1Prompt prompt={content.writing.task1Prompt} />
               </div>
               <textarea
                 value={writingTask1}
@@ -606,26 +845,62 @@ export function IELTSTest() {
     )
   }
 
-  // ─── Speaking ───
+  // ─── Speaking (FIX 5: orb UI, auto-play, live transcript) ───
   if (phase === 'speaking' && content) {
-    const isRec = (part: number, idx?: number) =>
-      isRecording && recordingTarget?.part === part && recordingTarget?.idx === idx
+    const orbState: 'idle' | 'speaking' | 'recording' = examinerSpeaking ? 'speaking' : isRecording ? 'recording' : 'idle'
 
-    const RecordButton = ({ part, idx }: { part: number; idx?: number }) => (
-      sttSupported ? (
-        <button
-          onClick={() => isRec(part, idx) ? stopRecording() : startRecording(part, idx)}
-          className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5"
-          style={isRec(part, idx)
-            ? { background: '#F87171', color: '#fff' }
-            : { background: '#1E293B', border: '1px solid #334155', color: '#94A3B8' }}
-        >
-          {isRec(part, idx) ? (
-            <><span className="w-2 h-2 rounded-full bg-white animate-pulse inline-block" />⏹ Зогсоох</>
-          ) : '🎤 Хариулах'}
-        </button>
-      ) : null
-    )
+    let currentQuestion = ''
+    let currentAnswer = ''
+    let questionLabel = ''
+
+    if (speakPart === 1) {
+      currentQuestion = content.speaking.part1Questions[speakQuestionIdx] ?? ''
+      currentAnswer = speakPart1[speakQuestionIdx] || ''
+      questionLabel = `Part 1 — Асуулт ${speakQuestionIdx + 1}/${content.speaking.part1Questions.length}`
+    } else if (speakPart === 2) {
+      currentQuestion = content.speaking.part2Card
+      currentAnswer = speakPart2
+      questionLabel = 'Part 2 — Сэдвийн карт'
+    } else {
+      currentQuestion = content.speaking.part3Questions[speakQuestionIdx] ?? ''
+      currentAnswer = speakPart3[speakQuestionIdx] || ''
+      questionLabel = `Part 3 — Асуулт ${speakQuestionIdx + 1}/${content.speaking.part3Questions.length}`
+    }
+
+    const isLastInPart = speakPart === 1
+      ? speakQuestionIdx >= content.speaking.part1Questions.length - 1
+      : speakPart === 3
+      ? speakQuestionIdx >= content.speaking.part3Questions.length - 1
+      : true
+
+    const handleToggleRecord = () => {
+      if (isRecording) {
+        stopRecording()
+      } else {
+        examinerAbortRef.current = true
+        stopSpeech()
+        setExaminerSpeaking(false)
+        const idx = speakPart !== 2 ? speakQuestionIdx : undefined
+        startRecording(speakPart, idx)
+      }
+    }
+
+    const handleNextQuestion = () => {
+      stopRecording()
+      examinerAbortRef.current = true
+      stopSpeech()
+      setExaminerSpeaking(false)
+      setSpeakQuestionIdx(i => i + 1)
+    }
+
+    const handleNextPart = (nextPart: 1 | 2 | 3) => {
+      stopRecording()
+      examinerAbortRef.current = true
+      stopSpeech()
+      setExaminerSpeaking(false)
+      setSpeakPart(nextPart)
+      setSpeakQuestionIdx(0)
+    }
 
     return (
       <div className="min-h-screen bg-navy flex flex-col">
@@ -633,19 +908,12 @@ export function IELTSTest() {
         <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
           <SectionProgress sectionIdx={sectionIdx} />
 
-          {/* STT notice */}
-          {!sttSupported && (
-            <div className="bg-navy-surface border border-gold/20 rounded-xl p-3 mb-4 text-xs" style={{ color: '#94A3B8' }}>
-              ⚠️ Таны браузер дуу таних боломжгүй тул бичгээр хариулна уу
-            </div>
-          )}
-
           {/* Part tabs */}
           <div className="flex gap-2 mb-5">
             {([1, 2, 3] as const).map(part => (
               <button
                 key={part}
-                onClick={() => setSpeakPart(part)}
+                onClick={() => handleNextPart(part)}
                 className="flex-1 py-2 rounded-xl text-sm font-semibold transition-colors border"
                 style={speakPart === part
                   ? { background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A', borderColor: 'transparent' }
@@ -656,111 +924,142 @@ export function IELTSTest() {
             ))}
           </div>
 
-          {speakPart === 1 && (
-            <>
-              <div className="text-xs font-semibold text-gold uppercase tracking-wide mb-3">🗣️ Part 1 — Хувийн асуулт</div>
-              <div className="space-y-5 mb-6">
-                {content.speaking.part1Questions.map((q, i) => (
-                  <div key={i}>
-                    <div className="flex items-start gap-2 mb-2">
-                      <p className="text-sm text-text-primary flex-1">{q}</p>
-                      <div className="flex gap-1.5 flex-shrink-0">
-                        {ttsSupported && (
-                          <button onClick={() => speakQuestion(q)} className="text-xs px-2 py-1.5 rounded-lg bg-navy-surface-2 text-gold">🔊</button>
-                        )}
-                        <RecordButton part={1} idx={i} />
-                      </div>
-                    </div>
-                    <textarea
-                      value={speakPart1[i] || ''}
-                      onChange={e => { const a = [...speakPart1]; a[i] = e.target.value; setSpeakPart1(a) }}
-                      placeholder="Хариулт бичнэ үү..."
-                      rows={2}
-                      className="w-full rounded-xl p-3 text-sm resize-none outline-none"
-                      style={{ background: '#1E293B', border: '1px solid #334155', color: '#F8FAFC' }}
-                    />
-                  </div>
+          {/* Orb */}
+          <div className="flex justify-center mb-4">
+            <OrbAnimation state={orbState} />
+          </div>
+
+          {/* Examiner speaking indicator */}
+          {examinerSpeaking && (
+            <div className="text-center text-sm mb-3" style={{ color: '#F59E0B' }}>
+              <span>Шалгагч ярьж байна</span>
+              <span className="inline-flex gap-0.5 ml-1">
+                {[0, 1, 2].map(i => (
+                  <span key={i} className="animate-bounce" style={{ animationDelay: `${i * 0.15}s` }}>.</span>
                 ))}
-              </div>
-              <button onClick={() => setSpeakPart(2)} className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
-                Part 2 →
-              </button>
-            </>
+              </span>
+            </div>
           )}
 
-          {speakPart === 2 && (
-            <>
-              <div className="bg-navy-surface rounded-2xl p-4 mb-4" style={{ border: '1px solid rgba(245,158,11,0.3)' }}>
-                <div className="text-xs font-semibold text-gold uppercase tracking-wide mb-2">🗣️ Part 2 — Сэдвийн карт</div>
-                <p className="text-sm text-text-primary leading-relaxed whitespace-pre-line">{content.speaking.part2Card}</p>
-                {ttsSupported && (
-                  <button onClick={() => speakQuestion(content.speaking.part2Card)} className="mt-3 text-xs px-3 py-1.5 rounded-lg bg-navy-surface-2 text-gold">🔊 Уншуулах</button>
-                )}
-              </div>
-
-              {/* Prep timer */}
-              {prepCountdown === null ? (
-                <button onClick={startPrepTimer} className="w-full mb-4 py-2 rounded-xl text-sm font-semibold bg-navy-surface border border-navy-surface-2 text-text-secondary hover:border-gold/30 transition-colors">
-                  ⏱ 1 минут бэлтгэх
-                </button>
-              ) : (
-                <div className="w-full mb-4 py-2 rounded-xl text-center text-sm font-bold bg-navy-surface border border-gold/20" style={{ color: prepCountdown > 0 ? '#F59E0B' : '#34D399' }}>
-                  {prepCountdown > 0 ? `Бэлтгэх: ${prepCountdown}с` : '✓ Бэлтгэл дууслаа'}
-                </div>
-              )}
-
-              <div className="flex items-center gap-2 mb-2">
-                <p className="text-xs flex-1" style={{ color: '#64748B' }}>1-2 минут ярьсан бичнэ үү</p>
-                <RecordButton part={2} />
-              </div>
-              <textarea
-                value={speakPart2}
-                onChange={e => setSpeakPart2(e.target.value)}
-                placeholder="Монолог бичнэ үү..."
-                rows={6}
-                className="w-full rounded-xl p-3 text-sm resize-none outline-none mb-4"
-                style={{ background: '#1E293B', border: '1px solid #334155', color: '#F8FAFC' }}
-              />
-              <button onClick={() => setSpeakPart(3)} className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
-                Part 3 →
-              </button>
-            </>
+          {/* STT not supported notice */}
+          {!sttSupported && (
+            <div className="bg-navy-surface border border-gold/20 rounded-xl p-3 mb-4 text-xs" style={{ color: '#94A3B8' }}>
+              ⚠️ Таны браузер дуу таних боломжгүй тул бичгээр хариулна уу
+            </div>
           )}
 
-          {speakPart === 3 && (
-            <>
-              <div className="text-xs font-semibold text-gold uppercase tracking-wide mb-3">🗣️ Part 3 — Хэлэлцүүлэг</div>
-              <div className="space-y-5 mb-6">
-                {content.speaking.part3Questions.map((q, i) => (
-                  <div key={i}>
-                    <div className="flex items-start gap-2 mb-2">
-                      <p className="text-sm text-text-primary flex-1">{q}</p>
-                      <div className="flex gap-1.5 flex-shrink-0">
-                        {ttsSupported && (
-                          <button onClick={() => speakQuestion(q)} className="text-xs px-2 py-1.5 rounded-lg bg-navy-surface-2 text-gold">🔊</button>
-                        )}
-                        <RecordButton part={3} idx={i} />
-                      </div>
-                    </div>
-                    <textarea
-                      value={speakPart3[i] || ''}
-                      onChange={e => { const a = [...speakPart3]; a[i] = e.target.value; setSpeakPart3(a) }}
-                      placeholder="Хариулт бичнэ үү..."
-                      rows={3}
-                      className="w-full rounded-xl p-3 text-sm resize-none outline-none"
-                      style={{ background: '#1E293B', border: '1px solid #334155', color: '#F8FAFC' }}
-                    />
-                  </div>
-                ))}
-              </div>
+          {/* Current question card */}
+          <div className="bg-navy-surface border border-gold/20 rounded-2xl p-4 mb-4">
+            <div className="text-xs font-semibold text-gold uppercase tracking-wide mb-2">{questionLabel}</div>
+            <p className="text-sm text-text-primary leading-relaxed whitespace-pre-line">{currentQuestion}</p>
+            {ttsSupported && (
               <button
-                onClick={submitTest}
-                className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5"
-                style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}
+                onClick={() => {
+                  if (examinerSpeaking) {
+                    examinerAbortRef.current = true
+                    stopSpeech()
+                    setExaminerSpeaking(false)
+                  } else {
+                    autoPlayQuestion(currentQuestion)
+                  }
+                }}
+                className="mt-2 text-xs px-3 py-1.5 rounded-lg transition-colors"
+                style={{ background: '#0F172A', border: '1px solid #334155', color: '#94A3B8' }}
               >
-                Тест илгээх →
+                {examinerSpeaking ? '⏸ Зогсоох' : '🔊 Дахин тоглуулах'}
               </button>
-            </>
+            )}
+          </div>
+
+          {/* Part 2: prep timer */}
+          {speakPart === 2 && (
+            prepCountdown === null ? (
+              <button onClick={startPrepTimer} className="w-full mb-4 py-2 rounded-xl text-sm font-semibold bg-navy-surface border border-navy-surface-2 text-text-secondary hover:border-gold/30 transition-colors">
+                ⏱ 1 минут бэлтгэх
+              </button>
+            ) : (
+              <div className="w-full mb-4 py-2 rounded-xl text-center text-sm font-bold bg-navy-surface border border-gold/20" style={{ color: prepCountdown > 0 ? '#F59E0B' : '#34D399' }}>
+                {prepCountdown > 0 ? `Бэлтгэх: ${prepCountdown}с` : '✓ Бэлтгэл дууслаа'}
+              </div>
+            )
+          )}
+
+          {/* Mic button */}
+          {sttSupported && (
+            <div className="flex flex-col items-center mb-4">
+              <button
+                onClick={handleToggleRecord}
+                className="w-20 h-20 rounded-full flex items-center justify-center text-3xl transition-all shadow-lg mb-2"
+                style={{
+                  background: isRecording
+                    ? 'linear-gradient(135deg, #EF4444, #DC2626)'
+                    : 'linear-gradient(135deg, #1E293B, #334155)',
+                  border: isRecording ? '3px solid #EF4444' : '3px solid #334155',
+                }}
+              >
+                {isRecording ? '⏹' : '🎤'}
+              </button>
+              <span className="text-xs" style={{ color: '#64748B' }}>
+                {isRecording ? 'Сонсож байна...' : '🎤 Дарж ярина уу'}
+              </span>
+            </div>
+          )}
+
+          {/* Live transcript while recording */}
+          {isRecording && liveTranscript && (
+            <div className="rounded-xl p-3 mb-3" style={{ background: '#0F172A', border: '1px solid #0EA5E933' }}>
+              <div className="text-xs mb-1" style={{ color: '#0EA5E9' }}>Сонсож байна...</div>
+              <p className="text-sm text-text-primary">{liveTranscript}</p>
+            </div>
+          )}
+
+          {/* Answer textarea */}
+          <div className="mb-4">
+            <div className="text-xs mb-1" style={{ color: '#64748B' }}>Таны хариулт</div>
+            <textarea
+              value={currentAnswer}
+              onChange={e => {
+                const val = e.target.value
+                if (speakPart === 1) {
+                  setSpeakPart1(prev => { const a = [...prev]; a[speakQuestionIdx] = val; return a })
+                } else if (speakPart === 2) {
+                  setSpeakPart2(val)
+                } else {
+                  setSpeakPart3(prev => { const a = [...prev]; a[speakQuestionIdx] = val; return a })
+                }
+              }}
+              placeholder={sttSupported ? 'Дуу бичлэгийн хариулт энд гарна. Засварлах боломжтой.' : 'Хариулт бичнэ үү...'}
+              rows={4}
+              className="w-full rounded-xl p-3 text-sm resize-none outline-none"
+              style={{ background: '#1E293B', border: '1px solid #334155', color: '#F8FAFC' }}
+            />
+          </div>
+
+          {/* Navigation */}
+          {speakPart === 1 && !isLastInPart && (
+            <button onClick={handleNextQuestion} className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+              Дараагийн асуулт →
+            </button>
+          )}
+          {speakPart === 1 && isLastInPart && (
+            <button onClick={() => handleNextPart(2)} className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+              Part 2 →
+            </button>
+          )}
+          {speakPart === 2 && (
+            <button onClick={() => handleNextPart(3)} className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+              Part 3 →
+            </button>
+          )}
+          {speakPart === 3 && !isLastInPart && (
+            <button onClick={handleNextQuestion} className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+              Дараагийн асуулт →
+            </button>
+          )}
+          {speakPart === 3 && isLastInPart && (
+            <button onClick={submitTest} className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+              Тест илгээх →
+            </button>
           )}
         </div>
       </div>
@@ -787,7 +1086,6 @@ export function IELTSTest() {
         <NavBar lessonTitle="IELTS — Үр дүн" />
         <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full page-enter-up">
 
-          {/* Overall band */}
           <div className="text-center mb-6 py-6">
             <div
               className="text-8xl font-extrabold mb-2 leading-none"
@@ -804,7 +1102,6 @@ export function IELTSTest() {
             </p>
           </div>
 
-          {/* Section scores grid */}
           <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 mb-4">
             <div className="text-sm font-semibold text-text-primary mb-3">Хэсэг тус бүрийн оноо</div>
             <div className="grid grid-cols-2 gap-3">
@@ -823,7 +1120,6 @@ export function IELTSTest() {
             </div>
           </div>
 
-          {/* Writing criteria */}
           {criteriaRows.length > 0 && (
             <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 mb-4">
               <div className="text-sm font-semibold text-text-primary mb-3">✍️ Writing шалгуур</div>
@@ -843,7 +1139,6 @@ export function IELTSTest() {
             </div>
           )}
 
-          {/* Speaking criteria */}
           {speakRows.length > 0 && (
             <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 mb-6">
               <div className="text-sm font-semibold text-text-primary mb-3">🗣️ Speaking шалгуур</div>

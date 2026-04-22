@@ -2,15 +2,48 @@ export interface TTSVoiceOptions {
   pitch?: number
   rate?: number
   preferUri?: string
+  voice?: SpeechSynthesisVoice | null
 }
 
 function findVoice(preferUri: string, lang: string): SpeechSynthesisVoice | null {
   const voices = window.speechSynthesis.getVoices()
-  // Try preferred URI first
-  const preferred = voices.find(v => v.voiceURI.includes(preferUri))
-  if (preferred) return preferred
-  // Fall back to lang match
+  // Exact name match
+  const byName = voices.find(v => v.name === preferUri)
+  if (byName) return byName
+  // Partial URI or name match
+  const byUri = voices.find(v => v.voiceURI.includes(preferUri) || v.name.includes(preferUri))
+  if (byUri) return byUri
+  // Lang with Female in name
+  const langFemale = voices.find(v => v.lang.startsWith(lang) && v.name.toLowerCase().includes('female'))
+  if (langFemale) return langFemale
   return voices.find(v => v.lang.startsWith(lang)) ?? null
+}
+
+export function selectSpeakerA(): SpeechSynthesisVoice | null {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return null
+  const voices = window.speechSynthesis.getVoices()
+  return (
+    voices.find(v => v.name === 'Google US English') ??
+    voices.find(v => v.lang.startsWith('en-US') && v.name.toLowerCase().includes('female')) ??
+    voices.find(v => v.lang.startsWith('en-US')) ??
+    voices.find(v => v.lang.startsWith('en')) ??
+    null
+  )
+}
+
+export function selectSpeakerB(): SpeechSynthesisVoice | null {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return null
+  const voices = window.speechSynthesis.getVoices()
+  const usVoices = voices.filter(v => v.lang.startsWith('en-US'))
+  return (
+    voices.find(v => v.name === 'Google UK English Female') ??
+    voices.find(v => v.name.includes('Zira')) ??
+    voices.find(v => v.lang.startsWith('en-GB')) ??
+    (usVoices.length > 1 ? usVoices[1] : null) ??
+    usVoices[0] ??
+    voices.find(v => v.lang.startsWith('en')) ??
+    null
+  )
 }
 
 export function speakTurn(text: string, opts: TTSVoiceOptions = {}): Promise<void> {
@@ -20,7 +53,9 @@ export function speakTurn(text: string, opts: TTSVoiceOptions = {}): Promise<voi
     const utt = new SpeechSynthesisUtterance(text)
     utt.pitch = opts.pitch ?? 1.0
     utt.rate = opts.rate ?? 0.9
-    if (opts.preferUri) {
+    if (opts.voice) {
+      utt.voice = opts.voice
+    } else if (opts.preferUri) {
       const v = findVoice(opts.preferUri, 'en')
       if (v) utt.voice = v
     }
