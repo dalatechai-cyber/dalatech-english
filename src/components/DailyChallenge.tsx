@@ -133,17 +133,22 @@ export function DailyChallenge() {
       )}
 
       {submitted && (
-        <div className={`rounded-xl p-3 text-sm ${correct ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400' : 'bg-rose-500/10 border border-rose-500/30 text-rose-400'}`}>
-          <div className="font-semibold mb-1">
-            {correct ? `✅ ${t('correct')}` : `❌ ${t('wrong')}`}
-          </div>
-          {!correct && (
-            <div className="text-xs mb-1 text-text-secondary">
-              {t('correctAnswer')}: <span className="text-emerald-400 font-medium">{String(q.correct)}</span>
+        <>
+          <div className={`rounded-xl p-3 text-sm ${correct ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400' : 'bg-rose-500/10 border border-rose-500/30 text-rose-400'}`}>
+            <div className="font-semibold mb-1">
+              {correct ? `✅ ${t('correct')}` : `❌ ${t('wrong')}`}
             </div>
-          )}
-          <div className="text-xs text-text-secondary">{q.explanation}</div>
-        </div>
+            {!correct && (
+              <div className="text-xs mb-1 text-text-secondary">
+                {t('correctAnswer')}: <span className="text-emerald-400 font-medium">{String(q.correct)}</span>
+              </div>
+            )}
+            <div className="text-xs text-text-secondary">{q.explanation}</div>
+          </div>
+          <p className="text-center text-sm font-semibold text-gold mt-3">
+            ✅ Өнөөдрийн даалгавар дууссан. Маргааш дахин ирээрэй!
+          </p>
+        </>
       )}
       </div>
     </div>

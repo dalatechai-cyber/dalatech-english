@@ -171,7 +171,7 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
             {t('close')} ✕
           </button>
           <p className="text-center text-xs mt-1" style={{ color: '#64748B' }}>
-            Гэрчилгээгээ татаж аваад Facebook-т хуваалцаарай
+            Гэрчилгээгээ татаж аваад найзуудтайгаа хуваалцаарай 🎉
           </p>
         </div>
       </div>

@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { loadStreak } from '@/lib/streak'
 import { t } from '@/lib/i18n'
 
@@ -13,11 +13,23 @@ interface NavBarProps {
 export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
   const [streak, setStreak] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const data = loadStreak()
     setStreak(data.current)
   }, [])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [menuOpen])
 
   return (
     <nav className="bg-navy-surface border-b border-navy-surface-2 px-4 py-3 relative z-40">
@@ -45,10 +57,10 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
           </>
         )}
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-3" ref={menuRef}>
           {streak > 0 && (
             <span className="text-gold text-sm font-medium flex items-center gap-1 flex-shrink-0">
-              🔥 {streak} {t('streak')}
+              🔥 {streak} <span className="hidden sm:inline">{t('streak')}</span>
             </span>
           )}
           {/* Desktop nav links */}
@@ -63,16 +75,17 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
           </Link>
           {/* Mobile hamburger */}
           <button
-            className="sm:hidden w-9 h-9 flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors rounded-lg hover:bg-navy-surface-2/50"
+            className="sm:hidden w-9 h-9 flex items-center justify-center rounded-lg transition-colors"
+            style={{ color: '#F59E0B' }}
             onClick={() => setMenuOpen(o => !o)}
             aria-label="Цэс нээх"
           >
             {menuOpen ? (
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             ) : (
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             )}
@@ -82,24 +95,40 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
 
       {/* Mobile dropdown menu */}
       {menuOpen && (
-        <div className="sm:hidden absolute top-full left-0 right-0 bg-navy-surface border-b border-navy-surface-2 py-2 z-50">
+        <div
+          className="sm:hidden absolute top-full right-4 mt-2 rounded-xl overflow-hidden z-50 min-w-[180px]"
+          style={{
+            background: '#1E293B',
+            border: '1px solid #F59E0B',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.4), 0 0 20px rgba(245,158,11,0.15)',
+          }}
+        >
           <Link
             href="/ielts"
-            className="flex items-center gap-3 px-4 py-3 text-text-secondary hover:text-text-primary hover:bg-navy-surface-2/30 transition-colors text-sm"
+            className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors"
+            style={{ color: '#F59E0B' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.12)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             onClick={() => setMenuOpen(false)}
           >
             📝 IELTS
           </Link>
           <Link
             href="/mistakes"
-            className="flex items-center gap-3 px-4 py-3 text-text-secondary hover:text-text-primary hover:bg-navy-surface-2/30 transition-colors text-sm"
+            className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors"
+            style={{ color: '#F59E0B' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.12)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             onClick={() => setMenuOpen(false)}
           >
             📓 {t('mistakes')}
           </Link>
           <Link
             href="/profile"
-            className="flex items-center gap-3 px-4 py-3 text-text-secondary hover:text-text-primary hover:bg-navy-surface-2/30 transition-colors text-sm"
+            className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors"
+            style={{ color: '#F59E0B' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.12)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             onClick={() => setMenuOpen(false)}
           >
             👤 {t('profile')}

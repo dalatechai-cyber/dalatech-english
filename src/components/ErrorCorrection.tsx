@@ -36,7 +36,7 @@ export function ErrorCorrection({ content }: ErrorCorrectionProps) {
             key={i}
             className="rounded-lg p-3 text-sm leading-relaxed whitespace-pre-wrap"
             style={{
-              background: 'rgba(234, 179, 8, 0.15)',
+              background: 'rgba(234, 179, 8, 0.25)',
               borderLeft: '3px solid #F59E0B',
               color: '#FEF3C7',
             }}

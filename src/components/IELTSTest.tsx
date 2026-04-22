@@ -165,10 +165,8 @@ export function IELTSTest() {
   const listenLoadStartedRef = useRef(false)
 
   // ── Reading ──
-  const [readIndex, setReadIndex] = useState(0)
   const [readAnswers, setReadAnswers] = useState<(number | null)[]>(Array(8).fill(null))
-  const [readSelected, setReadSelected] = useState<number | null>(null)
-  const [readAnswered, setReadAnswered] = useState(false)
+  const [readSubmitted, setReadSubmitted] = useState(false)
 
   // ── Writing ──
   const [writingTask1, setWritingTask1] = useState('')
@@ -747,7 +745,7 @@ export function IELTSTest() {
     setListenAudioError(false)
     setListenCurrentTurn(-1)
     setListenNotice(null)
-    setReadIndex(0); setReadAnswers(Array(8).fill(null)); setReadSelected(null); setReadAnswered(false)
+    setReadAnswers(Array(8).fill(null)); setReadSubmitted(false)
     setWritingTask1(''); setWritingTask2(''); setWritingTaskView(1)
     setSpeakPhase('ready')
     setSpeakTranscript('')
@@ -815,7 +813,7 @@ export function IELTSTest() {
     )
   }
 
-  if (phase === 'loading') return <Spinner label="Тест бэлдэж байна..." />
+  if (phase === 'loading') return <Spinner label="Яриа бэлтгэж байна..." />
   if (phase === 'grading') return <Spinner label="Үнэлж байна... (30–60 секунд)" />
 
   // ══════════════════════════════════════════
@@ -996,40 +994,60 @@ export function IELTSTest() {
   // ══════════════════════════════════════════
   // ─── Reading ───
   if (phase === 'reading' && content) {
-    const q = content.reading.questions[readIndex]
+    const allReadAnswered = readAnswers.every(a => a !== null)
     return (
       <div className="min-h-screen bg-navy flex flex-col">
-        <NavBar lessonTitle={`Reading — ${readIndex + 1}/${content.reading.questions.length}`} />
+        <NavBar lessonTitle="Reading" />
         <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
           <SectionProgress idx={sectionIdx} />
           <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 mb-4">
             <div className="text-xs font-semibold text-gold uppercase tracking-wide mb-2">📖 Нийтлэл</div>
             <p className="text-sm leading-relaxed text-text-primary">{content.reading.passage}</p>
           </div>
-          <div className="text-xs mb-2" style={{ color: '#64748B' }}>Асуулт {readIndex + 1}/{content.reading.questions.length}</div>
-          <h2 className="text-base font-semibold text-text-primary mb-4">{q.question}</h2>
-          <div className="space-y-3 mb-6">
-            {q.options.map((opt, i) => {
-              let bg = 'transparent', border = '#334155', textColor = '#F8FAFC'
-              if (readAnswered) {
-                if (i === q.correct) { bg = 'rgba(52,211,153,0.1)'; border = '#34D399'; textColor = '#34D399' }
-                else if (i === readSelected) { bg = 'rgba(248,113,113,0.1)'; border = '#F87171'; textColor = '#F87171' }
-                else textColor = '#64748B'
-              }
-              return (
-                <button key={i} onClick={() => { if (readAnswered) return; setReadSelected(i); const a = [...readAnswers]; a[readIndex] = i; setReadAnswers(a); setReadAnswered(true) }}
-                  disabled={readAnswered} className="w-full text-left px-4 py-3 min-h-[48px] flex items-center rounded-xl border transition-all text-sm"
-                  style={{ background: bg, borderColor: border, color: textColor }}>
-                  <span className="font-medium mr-2">{String.fromCharCode(65 + i)}.</span>{opt}
-                </button>
-              )
-            })}
+
+          <p className="text-xs mb-3 font-semibold" style={{ color: '#64748B' }}>Бүх {content.reading.questions.length} асуултад хариулна уу</p>
+          <div className="space-y-4 mb-6">
+            {content.reading.questions.map((q, qi) => (
+              <div key={qi} className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4">
+                <p className="text-sm font-semibold text-text-primary mb-3">
+                  <span style={{ color: '#F59E0B' }}>{qi + 1}.</span> {q.question}
+                </p>
+                <div className="space-y-2">
+                  {q.options.map((opt, oi) => {
+                    const selected = readAnswers[qi] === oi
+                    const correct = readSubmitted && oi === q.correct
+                    const wrong = readSubmitted && selected && oi !== q.correct
+                    const neutral = readSubmitted && !selected && oi !== q.correct
+                    return (
+                      <button key={oi}
+                        onClick={() => { if (readSubmitted) return; const a = [...readAnswers]; a[qi] = oi; setReadAnswers(a) }}
+                        disabled={readSubmitted}
+                        className="w-full text-left px-4 py-2.5 min-h-[44px] flex items-center rounded-xl border text-sm transition-all"
+                        style={{
+                          background: correct ? 'rgba(52,211,153,0.1)' : wrong ? 'rgba(248,113,113,0.1)' : selected ? 'rgba(245,158,11,0.08)' : 'transparent',
+                          borderColor: correct ? '#34D399' : wrong ? '#F87171' : selected ? '#F59E0B' : '#334155',
+                          color: neutral ? '#64748B' : correct ? '#34D399' : wrong ? '#F87171' : '#F8FAFC',
+                        }}>
+                        <span className="font-medium mr-2">{String.fromCharCode(65 + oi)}.</span>{opt}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
-          {readAnswered && (
-            <button onClick={() => { if (readIndex < content.reading.questions.length - 1) { setReadIndex(p => p + 1); setReadSelected(null); setReadAnswered(false) } else setPhase('writing') }}
+
+          {!readSubmitted ? (
+            <button onClick={() => setReadSubmitted(true)} disabled={!allReadAnswered}
+              className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+              Хариултаа илгээх
+            </button>
+          ) : (
+            <button onClick={() => setPhase('writing')}
               className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5"
               style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
-              {readIndex < content.reading.questions.length - 1 ? 'Дараагийн →' : 'Writing →'}
+              Writing →
             </button>
           )}
         </div>
@@ -1133,8 +1151,10 @@ export function IELTSTest() {
           <div className="fixed top-4 right-4 z-50">
             <button
               onClick={handleStopSpeaking}
-              className="px-3 py-1.5 rounded-xl text-xs font-semibold"
-              style={{ background: '#1E293B', border: '1px solid #334155', color: '#94A3B8' }}>
+              className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors"
+              style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #EF4444', color: '#FCA5A5' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.4)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)' }}>
               ⏹ Дуусгах
             </button>
           </div>
