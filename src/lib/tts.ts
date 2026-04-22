@@ -19,6 +19,37 @@ function findVoice(preferUri: string, lang: string): SpeechSynthesisVoice | null
   return voices.find(v => v.lang.startsWith(lang)) ?? null
 }
 
+// Listening Speaker A — Female, British
+export function selectListeningVoiceA(): SpeechSynthesisVoice | null {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return null
+  const voices = window.speechSynthesis.getVoices()
+  return (
+    voices.find(v => v.name === 'Google UK English Female') ??
+    voices.find(v => v.name.includes('Hazel')) ??
+    voices.find(v => v.name === 'Karen') ??
+    voices.find(v => v.lang.startsWith('en-GB') && v.name.toLowerCase().includes('female')) ??
+    voices.find(v => v.lang.startsWith('en-GB')) ??
+    voices.find(v => v.lang.startsWith('en')) ??
+    null
+  )
+}
+
+// Listening Speaker B — Male, British or American
+export function selectListeningVoiceB(): SpeechSynthesisVoice | null {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return null
+  const voices = window.speechSynthesis.getVoices()
+  return (
+    voices.find(v => v.name === 'Google UK English Male') ??
+    voices.find(v => v.name.includes('George')) ??
+    voices.find(v => v.name === 'Daniel') ??
+    voices.find(v => v.lang.startsWith('en-GB') && !v.name.toLowerCase().includes('female')) ??
+    voices.find(v => v.name === 'Google US English') ??
+    voices.find(v => v.lang.startsWith('en-US') && !v.name.toLowerCase().includes('female')) ??
+    voices.find(v => v.lang.startsWith('en')) ??
+    null
+  )
+}
+
 export function selectSpeakerA(): SpeechSynthesisVoice | null {
   if (typeof window === 'undefined' || !window.speechSynthesis) return null
   const voices = window.speechSynthesis.getVoices()

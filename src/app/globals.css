@@ -138,3 +138,21 @@ body {
 .orb-ring-outer.orb-recording  { animation: orbRecordRing 1.5s ease-in-out infinite 0.3s; }
 .orb-ring-middle.orb-recording { animation: orbRecordRing 1.2s ease-in-out infinite; }
 .orb-inner.orb-recording       { animation: orbRecordInner 0.9s ease-in-out infinite; }
+
+/* Listening = same pulse as recording */
+.orb-ring-outer.orb-listening  { animation: orbRecordRing 1.5s ease-in-out infinite 0.3s; }
+.orb-ring-middle.orb-listening { animation: orbRecordRing 1.2s ease-in-out infinite; }
+.orb-inner.orb-listening       { animation: orbRecordInner 0.9s ease-in-out infinite; }
+
+/* Thinking = rotating purple ring */
+@keyframes orbThinkSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes orbThinkInner {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50%       { transform: scale(1.1); opacity: 1; }
+}
+.orb-ring-outer.orb-thinking  { animation: orbThinkSpin 2s linear infinite; }
+.orb-ring-middle.orb-thinking { animation: orbThinkSpin 1.4s linear infinite reverse; }
+.orb-inner.orb-thinking       { animation: orbThinkInner 1s ease-in-out infinite; }
