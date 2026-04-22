@@ -3,33 +3,54 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-const POSITIVE = [
-  "That's really interesting, thank you.",
-  "I see, that's a great point.",
-  "Wonderful, thank you for sharing that.",
-  "Absolutely, thank you.",
-  "That's very insightful.",
+const BRITISH_ACK = [
+  'I see, thank you.',
+  'Right.',
+  'Indeed.',
+  'Thank you.',
+  "That's interesting.",
+  'Mmm, I see.',
 ]
-const NEUTRAL = [
-  "I see, thank you.",
-  "Right, okay.",
-  "Thank you for that.",
-  "Okay, thank you.",
-]
-const ENCOURAGE = [
-  "Could you tell me a little more about that?",
-  "Can you expand on that a little?",
-  "Interesting — could you elaborate?",
+const PROBES = [
+  'Could you elaborate on that a little more?',
+  'Can you give me an example?',
+  'Tell me a bit more about that.',
 ]
 
 function wordCount(t: string) {
   return t.trim().split(/\s+/).filter(Boolean).length
 }
 
-function pickFallback(transcript: string): string {
+interface ReactionPayload {
+  reaction: string
+  followUp: string | null
+  moveToNext: boolean
+  probeUsed: boolean
+}
+
+function fallback(transcript: string, probeUsed: boolean): ReactionPayload {
   const wc = wordCount(transcript)
-  const pool = wc < 15 ? ENCOURAGE : wc >= 40 ? POSITIVE : NEUTRAL
-  return pool[Math.floor(Math.random() * pool.length)]
+  if (wc < 30 && !probeUsed) {
+    return {
+      reaction: 'I see.',
+      followUp: PROBES[Math.floor(Math.random() * PROBES.length)],
+      moveToNext: false,
+      probeUsed: true,
+    }
+  }
+  return {
+    reaction: BRITISH_ACK[Math.floor(Math.random() * BRITISH_ACK.length)],
+    followUp: null,
+    moveToNext: true,
+    probeUsed,
+  }
+}
+
+interface RequestBody {
+  transcript?: string
+  question?: string
+  part?: 1 | 2 | 3
+  probeUsed?: boolean
 }
 
 export const runtime = 'nodejs'
@@ -37,40 +58,80 @@ export const maxDuration = 20
 
 export async function POST(req: NextRequest) {
   try {
-    const { transcript } = (await req.json()) as { transcript?: string }
-    const text = (transcript ?? '').trim()
-    if (!text) {
-      return NextResponse.json({ reaction: pickFallback('') })
-    }
+    const body = (await req.json()) as RequestBody
+    const transcript = (body.transcript ?? '').trim()
+    const question = (body.question ?? '').trim()
+    const part = (body.part ?? 1) as 1 | 2 | 3
+    const probeUsed = !!body.probeUsed
 
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return NextResponse.json({ reaction: pickFallback(text) })
-    }
+    if (!transcript) return NextResponse.json(fallback('', probeUsed))
+    if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json(fallback(transcript, probeUsed))
 
-    const wc = wordCount(text)
-    const instruction = `You are Sarah, a professional IELTS examiner. The student just answered: "${text}"
+    const wc = wordCount(transcript)
+    const partGuide = part === 3
+      ? 'This is Part 3 (discussion). A follow-up may gently challenge the student — reference their own words, ask whether it might change in the future, or compare Mongolia to other countries. Feel intellectually engaged.'
+      : part === 2
+      ? 'This comes right after the Part 2 long turn. Give a brief warm reaction and move on — no follow-up.'
+      : 'This is Part 1 (warm-up). Any follow-up should feel warm and conversational, and should reference a specific word or detail the student actually said.'
 
-Choose the single most appropriate 1-sentence reaction from these options:
+    const instruction = `You are Sarah, a professional British IELTS examiner who actually listens to the student and responds like a real human examiner.
 
-Positive (detailed/good answers): ${POSITIVE.join(' | ')}
-Neutral (short answers): ${NEUTRAL.join(' | ')}
-Encouraging (answers under 15 words): ${ENCOURAGE.join(' | ')}
+Question you asked: "${question}"
+Student's answer (${wc} words): "${transcript}"
+Probe already used for this question: ${probeUsed}
+${partGuide}
 
-The answer has ${wc} words. If under 15 words, use an Encouraging reaction. Otherwise pick the most appropriate based on quality/detail.
+Decide ONE of:
+  PROBE — only if answer is under 30 words AND probeUsed is false. Use a gentle encouragement like: "Could you elaborate on that a little more?" / "Can you give me an example?" / "Tell me a bit more about that."
+  FOLLOWUP — when the answer has something specific worth exploring. You MUST reference a specific word, detail, or claim the student actually said. Examples: "You mentioned [word they used] — can you tell me more about that?", "Why do you feel that way?", "How long have you been doing that?", "Has that always been the case?". For Part 3, you may challenge: "Some people would argue the opposite — what would you say to that?" or "Do you think that will change in the future?".
+  MOVE_ON — when the answer is 30+ words and complete, OR when probeUsed is already true (never probe twice).
 
-Return ONLY the single reaction sentence with no quotes, no prefix, no explanation.`
+Strict rules:
+- Never say "Great!" or "Excellent!" — too fake.
+- Use natural British phrases where appropriate: "I see", "Right", "Indeed", "That's interesting", "Mmm".
+- Reaction must be 1 short sentence.
+- Any follow-up must be a single clear question, under 18 words.
+- Any follow-up must feel like it came from listening — it must reference the student's actual answer, not be generic.
+
+Return ONLY valid JSON (no code fences, no prose before or after):
+{"reaction":"<1 short sentence>","followUp":"<question or null>","moveToNext":<true|false>,"probeUsed":<true|false>}
+Rules for the JSON:
+- PROBE   -> moveToNext=false, probeUsed=true,  followUp=<probe question>
+- FOLLOWUP-> moveToNext=false, probeUsed=${probeUsed}, followUp=<contextual follow-up>
+- MOVE_ON -> moveToNext=true,  probeUsed=${probeUsed}, followUp=null`
 
     const response = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 60,
+      max_tokens: 220,
       messages: [{ role: 'user', content: instruction }],
     })
 
     const raw = response.content[0]?.type === 'text' ? response.content[0].text : ''
-    const reaction = raw.trim().replace(/^["']|["']$/g, '').split('\n')[0].trim()
-    if (!reaction) return NextResponse.json({ reaction: pickFallback(text) })
-    return NextResponse.json({ reaction })
+    const jsonMatch = raw.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) return NextResponse.json(fallback(transcript, probeUsed))
+
+    try {
+      const parsed = JSON.parse(jsonMatch[0]) as Partial<ReactionPayload>
+      const reaction = (parsed.reaction ?? '').trim() || BRITISH_ACK[0]
+      const rawFollowUp =
+        typeof parsed.followUp === 'string' ? parsed.followUp.trim() : ''
+      const followUp =
+        rawFollowUp && rawFollowUp.toLowerCase() !== 'null' ? rawFollowUp : null
+
+      // If the model asked to move on but provided a follow-up, trust the follow-up.
+      // If we already used a probe this question, force move-on regardless.
+      const moveToNext = probeUsed ? true : followUp ? false : parsed.moveToNext ?? true
+
+      return NextResponse.json({
+        reaction,
+        followUp: moveToNext ? null : followUp,
+        moveToNext,
+        probeUsed: !!parsed.probeUsed || probeUsed,
+      } as ReactionPayload)
+    } catch {
+      return NextResponse.json(fallback(transcript, probeUsed))
+    }
   } catch {
-    return NextResponse.json({ reaction: pickFallback('') })
+    return NextResponse.json(fallback('', false))
   }
 }

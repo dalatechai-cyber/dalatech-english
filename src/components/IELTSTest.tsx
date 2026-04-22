@@ -608,20 +608,57 @@ export function IELTSTest() {
 
     const pushAnswer = (ans: string) => { speakAnswersRef.current = [...speakAnswersRef.current, ans] }
 
-    const ask = async (question: string, minSpeakSec: number, silenceSec: number): Promise<string> => {
+    // ask(): play question → collect answer → examiner reacts.
+    // If the examiner has a contextual follow-up (and no probe has been used
+    // yet on this question), play it, collect one more answer, then always
+    // move on. Maximum ONE follow-up per question.
+    const ask = async (
+      question: string,
+      part: 1 | 3,
+      minSpeakSec: number,
+      silenceSec: number,
+    ): Promise<string> => {
       if (speakAbortRef.current) return ''
       await playExaminer(question)
       if (speakAbortRef.current) return ''
       await pause(200)
-      const ans = await collectStudentAnswer({ minSpeakSec, silenceSec })
-      if (speakAbortRef.current) return ans
-      // Natural reaction
+      const ans1 = await collectStudentAnswer({ minSpeakSec, silenceSec })
+      if (speakAbortRef.current) return ans1
+
       setSpeakStatus('Боловсруулж байна...')
-      const reaction = await fetchReaction(ans)
-      if (speakAbortRef.current) return ans
-      await playExaminer(reaction)
+      const r1 = await fetchReaction({ transcript: ans1, question, part, probeUsed: false })
+      if (speakAbortRef.current) return ans1
+      await playExaminer(r1.reaction)
+
+      if (!r1.moveToNext && r1.followUp) {
+        await pause(250)
+        if (speakAbortRef.current) return ans1
+        // Follow-up question plays through the same examiner voice —
+        // playExaminer sets phase='speaking' so the orb pulses gold.
+        await playExaminer(r1.followUp)
+        if (speakAbortRef.current) return ans1
+        await pause(200)
+        const ans2 = await collectStudentAnswer({
+          minSpeakSec: Math.max(4, minSpeakSec - 2),
+          silenceSec,
+        })
+        if (speakAbortRef.current) return `${ans1} ${ans2}`.trim()
+
+        // Brief closing reaction to the follow-up answer — no further probes.
+        setSpeakStatus('Боловсруулж байна...')
+        const r2 = await fetchReaction({
+          transcript: ans2,
+          question: r1.followUp,
+          part,
+          probeUsed: true, // force move-on; never probe twice on same question
+        })
+        if (!speakAbortRef.current) await playExaminer(r2.reaction)
+        await pause(500)
+        return `${ans1} ${ans2}`.trim()
+      }
+
       await pause(500)
-      return ans
+      return ans1
     }
 
     try {
@@ -633,7 +670,7 @@ export function IELTSTest() {
       // 2. Part 1
       for (const q of content.speaking.part1Questions) {
         if (speakAbortRef.current) return
-        const ans = await ask(q, 8, 4)
+        const ans = await ask(q, 1, 8, 4)
         pushAnswer(ans)
       }
 
@@ -664,15 +701,20 @@ export function IELTSTest() {
       pushAnswer(p2Answer)
 
       if (!speakAbortRef.current) {
-        const p2Reaction = await fetchReaction(p2Answer)
-        await playExaminer(p2Reaction)
+        const p2Reaction = await fetchReaction({
+          transcript: p2Answer,
+          question: content.speaking.part2Card,
+          part: 2,
+          probeUsed: true, // never follow up after the long turn
+        })
+        await playExaminer(p2Reaction.reaction)
         await pause(500)
       }
 
-      // 4. Part 3
+      // 4. Part 3 — discussion, follow-ups may challenge the student's view
       for (const q of content.speaking.part3Questions) {
         if (speakAbortRef.current) return
-        const ans = await ask(q, 8, 4)
+        const ans = await ask(q, 3, 8, 4)
         pushAnswer(ans)
       }
 

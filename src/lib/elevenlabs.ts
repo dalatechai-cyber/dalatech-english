@@ -87,17 +87,45 @@ export async function transcribeAudio(blob: Blob): Promise<string> {
   return (data.text ?? '').trim()
 }
 
-export async function fetchReaction(transcript: string): Promise<string> {
+export interface ReactionResult {
+  reaction: string
+  followUp: string | null
+  moveToNext: boolean
+  probeUsed: boolean
+}
+
+export interface ReactionRequest {
+  transcript: string
+  question?: string
+  part?: 1 | 2 | 3
+  probeUsed?: boolean
+}
+
+export async function fetchReaction(args: ReactionRequest): Promise<ReactionResult> {
+  const fallback: ReactionResult = {
+    reaction: 'I see, thank you.',
+    followUp: null,
+    moveToNext: true,
+    probeUsed: !!args.probeUsed,
+  }
   try {
     const res = await fetch('/api/ielts/reaction', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transcript }),
+      body: JSON.stringify(args),
     })
-    if (!res.ok) return 'I see, thank you.'
-    const data = (await res.json()) as { reaction?: string }
-    return (data.reaction ?? 'I see, thank you.').trim()
+    if (!res.ok) return fallback
+    const data = (await res.json()) as Partial<ReactionResult>
+    const rawFollowUp = typeof data.followUp === 'string' ? data.followUp.trim() : ''
+    const followUp =
+      rawFollowUp && rawFollowUp.toLowerCase() !== 'null' ? rawFollowUp : null
+    return {
+      reaction: (data.reaction ?? 'I see, thank you.').trim(),
+      followUp,
+      moveToNext: data.moveToNext ?? true,
+      probeUsed: data.probeUsed ?? !!args.probeUsed,
+    }
   } catch {
-    return 'I see, thank you.'
+    return fallback
   }
 }
