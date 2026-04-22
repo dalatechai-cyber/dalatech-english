@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const VOICE_IDS = {
-  rachel: '21m00Tcm4TlvDq8ikWAM',
-  daniel: 'onwK4e9ZLuTAKqWW03F9',
+  rachel: 'MF3mGyEYCl7XYWbV9V6O', // Elli — speaker A + examiner
+  daniel: 'pNInz6obpgDQGcFmaJgB', // Adam — speaker B
 } as const
 
 export const runtime = 'nodejs'
