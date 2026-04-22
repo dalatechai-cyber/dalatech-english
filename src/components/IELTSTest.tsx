@@ -269,18 +269,13 @@ export function IELTSTest() {
           if (cancelled) return
           const ctrl = new AbortController()
           const timeoutId = setTimeout(() => ctrl.abort(), 10000)
-          const attemptStart = Date.now()
           try {
             const url = await generateTTS(turn.text, voice, ctrl.signal)
             if (cancelled) return
             urls[i] = url
             success = true
             break
-          } catch (e) {
-            const aborted = ctrl.signal.aborted
-            console.error('[Listen TTS] Turn', i + 1, '/', turns.length,
-              'attempt', attempt, aborted ? 'TIMEOUT (10s)' : 'FAILED',
-              '(', voice, ')', 'after', Date.now() - attemptStart, 'ms:', e)
+          } catch {
             if (attempt < 2) {
               await new Promise(r => setTimeout(r, 800))
             }
@@ -290,7 +285,6 @@ export function IELTSTest() {
         }
         if (!success) {
           failedCount++
-          console.warn('[Listen TTS] Turn', i + 1, 'will use Web Speech fallback')
         }
         // Update progress immediately so UI reflects each turn as it completes
         setListenLoadProgress({ done: i + 1, total: turns.length })

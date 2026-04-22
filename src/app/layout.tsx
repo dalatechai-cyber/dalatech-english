@@ -19,7 +19,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="mn">
-      <body className={`${inter.className} min-h-screen bg-navy text-text-primary`}>
+      <body className={`${inter.className} min-h-dvh bg-navy text-text-primary`}>
         <div className="page-enter">
           {children}
         </div>

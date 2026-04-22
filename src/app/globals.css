@@ -156,3 +156,18 @@ body {
 .orb-ring-outer.orb-thinking  { animation: orbThinkSpin 2s linear infinite; }
 .orb-ring-middle.orb-thinking { animation: orbThinkSpin 1.4s linear infinite reverse; }
 .orb-inner.orb-thinking       { animation: orbThinkInner 1s ease-in-out infinite; }
+
+*:focus-visible {
+  outline: 2px solid #F59E0B;
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 2px solid #F59E0B;
+  outline-offset: 2px;
+  border-radius: 4px;
+}

@@ -26,17 +26,24 @@ export async function generateTTS(text: string, voice: ElevenVoice, signal?: Abo
   const cached = audioCache.get(key)
   if (cached) return cached
 
-  const res = await fetch('/api/ielts/tts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, voice }),
-    signal,
-  })
-  if (!res.ok) throw new Error(`TTS failed: ${res.status}`)
-  const blob = await res.blob()
-  const url = URL.createObjectURL(blob)
-  cacheSet(key, url)
-  return url
+  try {
+    const res = await fetch('/api/ielts/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, voice }),
+      signal,
+    })
+    if (!res.ok) {
+      const errorText = await res.text().catch(() => '')
+      throw new Error(`ElevenLabs error ${res.status}: ${errorText}`)
+    }
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    cacheSet(key, url)
+    return url
+  } catch (e) {
+    throw e instanceof Error ? e : new Error(String(e))
+  }
 }
 
 export function hasCachedTTS(text: string, voice: ElevenVoice): boolean {

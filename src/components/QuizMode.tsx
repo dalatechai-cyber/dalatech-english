@@ -414,8 +414,14 @@ export function QuizMode({ level }: QuizModeProps) {
             onChange={e => setWritingAnswer(e.target.value)}
             placeholder={t('quizWritingPlaceholder')}
             rows={6}
-            className="w-full bg-navy-surface border border-navy-surface-2 rounded-xl p-4 text-text-primary text-sm resize-none focus:outline-none focus:border-gold/50 focus:ring-2 focus:ring-amber-400 mb-4"
+            className="w-full bg-navy-surface border border-navy-surface-2 rounded-xl p-4 text-text-primary text-sm resize-none focus:outline-none focus:border-gold/50 focus:ring-2 focus:ring-amber-400"
           />
+          {writingAnswer.trim().length < 20 && (
+            <p className="text-amber-400 text-xs mt-1 mb-4">
+              Хамгийн багадаа 1-2 өгүүлбэр бичнэ үү
+            </p>
+          )}
+          {writingAnswer.trim().length >= 20 && <div className="mb-4" />}
 
           <button
             onClick={handleSubmitWriting}
