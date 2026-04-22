@@ -55,7 +55,7 @@ export function LevelPage({ levelCode }: LevelPageProps) {
             href={`/level/${levelCode}/chat`}
             className="group block rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-gold"
             style={{
-              background: 'linear-gradient(#1E293B, #1E293B) padding-box, linear-gradient(135deg, #F59E0B44, #F59E0B22) border-box',
+              background: 'linear-gradient(#1E293B, #1E293B) padding-box, linear-gradient(135deg, #F59E0B, #FCD34D) border-box',
               border: '1px solid transparent',
             }}
           >
@@ -79,7 +79,7 @@ export function LevelPage({ levelCode }: LevelPageProps) {
             href={`/level/${levelCode}/quiz`}
             className="group block rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-gold"
             style={{
-              background: 'linear-gradient(#1E293B, #1E293B) padding-box, linear-gradient(135deg, #F59E0B44, #F59E0B22) border-box',
+              background: 'linear-gradient(#1E293B, #1E293B) padding-box, linear-gradient(135deg, #F59E0B, #FCD34D) border-box',
               border: '1px solid transparent',
             }}
           >

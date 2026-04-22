@@ -64,10 +64,25 @@ export function playAudioURL(url: string): AudioHandle {
 }
 
 export async function transcribeAudio(blob: Blob): Promise<string> {
-  const fd = new FormData()
-  fd.append('audio', blob, 'audio.webm')
-  const res = await fetch('/api/ielts/stt', { method: 'POST', body: fd })
-  if (!res.ok) throw new Error(`STT failed: ${res.status}`)
+  // FormData is consumed by fetch — rebuild it per attempt so retries work
+  const makeBody = () => {
+    const fd = new FormData()
+    fd.append('audio', blob, 'audio.webm')
+    return fd
+  }
+
+  let res = await fetch('/api/ielts/stt', { method: 'POST', body: makeBody() })
+  // ElevenLabs occasionally returns 401 mid-session; retry once with a fresh request.
+  if (res.status === 401) {
+    console.warn('[STT] 401 — retrying once with fresh request')
+    await new Promise(r => setTimeout(r, 500))
+    res = await fetch('/api/ielts/stt', { method: 'POST', body: makeBody() })
+  }
+  if (!res.ok) {
+    // Throwing here signals the caller (collectStudentAnswer) to fall back to
+    // the Web Speech transcript captured in parallel — the session continues.
+    throw new Error(`STT failed: ${res.status}`)
+  }
   const data = (await res.json()) as { text?: string }
   return (data.text ?? '').trim()
 }

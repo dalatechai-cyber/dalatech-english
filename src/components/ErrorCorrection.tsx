@@ -34,7 +34,12 @@ export function ErrorCorrection({ content }: ErrorCorrectionProps) {
         ) : (
           <div
             key={i}
-            className="bg-amber-400/15 border border-amber-400/40 rounded-lg p-3 text-sm leading-relaxed whitespace-pre-wrap"
+            className="rounded-lg p-3 text-sm leading-relaxed whitespace-pre-wrap"
+            style={{
+              background: 'rgba(234, 179, 8, 0.15)',
+              borderLeft: '3px solid #F59E0B',
+              color: '#FEF3C7',
+            }}
           >
             {part.content}
           </div>

@@ -385,13 +385,6 @@ export function IELTSTest() {
     playingRef.current = false
   }
 
-  const pauseConversation = () => {
-    playingRef.current = false
-    stopSpeech()
-    listenCurrentHandleRef.current?.stop()
-    setIsPlaying(false)
-    setListenCurrentTurn(-1)
-  }
 
   // ── Speaking helpers ─────────────────────────────
   const playExaminer = async (text: string, setStatus = true): Promise<void> => {
@@ -505,8 +498,8 @@ export function IELTSTest() {
             const blob = new Blob(chunks, { type: chunks[0].type || 'audio/webm' })
             const sttText = await transcribeAudio(blob)
             if (sttText) finalText = sttText
-          } catch {
-            // keep Web Speech fallback
+          } catch (e) {
+            console.warn('[STT] failed after retry — using Web Speech transcript:', e)
           }
         }
         resolve(finalText)
@@ -853,7 +846,6 @@ export function IELTSTest() {
                   <div className="flex flex-col items-center py-2 gap-2">
                     <ListeningWaveform />
                     <p className="text-xs" style={{ color: '#F59E0B' }}>{playStatusText}</p>
-                    <button onClick={pauseConversation} className="text-xs px-3 py-1 rounded-lg" style={{ background: '#334155', color: '#94A3B8' }}>⏸ Зогсоох</button>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-2 py-2">
@@ -1051,7 +1043,7 @@ export function IELTSTest() {
                 <span>{wordCount(writingTask2)} үг</span>
                 <span className={wordCount(writingTask2) >= 250 ? 'text-emerald-400' : ''}>{wordCount(writingTask2) >= 250 ? '✓ 250+ үг' : `${250 - wordCount(writingTask2)} үг дутуу`}</span>
               </div>
-              <button onClick={() => setPhase('speaking')} disabled={wordCount(writingTask2) < 10}
+              <button onClick={() => setPhase('speaking')} disabled={wordCount(writingTask2) < 250}
                 className="w-full font-bold py-3 min-h-[48px] rounded-xl disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
                 Speaking →

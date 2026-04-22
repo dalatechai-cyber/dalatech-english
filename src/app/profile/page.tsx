@@ -6,6 +6,7 @@ import { loadCertificates, formatMongolianDate, type CertificateEntry } from '@/
 import { loadTestHistory, type TestHistoryEntry } from '@/lib/testHistory'
 import { loadStreak } from '@/lib/streak'
 import { loadIELTSResults, type IELTSResult } from '@/lib/ielts'
+import { loadProgress } from '@/lib/storage'
 import { t } from '@/lib/i18n'
 
 export default function ProfilePage() {
@@ -13,15 +14,28 @@ export default function ProfilePage() {
   const [testHistory, setTestHistory] = useState<TestHistoryEntry[]>([])
   const [ieltsHistory, setIeltsHistory] = useState<IELTSResult[]>([])
   const [streak, setStreak] = useState({ current: 0, longest: 0 })
+  const [lessonsCompleted, setLessonsCompleted] = useState(0)
+  const [passedExams, setPassedExams] = useState(0)
   const [selectedCert, setSelectedCert] = useState<CertificateEntry | null>(null)
 
   useEffect(() => {
-    setCerts(loadCertificates())
-    setTestHistory(loadTestHistory())
+    const loadedCerts = loadCertificates()
+    const loadedHistory = loadTestHistory()
+    setCerts(loadedCerts)
+    setTestHistory(loadedHistory)
     setIeltsHistory(loadIELTSResults())
     const s = loadStreak()
     setStreak({ current: s.current, longest: s.longest })
+    const progress = loadProgress()
+    const lessons = Object.values(progress.levels).reduce(
+      (sum, lp) => sum + (lp?.completedLessons?.length ?? 0),
+      0,
+    )
+    setLessonsCompleted(lessons)
+    setPassedExams(loadedCerts.length)
   }, [])
+
+  const totalPoints = lessonsCompleted * 10 + passedExams * 50
 
   return (
     <div className="min-h-screen bg-navy">
@@ -29,11 +43,11 @@ export default function ProfilePage() {
       <div className="max-w-2xl mx-auto px-4 py-6 sm:py-8 page-enter-up">
 
         {/* Stats hero row */}
-        <div className="grid grid-cols-2 gap-3 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
           <div
             className="rounded-2xl p-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:shadow-gold"
             style={{
-              background: 'linear-gradient(#1E293B, #1E293B) padding-box, linear-gradient(135deg, #F59E0B66, #F59E0B22) border-box',
+              background: 'linear-gradient(#1E293B, #1E293B) padding-box, linear-gradient(135deg, #F59E0B, #FCD34D) border-box',
               border: '1px solid transparent',
             }}
           >
@@ -44,13 +58,35 @@ export default function ProfilePage() {
           <div
             className="rounded-2xl p-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:shadow-gold"
             style={{
-              background: 'linear-gradient(#1E293B, #1E293B) padding-box, linear-gradient(135deg, #F59E0B66, #F59E0B22) border-box',
+              background: 'linear-gradient(#1E293B, #1E293B) padding-box, linear-gradient(135deg, #F59E0B, #FCD34D) border-box',
               border: '1px solid transparent',
             }}
           >
             <div className="text-3xl mb-1">⭐</div>
             <div className="text-3xl font-extrabold text-gold" style={{ letterSpacing: '-0.03em' }}>{streak.longest}</div>
             <div className="text-xs mt-1" style={{ color: '#64748B' }}>Хамгийн урт streak</div>
+          </div>
+          <div
+            className="rounded-2xl p-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:shadow-gold"
+            style={{
+              background: 'linear-gradient(#1E293B, #1E293B) padding-box, linear-gradient(135deg, #F59E0B, #FCD34D) border-box',
+              border: '1px solid transparent',
+            }}
+          >
+            <div className="text-3xl mb-1">✅</div>
+            <div className="text-3xl font-extrabold text-gold" style={{ letterSpacing: '-0.03em' }}>{lessonsCompleted}</div>
+            <div className="text-xs mt-1" style={{ color: '#64748B' }}>Хичээл дууссан</div>
+          </div>
+          <div
+            className="rounded-2xl p-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:shadow-gold"
+            style={{
+              background: 'linear-gradient(#1E293B, #1E293B) padding-box, linear-gradient(135deg, #F59E0B, #FCD34D) border-box',
+              border: '1px solid transparent',
+            }}
+          >
+            <div className="text-3xl mb-1">🏆</div>
+            <div className="text-3xl font-extrabold text-gold" style={{ letterSpacing: '-0.03em' }}>{totalPoints}</div>
+            <div className="text-xs mt-1" style={{ color: '#64748B' }}>Нийт оноо</div>
           </div>
         </div>
 
