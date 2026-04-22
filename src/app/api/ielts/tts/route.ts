@@ -9,6 +9,9 @@ export const runtime = 'nodejs'
 export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
+  console.log('ELEVENLABS_API_KEY exists:', !!process.env.ELEVENLABS_API_KEY)
+  console.log('ELEVENLABS_API_KEY length:', process.env.ELEVENLABS_API_KEY?.length)
+  console.log('ELEVENLABS_API_KEY first 8 chars:', process.env.ELEVENLABS_API_KEY?.slice(0, 8))
   try {
     const { text, voice } = (await req.json()) as { text?: string; voice?: keyof typeof VOICE_IDS }
     if (!text || typeof text !== 'string') {
