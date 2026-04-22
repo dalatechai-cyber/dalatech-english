@@ -189,9 +189,16 @@ export function IELTSTest() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const currentExaminerHandleRef = useRef<AudioHandle | null>(null)
+  const speakAnswersRef = useRef<string[]>([])
 
-  const ttsSupported = isSpeechSupported()
-  const sttSupported = isSpeechRecognitionSupported()
+  // Browser-capability flags: default to true for SSR to avoid hydration mismatch,
+  // then re-check client-side in useEffect.
+  const [ttsSupported, setTtsSupported] = useState(true)
+  const [sttSupported, setSttSupported] = useState(true)
+  useEffect(() => {
+    setTtsSupported(isSpeechSupported())
+    setSttSupported(isSpeechRecognitionSupported())
+  }, [])
 
   // ── Cleanup on unmount / phase change ──
   useEffect(() => () => {
@@ -481,12 +488,79 @@ export function IELTSTest() {
       }, 400)
     })
 
+  // Compile answers into final grade payload and submit to /api/ielts/grade
+  const gradeAndShowResults = async () => {
+    if (!content) return
+    const collected = [...speakAnswersRef.current]
+    const p1 = content.speaking.part1Questions.length
+    const p3 = content.speaking.part3Questions.length
+    const total = p1 + 1 + p3
+    while (collected.length < total) collected.push('')
+
+    const gradePayload: IELTSAnswers = {
+      listeningAnswers: listenAnswers,
+      readingAnswers: readAnswers,
+      writingTask1,
+      writingTask2,
+      speakingPart1: collected.slice(0, p1),
+      speakingPart2: collected[p1] ?? '',
+      speakingPart3: collected.slice(p1 + 1, p1 + 1 + p3),
+    }
+
+    setPhase('grading')
+    stopSpeech()
+    currentExaminerHandleRef.current?.stop()
+
+    try {
+      const res = await fetch('/api/ielts/grade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, answers: gradePayload }),
+      })
+      if (!res.ok) throw new Error('Grading failed')
+      const result = await res.json() as GradeResult
+      setGradeResult(result)
+      saveIELTSResult({ date: new Date().toISOString().slice(0, 10), overall: result.overall, listening: result.listening, reading: result.reading, writing: result.writing, speaking: result.speaking, feedback: result.writingFeedback })
+      saveTestResult({ type: 'ielts', ieltsBand: result.overall })
+      setPhase('results')
+    } catch {
+      setError('Үнэлгээ хийхэд алдаа гарлаа.')
+      setPhase('intro')
+    }
+  }
+
+  // Stop handler — aborts flow and shows partial results if any answers collected
+  const handleStopSpeaking = () => {
+    speakAbortRef.current = true
+    stopSpeech()
+    currentExaminerHandleRef.current?.stop()
+    try { recognitionRef.current?.stop() } catch { /* ignore */ }
+    recognitionRef.current = null
+    try { mediaRecorderRef.current?.stop() } catch { /* ignore */ }
+    mediaStreamRef.current?.getTracks().forEach(t => t.stop())
+    mediaStreamRef.current = null
+    setSpeakTranscript('')
+    setSpeakStatus('')
+    setSpeakCurrentText('')
+    setSpeakShowCard(null)
+    setSpeakPrepCountdown(null)
+    setSpeakContinue(false)
+
+    if (speakAnswersRef.current.length > 0) {
+      gradeAndShowResults()
+    } else {
+      setSpeakPhase('ready')
+    }
+  }
+
   // ── Main Speaking flow ──
   const handleStartSpeaking = async () => {
     if (!content) return
     speakAbortRef.current = false
     setSpeakNotice(null)
-    const answers: string[] = []
+    speakAnswersRef.current = []
+
+    const pushAnswer = (ans: string) => { speakAnswersRef.current = [...speakAnswersRef.current, ans] }
 
     const ask = async (question: string, minSpeakSec: number, silenceSec: number): Promise<string> => {
       if (speakAbortRef.current) return ''
@@ -507,41 +581,41 @@ export function IELTSTest() {
     try {
       // 1. Greeting
       await playExaminer(GREETING)
-      if (speakAbortRef.current) { setSpeakPhase('ready'); return }
+      if (speakAbortRef.current) return
       await pause(300)
 
       // 2. Part 1
       for (const q of content.speaking.part1Questions) {
-        if (speakAbortRef.current) { setSpeakPhase('ready'); return }
+        if (speakAbortRef.current) return
         const ans = await ask(q, 8, 4)
-        answers.push(ans)
+        pushAnswer(ans)
       }
 
       // 3. Part 2 — intro, prep countdown, begin, long turn
-      if (speakAbortRef.current) { setSpeakPhase('ready'); return }
+      if (speakAbortRef.current) return
       await playExaminer(PART2_INTRO)
-      if (speakAbortRef.current) { setSpeakPhase('ready'); return }
+      if (speakAbortRef.current) return
 
       // Prep phase with topic card + 60s countdown
       setSpeakPhase('prep')
       setSpeakCurrentText('')
       setSpeakShowCard(content.speaking.part2Card)
       for (let s = 60; s > 0; s--) {
-        if (speakAbortRef.current) { setSpeakPhase('ready'); setSpeakShowCard(null); return }
+        if (speakAbortRef.current) { setSpeakShowCard(null); return }
         setSpeakPrepCountdown(s)
         setSpeakStatus(`Бэлдэх хугацаа: 0:${String(s).padStart(2, '0')}`)
         await pause(1000)
       }
       setSpeakPrepCountdown(null)
 
-      if (speakAbortRef.current) { setSpeakPhase('ready'); setSpeakShowCard(null); return }
+      if (speakAbortRef.current) { setSpeakShowCard(null); return }
       await playExaminer(PART2_BEGIN)
       await pause(200)
 
       // Part 2 answer — min 45s, 4s silence
       const p2Answer = await collectStudentAnswer({ minSpeakSec: 45, silenceSec: 4 })
       setSpeakShowCard(null)
-      answers.push(p2Answer)
+      pushAnswer(p2Answer)
 
       if (!speakAbortRef.current) {
         const p2Reaction = await fetchReaction(p2Answer)
@@ -551,44 +625,19 @@ export function IELTSTest() {
 
       // 4. Part 3
       for (const q of content.speaking.part3Questions) {
-        if (speakAbortRef.current) { setSpeakPhase('ready'); return }
+        if (speakAbortRef.current) return
         const ans = await ask(q, 8, 4)
-        answers.push(ans)
+        pushAnswer(ans)
       }
 
-      if (speakAbortRef.current) { setSpeakPhase('ready'); return }
+      if (speakAbortRef.current) return
 
       // 5. Closing
       await playExaminer(CLOSING)
       await pause(300)
 
-      // Build grade payload
-      const p1 = content.speaking.part1Questions.length
-      const p3 = content.speaking.part3Questions.length
-      const gradePayload: IELTSAnswers = {
-        listeningAnswers: listenAnswers,
-        readingAnswers: readAnswers,
-        writingTask1,
-        writingTask2,
-        speakingPart1: answers.slice(0, p1),
-        speakingPart2: answers[p1] ?? '',
-        speakingPart3: answers.slice(p1 + 1, p1 + 1 + p3),
-      }
-
-      setPhase('grading')
-      stopSpeech()
-
-      const res = await fetch('/api/ielts/grade', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, answers: gradePayload }),
-      })
-      if (!res.ok) throw new Error('Grading failed')
-      const result = await res.json() as GradeResult
-      setGradeResult(result)
-      saveIELTSResult({ date: new Date().toISOString().slice(0, 10), overall: result.overall, listening: result.listening, reading: result.reading, writing: result.writing, speaking: result.speaking, feedback: result.writingFeedback })
-      saveTestResult({ type: 'ielts', ieltsBand: result.overall })
-      setPhase('results')
+      // Grade & show results
+      await gradeAndShowResults()
     } catch {
       setError('Үнэлгээ хийхэд алдаа гарлаа.')
       setPhase('intro')
@@ -737,18 +786,6 @@ export function IELTSTest() {
                 </div>
                 <p className="text-xs" style={{ color: '#F59E0B' }}>Яриа бэлтгэж байна...</p>
               </div>
-            ) : useFallback && !ttsSupported ? (
-              <div className="space-y-2 max-h-52 overflow-y-auto">
-                {conv.map((turn, i) => (
-                  <div key={i} className="flex gap-2 text-sm">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center"
-                      style={{ background: turn.speaker === 'A' ? 'linear-gradient(135deg, #F59E0B, #D97706)' : '#334155', color: turn.speaker === 'A' ? '#0F172A' : '#F8FAFC' }}>
-                      {turn.speaker}
-                    </span>
-                    <p className="flex-1 leading-relaxed text-text-secondary text-xs">{turn.text}</p>
-                  </div>
-                ))}
-              </div>
             ) : (
               <div className="mb-1">
                 {isPlaying ? (
@@ -760,14 +797,32 @@ export function IELTSTest() {
                 ) : (
                   <div className="flex flex-col items-center gap-2 py-2">
                     {listenPlayCount === 3 && <p className="text-xs font-semibold" style={{ color: '#34D399' }}>✓ Яриа дууссан</p>}
-                    <button onClick={playConversationTwice}
-                      className="px-6 py-2 rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5"
-                      style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
-                      ▶ Тоглуулах
-                    </button>
-                    <p className="text-xs" style={{ color: '#64748B' }}>Яриа 2 удаа автоматаар тоглуулна</p>
+                    {(listenAudioReady || (useFallback && ttsSupported)) && (
+                      <button onClick={playConversationTwice}
+                        className="px-6 py-2 rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5"
+                        style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+                        ▶ Тоглуулах
+                      </button>
+                    )}
+                    <p className="text-xs" style={{ color: '#64748B' }}>
+                      {listenAudioError ? 'Аудио ачаалагдсангүй — доорх ярианы текстийг уншаад хариулна уу' : 'Яриа 2 удаа автоматаар тоглуулна'}
+                    </p>
                   </div>
                 )}
+              </div>
+            )}
+
+            {listenAudioError && (
+              <div className="mt-3 pt-3 border-t border-navy-surface-2 space-y-2 max-h-60 overflow-y-auto">
+                {conv.map((turn, i) => (
+                  <div key={i} className="flex gap-2 text-sm">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center"
+                      style={{ background: turn.speaker === 'A' ? 'linear-gradient(135deg, #F59E0B, #D97706)' : '#334155', color: turn.speaker === 'A' ? '#0F172A' : '#F8FAFC' }}>
+                      {turn.speaker}
+                    </span>
+                    <p className="flex-1 leading-relaxed text-text-secondary text-xs">{turn.text}</p>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -978,30 +1033,14 @@ export function IELTSTest() {
 
     return (
       <div className="min-h-screen bg-navy flex flex-col" style={{ background: '#050D1A' }}>
-        {/* Pause button top-right */}
+        {/* Stop button top-right — finalizes with partial answers if any */}
         {speakPhase !== 'ready' && (
           <div className="fixed top-4 right-4 z-50">
             <button
-              onClick={() => {
-                speakAbortRef.current = true
-                stopSpeech()
-                currentExaminerHandleRef.current?.stop()
-                try { recognitionRef.current?.stop() } catch { /* ignore */ }
-                recognitionRef.current = null
-                try { mediaRecorderRef.current?.stop() } catch { /* ignore */ }
-                mediaStreamRef.current?.getTracks().forEach(t => t.stop())
-                mediaStreamRef.current = null
-                setSpeakPhase('ready')
-                setSpeakTranscript('')
-                setSpeakStatus('')
-                setSpeakCurrentText('')
-                setSpeakShowCard(null)
-                setSpeakPrepCountdown(null)
-                setSpeakContinue(false)
-              }}
+              onClick={handleStopSpeaking}
               className="px-3 py-1.5 rounded-xl text-xs font-semibold"
               style={{ background: '#1E293B', border: '1px solid #334155', color: '#94A3B8' }}>
-              ⏸ Зогсоох
+              ⏹ Дуусгах
             </button>
           </div>
         )}

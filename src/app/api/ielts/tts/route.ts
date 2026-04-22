@@ -16,7 +16,10 @@ export async function POST(req: NextRequest) {
     }
     const voiceId = VOICE_IDS[voice ?? 'rachel'] ?? VOICE_IDS.rachel
     const apiKey = process.env.ELEVENLABS_API_KEY
-    if (!apiKey) return NextResponse.json({ error: 'Server missing ELEVENLABS_API_KEY' }, { status: 500 })
+    console.log('EL key:', apiKey?.slice(0, 4), '(len:', apiKey?.length ?? 0, ') voice:', voice, 'chars:', text.length)
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Server missing ELEVENLABS_API_KEY' }, { status: 500 })
+    }
 
     const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: 'POST',
@@ -39,7 +42,8 @@ export async function POST(req: NextRequest) {
 
     if (!r.ok) {
       const msg = await r.text().catch(() => 'upstream error')
-      return NextResponse.json({ error: msg }, { status: r.status })
+      console.error('[ElevenLabs TTS]', r.status, r.statusText, '— body:', msg.slice(0, 500))
+      return NextResponse.json({ error: msg, status: r.status, statusText: r.statusText }, { status: r.status })
     }
 
     const buf = await r.arrayBuffer()
@@ -51,6 +55,7 @@ export async function POST(req: NextRequest) {
       },
     })
   } catch (e) {
+    console.error('[ElevenLabs TTS] exception:', e)
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
 }
