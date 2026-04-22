@@ -158,6 +158,7 @@ export function IELTSTest() {
   const [listenAudioError, setListenAudioError] = useState(false)
   const [listenCurrentTurn, setListenCurrentTurn] = useState(-1)
   const [listenNotice, setListenNotice] = useState<string | null>(null)
+  const [listenLoadProgress, setListenLoadProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 })
   const playingRef = useRef(false)
   const listenAudiosRef = useRef<string[]>([])
   const listenCurrentHandleRef = useRef<AudioHandle | null>(null)
@@ -239,66 +240,72 @@ export function IELTSTest() {
     }
   }, [phase])
 
-  // ── Pre-generate listening audio when entering listening phase ──
+  // ── Pre-generate listening audio SEQUENTIALLY when entering listening phase ──
+  // ElevenLabs free tier caps at 4 concurrent requests; generate one turn at a time.
   useEffect(() => {
     if (phase !== 'listening' || !content) return
     if (listenAudioReady || listenAudioLoading || listenAudioError) return
 
     let cancelled = false
-    let settled = false
     setListenAudioLoading(true)
     setListenNotice(null)
 
     const turns = content.listening.conversation
     const start = Date.now()
-    console.log('[Listen TTS] Starting generation for', turns.length, 'turns')
+    setListenLoadProgress({ done: 0, total: turns.length })
+    console.log('[Listen TTS] Starting sequential generation for', turns.length, 'turns')
 
-    const finalize = (urls: (string | null)[], timedOut = false) => {
-      if (cancelled || settled) return
-      settled = true
-      const successCount = urls.filter(Boolean).length
-      console.log('[Listen TTS] Finalize:', successCount, '/', turns.length,
-        'in', Date.now() - start, 'ms', timedOut ? '(timeout)' : '')
-      listenAudiosRef.current = urls.map(u => u ?? '')
+    ;(async () => {
+      const urls: string[] = new Array(turns.length).fill('')
+      let failedCount = 0
+
+      for (let i = 0; i < turns.length; i++) {
+        if (cancelled) return
+        const turn = turns[i]
+        const voice: ElevenVoice = turn.speaker === 'A' ? 'alice' : 'george'
+
+        let success = false
+        for (let attempt = 1; attempt <= 2; attempt++) {
+          if (cancelled) return
+          try {
+            const url = await generateTTS(turn.text, voice)
+            if (cancelled) return
+            urls[i] = url
+            console.log('[Listen TTS] Turn', i + 1, '/', turns.length, 'OK (', voice, ')',
+              attempt > 1 ? `(retry ${attempt})` : '')
+            success = true
+            break
+          } catch (e) {
+            console.error('[Listen TTS] Turn', i + 1, '/', turns.length, 'attempt', attempt, 'FAILED (', voice, '):', e)
+            if (attempt < 2) {
+              await new Promise(r => setTimeout(r, 800))
+            }
+          }
+        }
+        if (!success) {
+          failedCount++
+          console.warn('[Listen TTS] Turn', i + 1, 'will use Web Speech fallback')
+        }
+        setListenLoadProgress({ done: i + 1, total: turns.length })
+      }
+
+      if (cancelled) return
+      const successCount = turns.length - failedCount
+      console.log('[Listen TTS] Done:', successCount, '/', turns.length, 'in', Date.now() - start, 'ms')
+      listenAudiosRef.current = urls
       if (successCount === 0) {
         setListenAudioError(true)
         setListenNotice('ElevenLabs холбогдсонгүй, өөр дуу ашиглаж байна')
       } else {
-        if (successCount < turns.length) {
-          setListenNotice('Зарим хэсэгт өөр дуу ашиглана')
+        if (failedCount > 0) {
+          setListenNotice(`${failedCount} хэсэгт өөр дуу ашиглана`)
         }
         setListenAudioReady(true)
       }
       setListenAudioLoading(false)
-    }
+    })()
 
-    const urls: (string | null)[] = new Array(turns.length).fill(null)
-
-    const timeoutId = setTimeout(() => {
-      if (!settled) {
-        console.warn('[Listen TTS] 30s timeout reached, using partial results')
-        finalize(urls, true)
-      }
-    }, 30000)
-
-    Promise.allSettled(
-      turns.map(async (turn, i) => {
-        const voice: ElevenVoice = turn.speaker === 'A' ? 'alice' : 'george'
-        try {
-          const url = await generateTTS(turn.text, voice)
-          if (cancelled) return
-          urls[i] = url
-          console.log('[Listen TTS] Turn', i + 1, '/', turns.length, 'OK (', voice, ')')
-        } catch (e) {
-          console.error('[Listen TTS] Turn', i + 1, '/', turns.length, 'FAILED (', voice, '):', e)
-        }
-      })
-    ).then(() => {
-      clearTimeout(timeoutId)
-      finalize(urls)
-    })
-
-    return () => { cancelled = true; clearTimeout(timeoutId) }
+    return () => { cancelled = true }
   }, [phase, content, listenAudioReady, listenAudioLoading, listenAudioError])
 
   // ── Pre-generate Part 1 examiner audio in background when entering speaking phase ──
@@ -814,7 +821,15 @@ export function IELTSTest() {
                 <div className="flex gap-1.5">
                   {[0, 1, 2].map(i => <span key={i} className="w-2.5 h-2.5 rounded-full animate-bounce" style={{ background: '#F59E0B', animationDelay: `${i * 0.15}s` }} />)}
                 </div>
-                <p className="text-xs" style={{ color: '#F59E0B' }}>Яриа бэлтгэж байна...</p>
+                <p className="text-xs" style={{ color: '#F59E0B' }}>
+                  Яриа бэлтгэж байна...
+                  {listenLoadProgress.total > 0 && ` (${listenLoadProgress.done}/${listenLoadProgress.total})`}
+                </p>
+                {listenLoadProgress.total > 0 && (
+                  <div className="w-40 h-1.5 rounded-full overflow-hidden" style={{ background: '#334155' }}>
+                    <div className="h-full transition-all" style={{ width: `${(listenLoadProgress.done / listenLoadProgress.total) * 100}%`, background: '#F59E0B' }} />
+                  </div>
+                )}
               </div>
             ) : (
               <div className="mb-1">
