@@ -267,25 +267,35 @@ export function IELTSTest() {
         let success = false
         for (let attempt = 1; attempt <= 2; attempt++) {
           if (cancelled) return
+          const ctrl = new AbortController()
+          const timeoutId = setTimeout(() => ctrl.abort(), 10000)
+          const attemptStart = Date.now()
           try {
-            const url = await generateTTS(turn.text, voice)
+            const url = await generateTTS(turn.text, voice, ctrl.signal)
             if (cancelled) return
             urls[i] = url
             console.log('[Listen TTS] Turn', i + 1, '/', turns.length, 'OK (', voice, ')',
+              'in', Date.now() - attemptStart, 'ms',
               attempt > 1 ? `(retry ${attempt})` : '')
             success = true
             break
           } catch (e) {
-            console.error('[Listen TTS] Turn', i + 1, '/', turns.length, 'attempt', attempt, 'FAILED (', voice, '):', e)
+            const aborted = ctrl.signal.aborted
+            console.error('[Listen TTS] Turn', i + 1, '/', turns.length,
+              'attempt', attempt, aborted ? 'TIMEOUT (10s)' : 'FAILED',
+              '(', voice, ')', 'after', Date.now() - attemptStart, 'ms:', e)
             if (attempt < 2) {
               await new Promise(r => setTimeout(r, 800))
             }
+          } finally {
+            clearTimeout(timeoutId)
           }
         }
         if (!success) {
           failedCount++
           console.warn('[Listen TTS] Turn', i + 1, 'will use Web Speech fallback')
         }
+        // Update progress immediately so UI reflects each turn as it completes
         setListenLoadProgress({ done: i + 1, total: turns.length })
       }
 

@@ -8,7 +8,7 @@ function cacheKey(text: string, voice: ElevenVoice) {
   return `${voice}::${text}`
 }
 
-export async function generateTTS(text: string, voice: ElevenVoice): Promise<string> {
+export async function generateTTS(text: string, voice: ElevenVoice, signal?: AbortSignal): Promise<string> {
   const key = cacheKey(text, voice)
   const cached = audioCache.get(key)
   if (cached) return cached
@@ -17,6 +17,7 @@ export async function generateTTS(text: string, voice: ElevenVoice): Promise<str
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text, voice }),
+    signal,
   })
   if (!res.ok) throw new Error(`TTS failed: ${res.status}`)
   const blob = await res.blob()
