@@ -5,8 +5,7 @@ const VOICE_IDS = {
   george: 'JBFqnCBsd6RMkjVDRZzb', // George — British male, speaker B
 } as const
 
-export const runtime = 'nodejs'
-export const maxDuration = 60
+export const runtime = 'edge'
 
 export async function POST(req: NextRequest) {
   console.log('ELEVENLABS_API_KEY exists:', !!process.env.ELEVENLABS_API_KEY)
