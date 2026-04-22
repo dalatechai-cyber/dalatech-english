@@ -183,6 +183,7 @@ export function QuizMode({ level }: QuizModeProps) {
           grammarFocus: quizData.writing.grammar_focus,
         }),
       })
+      if (!res.ok) throw new Error('grade failed')
       const result = await res.json() as { score: number; feedback: string }
       setWritingScore(result.score)
       setWritingFeedback(result.feedback)
@@ -190,11 +191,11 @@ export function QuizMode({ level }: QuizModeProps) {
       const currentReadingScore = readingAnswers.filter((a, i) => a === readingQuestions[i]?.correctIndex).length * 2
       const currentTotal = currentMcScore + currentReadingScore + result.score
       saveTestResult({ type: 'quiz', level, score: currentTotal, total: 25, passed: currentTotal >= 18 })
+      setPhase('results')
     } catch {
-      setWritingScore(0)
-      setWritingFeedback('Үнэлгээ хийхэд алдаа гарлаа.')
+      setError('Засварлалт хийхэд алдаа гарлаа. Дахин оролдоно уу.')
+      setPhase('writing')
     }
-    setPhase('results')
   }
 
   const mcScore = mcAnswers.filter((a, i) => a === mcQuestions[i]?.correctIndex).length
@@ -205,7 +206,7 @@ export function QuizMode({ level }: QuizModeProps) {
   // ─── Error ───
   if (error) {
     return (
-      <div className="min-h-screen bg-navy flex flex-col">
+      <div className="min-h-dvh bg-navy flex flex-col">
         <NavBar levelCode={level} lessonTitle="Тест" />
         <div className="flex-1 flex items-center justify-center p-8 text-center">
           <div>
@@ -222,7 +223,7 @@ export function QuizMode({ level }: QuizModeProps) {
   // ─── Loading ───
   if (phase === 'loading') {
     return (
-      <div className="min-h-screen bg-navy flex flex-col">
+      <div className="min-h-dvh bg-navy flex flex-col">
         <NavBar levelCode={level} lessonTitle="Тест" />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -241,7 +242,7 @@ export function QuizMode({ level }: QuizModeProps) {
   // ─── Grading ───
   if (phase === 'grading') {
     return (
-      <div className="min-h-screen bg-navy flex flex-col">
+      <div className="min-h-dvh bg-navy flex flex-col">
         <NavBar levelCode={level} lessonTitle="Тест — үнэлж байна" />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -261,7 +262,7 @@ export function QuizMode({ level }: QuizModeProps) {
   if (phase === 'mc') {
     const q = mcQuestions[mcIndex]
     return (
-      <div className="min-h-screen bg-navy flex flex-col">
+      <div className="min-h-dvh bg-navy flex flex-col">
         <NavBar levelCode={level} lessonTitle={`${t('quizMC')} — ${mcIndex + 1}/15`} />
         <div className="flex-1 overflow-y-auto p-6 max-w-lg mx-auto w-full">
           {/* Progress bar */}
@@ -339,7 +340,7 @@ export function QuizMode({ level }: QuizModeProps) {
   if (phase === 'reading' && quizData) {
     const q = readingQuestions[readingIndex]
     return (
-      <div className="min-h-screen bg-navy flex flex-col">
+      <div className="min-h-dvh bg-navy flex flex-col">
         <NavBar levelCode={level} lessonTitle={`${t('quizReading')} — ${readingIndex + 1}/2`} />
         <div className="flex-1 overflow-y-auto p-6 max-w-lg mx-auto w-full">
           {/* Passage */}
@@ -399,7 +400,7 @@ export function QuizMode({ level }: QuizModeProps) {
   // ─── Writing Phase ───
   if (phase === 'writing' && quizData) {
     return (
-      <div className="min-h-screen bg-navy flex flex-col">
+      <div className="min-h-dvh bg-navy flex flex-col">
         <NavBar levelCode={level} lessonTitle={t('quizWriting')} />
         <div className="flex-1 overflow-y-auto p-6 max-w-lg mx-auto w-full">
           <div className="bg-navy-surface border border-gold/30 rounded-xl p-4 mb-5">
@@ -413,7 +414,7 @@ export function QuizMode({ level }: QuizModeProps) {
             onChange={e => setWritingAnswer(e.target.value)}
             placeholder={t('quizWritingPlaceholder')}
             rows={6}
-            className="w-full bg-navy-surface border border-navy-surface-2 rounded-xl p-4 text-text-primary text-sm resize-none focus:outline-none focus:border-gold/50 mb-4"
+            className="w-full bg-navy-surface border border-navy-surface-2 rounded-xl p-4 text-text-primary text-sm resize-none focus:outline-none focus:border-gold/50 focus:ring-2 focus:ring-amber-400 mb-4"
           />
 
           <button
@@ -431,7 +432,7 @@ export function QuizMode({ level }: QuizModeProps) {
   // ─── Results ───
   if (phase === 'results') {
     return (
-      <div className="min-h-screen bg-navy flex flex-col">
+      <div className="min-h-dvh bg-navy flex flex-col">
         <NavBar levelCode={level} lessonTitle="Тест — үр дүн" />
         <div className="flex-1 overflow-y-auto p-6 max-w-lg mx-auto w-full">
           {/* Score summary */}

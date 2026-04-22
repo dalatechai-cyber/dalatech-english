@@ -53,7 +53,7 @@ function wordCount(t: string) { return t.trim().split(/\s+/).filter(Boolean).len
 
 function Spinner({ label }: { label: string }) {
   return (
-    <div className="min-h-screen bg-navy flex flex-col">
+    <div className="min-h-dvh bg-navy flex flex-col">
       <NavBar lessonTitle="IELTS" />
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
@@ -253,9 +253,7 @@ export function IELTSTest() {
     setListenNotice(null)
 
     const turns = content.listening.conversation
-    const start = Date.now()
     setListenLoadProgress({ done: 0, total: turns.length })
-    console.log('[Listen TTS] Starting sequential generation for', turns.length, 'turns')
 
     ;(async () => {
       const urls: string[] = new Array(turns.length).fill('')
@@ -276,10 +274,6 @@ export function IELTSTest() {
             const url = await generateTTS(turn.text, voice, ctrl.signal)
             if (cancelled) return
             urls[i] = url
-            console.log('[Listen TTS] Turn', i + 1, '/', turns.length, 'OK (', voice, ')',
-              'in', Date.now() - attemptStart, 'ms',
-              attempt > 1 ? `(retry ${attempt})` : '')
-            console.log('Turn', i + 1, 'loaded successfully, url:', url)
             success = true
             break
           } catch (e) {
@@ -304,8 +298,6 @@ export function IELTSTest() {
 
       if (cancelled) return
       const successCount = turns.length - failedCount
-      console.log('[Listen TTS] Done:', successCount, '/', turns.length, 'in', Date.now() - start, 'ms')
-      console.log('All turns loaded, showing play button')
       listenAudiosRef.current = urls
       if (successCount === 0) {
         setListenAudioError(true)
@@ -784,7 +776,7 @@ export function IELTSTest() {
   // ─── Intro ───
   if (phase === 'intro') {
     return (
-      <div className="min-h-screen bg-navy flex flex-col">
+      <div className="min-h-dvh bg-navy flex flex-col">
         <NavBar lessonTitle="IELTS Mock Test" />
         <div className="flex-1 flex flex-col items-center justify-center p-8 max-w-lg mx-auto w-full text-center page-enter-up">
           <div className="text-5xl mb-4">📝</div>
@@ -831,7 +823,7 @@ export function IELTSTest() {
     const useFallback = listenAudioError && ttsSupported
 
     return (
-      <div className="min-h-screen bg-navy flex flex-col">
+      <div className="min-h-dvh bg-navy flex flex-col">
         <NavBar lessonTitle="Listening" />
         <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
           <SectionProgress idx={sectionIdx} />
@@ -996,7 +988,7 @@ export function IELTSTest() {
   if (phase === 'reading' && content) {
     const allReadAnswered = readAnswers.every(a => a !== null)
     return (
-      <div className="min-h-screen bg-navy flex flex-col">
+      <div className="min-h-dvh bg-navy flex flex-col">
         <NavBar lessonTitle="Reading" />
         <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
           <SectionProgress idx={sectionIdx} />
@@ -1059,7 +1051,7 @@ export function IELTSTest() {
   // ─── Writing ───
   if (phase === 'writing' && content) {
     return (
-      <div className="min-h-screen bg-navy flex flex-col">
+      <div className="min-h-dvh bg-navy flex flex-col">
         <NavBar lessonTitle={`Writing — Task ${writingTaskView}/2`} />
         <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
           <SectionProgress idx={sectionIdx} />
@@ -1120,7 +1112,7 @@ export function IELTSTest() {
   if (phase === 'speaking') {
     if (!sttSupported) {
       return (
-        <div className="min-h-screen bg-navy flex flex-col items-center justify-center p-8 text-center">
+        <div className="min-h-dvh bg-navy flex flex-col items-center justify-center p-8 text-center">
           <NavBar lessonTitle="Speaking" />
           <div className="flex-1 flex flex-col items-center justify-center gap-6">
             <div className="text-5xl">🎤</div>
@@ -1145,7 +1137,7 @@ export function IELTSTest() {
       '#8B5CF6'
 
     return (
-      <div className="min-h-screen bg-navy flex flex-col" style={{ background: '#050D1A' }}>
+      <div className="min-h-dvh bg-navy flex flex-col" style={{ background: '#050D1A' }}>
         {/* Stop button top-right — finalizes with partial answers if any */}
         {speakPhase !== 'ready' && (
           <div className="fixed top-4 right-4 z-50">
@@ -1260,7 +1252,7 @@ export function IELTSTest() {
       { label: 'Pronunciation', value: gradeResult.speakingCriteria.pronunciation },
     ] : []
     return (
-      <div className="min-h-screen bg-navy flex flex-col">
+      <div className="min-h-dvh bg-navy flex flex-col">
         <NavBar lessonTitle="IELTS — Үр дүн" />
         <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full page-enter-up">
           <div className="text-center mb-6 py-6">

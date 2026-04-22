@@ -5,7 +5,7 @@ import { NavBar } from './NavBar'
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-navy">
+    <div className="min-h-dvh bg-navy">
       <NavBar />
 
       {/* ─── Hero ─── */}

@@ -1,30 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 const VOICE_IDS = {
-  alice: 'Xb7hH8MSUJpSbSDYk0k2', // Alice — British female, speaker A + examiner
-  george: 'JBFqnCBsd6RMkjVDRZzb', // George — British male, speaker B
+  alice: 'Xb7hH8MSUJpSbSDYk0k2',
+  george: 'JBFqnCBsd6RMkjVDRZzb',
 } as const
 
 export const runtime = 'edge'
 
 export async function POST(req: NextRequest) {
-  console.log('ELEVENLABS_API_KEY exists:', !!process.env.ELEVENLABS_API_KEY)
-  console.log('ELEVENLABS_API_KEY length:', process.env.ELEVENLABS_API_KEY?.length)
-  console.log('ELEVENLABS_API_KEY first 8 chars:', process.env.ELEVENLABS_API_KEY?.slice(0, 8))
+  const limited = await checkRateLimit(req, 'ielts-tts')
+  if (limited) return limited
   try {
-    const { text, voice } = (await req.json()) as { text?: string; voice?: keyof typeof VOICE_IDS }
+    const body = await req.json().catch(() => null) as { text?: string; voice?: keyof typeof VOICE_IDS } | null
+    if (!body) return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    const { text, voice } = body
     if (!text || typeof text !== 'string') {
       return NextResponse.json({ error: 'Missing text' }, { status: 400 })
     }
     const voiceId = VOICE_IDS[voice ?? 'alice'] ?? VOICE_IDS.alice
-    const rawKey = process.env.ELEVENLABS_API_KEY
-    const apiKey = rawKey?.trim()
-    console.log('EL key:', apiKey?.slice(0, 4),
-      '(raw len:', rawKey?.length ?? 0, 'trimmed len:', apiKey?.length ?? 0,
-      ') voice:', voice, 'chars:', text.length)
-    if (!apiKey) {
-      return NextResponse.json({ error: 'Server missing ELEVENLABS_API_KEY' }, { status: 500 })
-    }
+    const apiKey = process.env.ELEVENLABS_API_KEY?.trim()
+    if (!apiKey) return NextResponse.json({ error: 'TTS unavailable' }, { status: 500 })
 
     const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: 'POST',
@@ -48,7 +44,7 @@ export async function POST(req: NextRequest) {
     if (!r.ok) {
       const msg = await r.text().catch(() => 'upstream error')
       console.error('[ElevenLabs TTS]', r.status, r.statusText, '— body:', msg.slice(0, 500))
-      return NextResponse.json({ error: msg, status: r.status, statusText: r.statusText }, { status: r.status })
+      return NextResponse.json({ error: 'Speech service unavailable' }, { status: 502 })
     }
 
     const buf = await r.arrayBuffer()
@@ -61,6 +57,6 @@ export async function POST(req: NextRequest) {
     })
   } catch (e) {
     console.error('[ElevenLabs TTS] exception:', e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return NextResponse.json({ error: 'Speech service unavailable' }, { status: 500 })
   }
 }

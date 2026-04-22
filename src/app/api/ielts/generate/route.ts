@@ -1,13 +1,22 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
+import { CLAUDE_MODEL } from '@/lib/constants'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
+  const limited = await checkRateLimit(req, 'ielts-generate')
+  if (limited) return limited
   try {
-    const body = await req.json().catch(() => ({})) as { seed?: number; usedTopics?: string[] }
-    const seed = body.seed ?? Date.now()
-    const usedTopics = body.usedTopics ?? []
+    const body = await req.json().catch(() => null) as { seed?: number; usedTopics?: unknown } | null
+    if (!body) return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    const seed = typeof body.seed === 'number' ? body.seed : Date.now()
+    const rawTopics = Array.isArray(body.usedTopics) ? body.usedTopics : []
+    const usedTopics = rawTopics
+      .slice(0, 10)
+      .filter((t): t is string => typeof t === 'string')
+      .map(t => t.slice(0, 60))
 
     const avoidTopics = usedTopics.length > 0
       ? `Previously used Part 2 topics to AVOID: ${usedTopics.join('; ')}. Choose a completely different topic.`
@@ -86,7 +95,7 @@ SPEAKING section rules (seed ${seed} — make every session unique):
 - part3Questions: exactly 4 abstract discussion questions derived from and extending the Part 2 topic. Make them thought-provoking and different from Part 1.`
 
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: CLAUDE_MODEL,
       max_tokens: 4000,
       system: systemPrompt,
       messages: [{ role: 'user', content: 'Generate the IELTS test now.' }],

@@ -51,9 +51,13 @@ export function recordStudySession(): StreakData {
 
   if (current > longest) longest = current
 
-  localStorage.setItem(KEY_CURRENT, String(current))
-  localStorage.setItem(KEY_LONGEST, String(longest))
-  localStorage.setItem(KEY_LAST_DATE, today)
+  try {
+    localStorage.setItem(KEY_CURRENT, String(current))
+    localStorage.setItem(KEY_LONGEST, String(longest))
+    localStorage.setItem(KEY_LAST_DATE, today)
+  } catch (e) {
+    console.warn('Storage full:', e)
+  }
 
   return { current, longest, lastDate: today, isNewDay: true, isFirstEver: lastDate === null }
 }

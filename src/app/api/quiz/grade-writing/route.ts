@@ -1,16 +1,23 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import type { LevelCode } from '@/lib/types'
+import { CLAUDE_MODEL } from '@/lib/constants'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
   try {
-    const { level, prompt, answer, grammarFocus } = await req.json() as {
-      level: LevelCode
-      prompt: string
-      answer: string
-      grammarFocus: string
+    const body = await req.json().catch(() => null) as {
+      level?: LevelCode
+      prompt?: string
+      answer?: string
+      grammarFocus?: string
+    } | null
+    if (!body) return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    const { level, prompt, grammarFocus } = body
+    const answer = typeof body.answer === 'string' ? body.answer.slice(0, 2000) : ''
+    if (!level || !prompt || !grammarFocus) {
+      return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
     }
 
     const systemPrompt = `You are an English writing evaluator for Mongolian learners at ${level} level.
@@ -34,7 +41,7 @@ Return ONLY valid JSON, no extra text:
 }`
 
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: CLAUDE_MODEL,
       max_tokens: 512,
       system: systemPrompt,
       messages: [{ role: 'user', content: answer || '(no answer provided)' }],

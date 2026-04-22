@@ -117,7 +117,7 @@ export function DailyChallenge() {
             onKeyDown={e => e.key === 'Enter' && !submitted && handleSubmit()}
             disabled={submitted}
             placeholder={t('yourType')}
-            className="w-full bg-navy border border-navy-surface-2 focus:border-gold/40 rounded-xl px-4 py-2.5 text-text-primary text-sm outline-none transition-colors disabled:opacity-60"
+            className="w-full bg-navy border border-navy-surface-2 focus:border-gold/40 focus:ring-2 focus:ring-amber-400 rounded-xl px-4 py-2.5 text-text-primary text-sm outline-none transition-colors disabled:opacity-60"
           />
         </div>
       )}

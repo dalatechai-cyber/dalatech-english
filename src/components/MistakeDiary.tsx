@@ -33,12 +33,12 @@ export function MistakeDiary() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder={t('searchMistakes')}
-            className="flex-1 bg-navy-surface border border-navy-surface-2 focus:border-gold/40 rounded-xl px-4 py-2.5 text-text-primary text-sm outline-none"
+            className="flex-1 bg-navy-surface border border-navy-surface-2 focus:border-gold/40 focus:ring-2 focus:ring-amber-400 rounded-xl px-4 py-2.5 text-text-primary text-sm outline-none"
           />
           <select
             value={filterLevel}
             onChange={e => setFilterLevel(e.target.value as LevelCode | 'all')}
-            className="w-full sm:w-auto bg-navy-surface border border-navy-surface-2 rounded-xl px-4 py-2.5 text-text-primary text-sm outline-none"
+            className="w-full sm:w-auto bg-navy-surface border border-navy-surface-2 focus:ring-2 focus:ring-amber-400 rounded-xl px-4 py-2.5 text-text-primary text-sm outline-none"
           >
             <option value="all">{t('allLevels')}</option>
             {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}

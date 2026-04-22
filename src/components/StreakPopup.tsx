@@ -24,7 +24,7 @@ export function StreakPopup({ streak, onClose }: StreakPopupProps) {
     >
       <span className="text-2xl">{isNew ? '💪' : '🔥'}</span>
       <p className="text-text-primary text-sm font-medium">{message}</p>
-      <button className="text-text-secondary hover:text-text-primary ml-2 text-lg">×</button>
+      <button onClick={onClose} className="text-text-secondary hover:text-text-primary ml-2 text-lg">×</button>
     </div>
   )
 }

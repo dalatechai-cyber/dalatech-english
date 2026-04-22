@@ -33,7 +33,6 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
   const [streakData, setStreakData] = useState<{ current: number; isNewDay: boolean } | null>(null)
   const [hasRecordedStreak, setHasRecordedStreak] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -84,6 +83,7 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
         body: JSON.stringify({ messages: apiMessages, level, lessonId }),
       })
 
+      if (!res.ok) throw new Error('API error ' + res.status)
       if (!res.body) throw new Error('No stream body')
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
@@ -123,7 +123,7 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
         setMessages(prev =>
           prev.map(m =>
             m.id === aiMsgId
-              ? { ...m, content: 'Уучлаарай, алдаа гарлаа. Дахин оролдоно уу.' }
+              ? { ...m, content: 'Алдаа гарлаа. Дахин оролдоно уу.' }
               : m
           )
         )
@@ -194,7 +194,6 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
       <div className="px-4 pt-3 pb-input-area bg-navy border-t border-navy-surface-2">
         <div className="flex items-end gap-2 bg-navy rounded-2xl px-4 py-2 border border-navy-surface-2">
           <textarea
-            ref={inputRef}
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}

@@ -50,33 +50,6 @@ export function selectListeningVoiceB(): SpeechSynthesisVoice | null {
   )
 }
 
-export function selectSpeakerA(): SpeechSynthesisVoice | null {
-  if (typeof window === 'undefined' || !window.speechSynthesis) return null
-  const voices = window.speechSynthesis.getVoices()
-  return (
-    voices.find(v => v.name === 'Google US English') ??
-    voices.find(v => v.lang.startsWith('en-US') && v.name.toLowerCase().includes('female')) ??
-    voices.find(v => v.lang.startsWith('en-US')) ??
-    voices.find(v => v.lang.startsWith('en')) ??
-    null
-  )
-}
-
-export function selectSpeakerB(): SpeechSynthesisVoice | null {
-  if (typeof window === 'undefined' || !window.speechSynthesis) return null
-  const voices = window.speechSynthesis.getVoices()
-  const usVoices = voices.filter(v => v.lang.startsWith('en-US'))
-  return (
-    voices.find(v => v.name === 'Google UK English Female') ??
-    voices.find(v => v.name.includes('Zira')) ??
-    voices.find(v => v.lang.startsWith('en-GB')) ??
-    (usVoices.length > 1 ? usVoices[1] : null) ??
-    usVoices[0] ??
-    voices.find(v => v.lang.startsWith('en')) ??
-    null
-  )
-}
-
 export function speakTurn(text: string, opts: TTSVoiceOptions = {}): Promise<void> {
   return new Promise(resolve => {
     if (typeof window === 'undefined' || !window.speechSynthesis) { resolve(); return }

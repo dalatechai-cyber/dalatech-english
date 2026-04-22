@@ -29,5 +29,9 @@ export function saveTestResult(entry: Omit<TestHistoryEntry, 'id' | 'date'>): vo
     date: new Date().toISOString().slice(0, 10),
   }
   history.unshift(newEntry)
-  localStorage.setItem(KEY, JSON.stringify(history.slice(0, 50)))
+  try {
+    localStorage.setItem(KEY, JSON.stringify(history.slice(0, 50)))
+  } catch (e) {
+    console.warn('Storage full:', e)
+  }
 }

@@ -25,7 +25,11 @@ export function loadProgress(): AppProgress {
 
 export function saveProgress(progress: AppProgress): void {
   if (typeof window === 'undefined') return
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(progress))
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress))
+  } catch (e) {
+    console.warn('Storage full:', e)
+  }
 }
 
 export function isLevelUnlocked(_levelCode: LevelCode): boolean {

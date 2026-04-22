@@ -81,6 +81,7 @@ export function FreeChatInterface({ level }: FreeChatInterfaceProps) {
         body: JSON.stringify({ messages: apiMessages, level }),
       })
 
+      if (!res.ok) throw new Error('API error ' + res.status)
       if (!res.body) throw new Error('No stream body')
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
@@ -104,7 +105,7 @@ export function FreeChatInterface({ level }: FreeChatInterfaceProps) {
       setMessages(prev =>
         prev.map(m =>
           m.id === aiMsgId
-            ? { ...m, content: 'Уучлаарай, алдаа гарлаа. Дахин оролдоно уу.' }
+            ? { ...m, content: 'Алдаа гарлаа. Дахин оролдоно уу.' }
             : m
         )
       )

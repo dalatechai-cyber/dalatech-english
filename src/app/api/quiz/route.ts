@@ -2,15 +2,22 @@ import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import type { LevelCode } from '@/lib/types'
 import { getQuizSystemPrompt } from '@/lib/prompts'
+import { CLAUDE_MODEL } from '@/lib/constants'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
+  const limited = await checkRateLimit(req, 'quiz')
+  if (limited) return limited
   try {
-    const { level } = await req.json() as { level: LevelCode }
+    const body = await req.json().catch(() => null) as { level?: LevelCode } | null
+    if (!body) return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    const { level } = body
+    if (!level) return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
     const systemPrompt = getQuizSystemPrompt(level)
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: CLAUDE_MODEL,
       max_tokens: 3000,
       system: systemPrompt,
       messages: [{ role: 'user', content: `Generate the full quiz for ${level} level.` }],

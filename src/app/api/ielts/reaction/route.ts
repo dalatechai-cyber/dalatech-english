@@ -1,5 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
+import { CLAUDE_HAIKU_MODEL } from '@/lib/constants'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -57,10 +59,14 @@ export const runtime = 'nodejs'
 export const maxDuration = 20
 
 export async function POST(req: NextRequest) {
+  const limited = await checkRateLimit(req, 'ielts-reaction')
+  if (limited) return limited
   try {
-    const body = (await req.json()) as RequestBody
-    const transcript = (body.transcript ?? '').trim()
-    const question = (body.question ?? '').trim()
+    const raw = await req.json().catch(() => null) as RequestBody | null
+    if (!raw) return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    const body = raw
+    const transcript = (body.transcript ?? '').trim().slice(0, 1000)
+    const question = (body.question ?? '').trim().slice(0, 500)
     const part = (body.part ?? 1) as 1 | 2 | 3
     const probeUsed = !!body.probeUsed
 
@@ -101,13 +107,13 @@ Rules for the JSON:
 - MOVE_ON -> moveToNext=true,  probeUsed=${probeUsed}, followUp=null`
 
     const response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: CLAUDE_HAIKU_MODEL,
       max_tokens: 220,
       messages: [{ role: 'user', content: instruction }],
     })
 
-    const raw = response.content[0]?.type === 'text' ? response.content[0].text : ''
-    const jsonMatch = raw.match(/\{[\s\S]*\}/)
+    const rawText = response.content[0]?.type === 'text' ? response.content[0].text : ''
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/)
     if (!jsonMatch) return NextResponse.json(fallback(transcript, probeUsed))
 
     try {

@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import type { IELTSContent, IELTSAnswers } from '@/lib/ielts'
+import { CLAUDE_MODEL } from '@/lib/constants'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -19,8 +21,15 @@ function scoreObjective(answers: (number | null)[], questions: { correct: number
 }
 
 export async function POST(req: NextRequest) {
+  const limited = await checkRateLimit(req, 'ielts-grade')
+  if (limited) return limited
   try {
-    const { content, answers } = await req.json() as { content: IELTSContent; answers: IELTSAnswers }
+    const body = await req.json().catch(() => null) as { content?: IELTSContent; answers?: IELTSAnswers } | null
+    if (!body) return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    const { content, answers } = body
+    if (!content || !answers || !content.listening || !content.reading || !content.writing || !content.speaking) {
+      return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    }
 
     const listeningBand = scoreObjective(answers.listeningAnswers, content.listening.questions)
     const readingBand = scoreObjective(answers.readingAnswers, content.reading.questions)
@@ -69,7 +78,7 @@ Score each criterion 1-9. Return this JSON:
 }`
 
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: CLAUDE_MODEL,
       max_tokens: 800,
       system: 'You are a certified IELTS examiner. Return only valid JSON.',
       messages: [{ role: 'user', content: gradingPrompt }],

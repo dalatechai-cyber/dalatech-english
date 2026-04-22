@@ -3,9 +3,22 @@
 export type ElevenVoice = 'alice' | 'george'
 
 const audioCache = new Map<string, string>()
+const MAX_CACHE = 30
 
 function cacheKey(text: string, voice: ElevenVoice) {
   return `${voice}::${text}`
+}
+
+function cacheSet(key: string, url: string) {
+  if (!audioCache.has(key) && audioCache.size >= MAX_CACHE) {
+    const oldestKey = audioCache.keys().next().value
+    if (oldestKey !== undefined) {
+      const oldUrl = audioCache.get(oldestKey)
+      if (oldUrl) URL.revokeObjectURL(oldUrl)
+      audioCache.delete(oldestKey)
+    }
+  }
+  audioCache.set(key, url)
 }
 
 export async function generateTTS(text: string, voice: ElevenVoice, signal?: AbortSignal): Promise<string> {
@@ -22,7 +35,7 @@ export async function generateTTS(text: string, voice: ElevenVoice, signal?: Abo
   if (!res.ok) throw new Error(`TTS failed: ${res.status}`)
   const blob = await res.blob()
   const url = URL.createObjectURL(blob)
-  audioCache.set(key, url)
+  cacheSet(key, url)
   return url
 }
 

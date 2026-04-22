@@ -1,22 +1,43 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import type { LevelCode } from '@/lib/types'
 import { getSystemPrompt } from '@/lib/prompts'
 import { isContentBlocked, BLOCKED_RESPONSE } from '@/lib/contentFilter'
+import { CLAUDE_MODEL } from '@/lib/constants'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
 
 export async function POST(req: NextRequest) {
-  const { messages, level, lessonId } = await req.json() as {
-    messages: Array<{ role: 'user' | 'assistant'; content: string }>
-    level: LevelCode
-    lessonId: number
+  const limited = await checkRateLimit(req, 'chat')
+  if (limited) return limited
+
+  const body = await req.json().catch(() => null) as
+    | { messages?: unknown; level?: LevelCode; lessonId?: number }
+    | null
+  if (!body) return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+
+  const { level, lessonId } = body
+  const rawMessages = body.messages
+  if (!Array.isArray(rawMessages) || rawMessages.length === 0 || rawMessages.length > 40) {
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
 
-  const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')
-  if (lastUserMessage && isContentBlocked(lastUserMessage.content)) {
+  const messages = rawMessages.slice(-20).map((m) => {
+    const role = (m as { role?: string } | null)?.role
+    const content = (m as { content?: string } | null)?.content
+    if ((role !== 'user' && role !== 'assistant') || typeof content !== 'string') return null
+    return { role, content: content.slice(0, 4000) }
+  }).filter(Boolean) as Array<{ role: 'user' | 'assistant'; content: string }>
+
+  if (messages.length === 0) {
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+  }
+
+  const hasBlocked = messages.some(m => m.role === 'user' && isContentBlocked(m.content))
+  if (hasBlocked) {
     return new Response(BLOCKED_RESPONSE, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
@@ -25,27 +46,38 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  const systemPrompt = getSystemPrompt(level, lessonId)
+  const systemPrompt = getSystemPrompt(level as LevelCode, lessonId as number)
 
-  const stream = await client.messages.stream({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 1024,
-    system: systemPrompt,
-    messages,
-  })
+  let stream
+  try {
+    stream = await client.messages.stream({
+      model: CLAUDE_MODEL,
+      max_tokens: 1024,
+      system: systemPrompt,
+      messages,
+    })
+  } catch (e) {
+    console.error('[chat] upstream error:', e)
+    return NextResponse.json({ error: 'Upstream AI error' }, { status: 502 })
+  }
 
   const encoder = new TextEncoder()
   const readable = new ReadableStream({
     async start(controller) {
-      for await (const event of stream) {
-        if (
-          event.type === 'content_block_delta' &&
-          event.delta.type === 'text_delta'
-        ) {
-          controller.enqueue(encoder.encode(event.delta.text))
+      try {
+        for await (const event of stream) {
+          if (
+            event.type === 'content_block_delta' &&
+            event.delta.type === 'text_delta'
+          ) {
+            controller.enqueue(encoder.encode(event.delta.text))
+          }
         }
+      } catch (e) {
+        console.error('[chat] stream error:', e)
+      } finally {
+        controller.close()
       }
-      controller.close()
     },
   })
 

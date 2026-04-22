@@ -30,7 +30,11 @@ export function saveMistake(entry: Omit<MistakeEntry, 'id' | 'date'>): void {
     date: new Date().toISOString().slice(0, 10),
   }
   const updated = [newEntry, ...mistakes].slice(0, MAX)
-  localStorage.setItem(KEY, JSON.stringify(updated))
+  try {
+    localStorage.setItem(KEY, JSON.stringify(updated))
+  } catch (e) {
+    console.warn('Storage full:', e)
+  }
 }
 
 export function parseCorrectionsFromContent(content: string, level: LevelCode): Omit<MistakeEntry, 'id' | 'date'>[] {
