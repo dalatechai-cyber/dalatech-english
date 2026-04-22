@@ -162,6 +162,7 @@ export function IELTSTest() {
   const playingRef = useRef(false)
   const listenAudiosRef = useRef<string[]>([])
   const listenCurrentHandleRef = useRef<AudioHandle | null>(null)
+  const listenLoadStartedRef = useRef(false)
 
   // ── Reading ──
   const [readIndex, setReadIndex] = useState(0)
@@ -219,6 +220,7 @@ export function IELTSTest() {
       playingRef.current = false
       setIsPlaying(false)
       setListenCurrentTurn(-1)
+      listenLoadStartedRef.current = false
     }
     if (phase !== 'speaking') {
       speakAbortRef.current = true
@@ -242,9 +244,11 @@ export function IELTSTest() {
 
   // ── Pre-generate listening audio SEQUENTIALLY when entering listening phase ──
   // ElevenLabs free tier caps at 4 concurrent requests; generate one turn at a time.
+  // Gate on a ref (not state) so setState inside the effect doesn't retrigger cleanup.
   useEffect(() => {
     if (phase !== 'listening' || !content) return
-    if (listenAudioReady || listenAudioLoading || listenAudioError) return
+    if (listenLoadStartedRef.current) return
+    listenLoadStartedRef.current = true
 
     let cancelled = false
     setListenAudioLoading(true)
@@ -277,6 +281,7 @@ export function IELTSTest() {
             console.log('[Listen TTS] Turn', i + 1, '/', turns.length, 'OK (', voice, ')',
               'in', Date.now() - attemptStart, 'ms',
               attempt > 1 ? `(retry ${attempt})` : '')
+            console.log('Turn', i + 1, 'loaded successfully, url:', url)
             success = true
             break
           } catch (e) {
@@ -302,6 +307,7 @@ export function IELTSTest() {
       if (cancelled) return
       const successCount = turns.length - failedCount
       console.log('[Listen TTS] Done:', successCount, '/', turns.length, 'in', Date.now() - start, 'ms')
+      console.log('All turns loaded, showing play button')
       listenAudiosRef.current = urls
       if (successCount === 0) {
         setListenAudioError(true)
@@ -316,7 +322,7 @@ export function IELTSTest() {
     })()
 
     return () => { cancelled = true }
-  }, [phase, content, listenAudioReady, listenAudioLoading, listenAudioError])
+  }, [phase, content])
 
   // ── Pre-generate Part 1 examiner audio in background when entering speaking phase ──
   useEffect(() => {
