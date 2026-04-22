@@ -1,6 +1,6 @@
 'use client'
 
-export type ElevenVoice = 'rachel' | 'daniel'
+export type ElevenVoice = 'alice' | 'george'
 
 const audioCache = new Map<string, string>()
 

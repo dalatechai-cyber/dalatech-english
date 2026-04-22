@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const VOICE_IDS = {
-  rachel: 'Xb7hH8MSUJpSbSDYk0k2', // Alice — British female, speaker A + examiner
-  daniel: 'JBFqnCBsd6RMkjVDRZzb', // George — British male, speaker B
+  alice: 'Xb7hH8MSUJpSbSDYk0k2', // Alice — British female, speaker A + examiner
+  george: 'JBFqnCBsd6RMkjVDRZzb', // George — British male, speaker B
 } as const
 
 export const runtime = 'nodejs'
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     if (!text || typeof text !== 'string') {
       return NextResponse.json({ error: 'Missing text' }, { status: 400 })
     }
-    const voiceId = VOICE_IDS[voice ?? 'rachel'] ?? VOICE_IDS.rachel
+    const voiceId = VOICE_IDS[voice ?? 'alice'] ?? VOICE_IDS.alice
     const apiKey = process.env.ELEVENLABS_API_KEY
     console.log('EL key:', apiKey?.slice(0, 4), '(len:', apiKey?.length ?? 0, ') voice:', voice, 'chars:', text.length)
     if (!apiKey) {

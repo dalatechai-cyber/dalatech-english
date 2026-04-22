@@ -245,31 +245,60 @@ export function IELTSTest() {
     if (listenAudioReady || listenAudioLoading || listenAudioError) return
 
     let cancelled = false
+    let settled = false
     setListenAudioLoading(true)
     setListenNotice(null)
-    ;(async () => {
-      try {
-        const urls: string[] = []
-        for (const turn of content.listening.conversation) {
-          if (cancelled) return
-          const voice: ElevenVoice = turn.speaker === 'A' ? 'rachel' : 'daniel'
-          const url = await generateTTS(turn.text, voice)
-          urls.push(url)
-        }
-        if (cancelled) return
-        listenAudiosRef.current = urls
-        setListenAudioReady(true)
-      } catch {
-        if (!cancelled) {
-          setListenAudioError(true)
-          setListenNotice('ElevenLabs холбогдсонгүй, өөр дуу ашиглаж байна')
-        }
-      } finally {
-        if (!cancelled) setListenAudioLoading(false)
-      }
-    })()
 
-    return () => { cancelled = true }
+    const turns = content.listening.conversation
+    const start = Date.now()
+    console.log('[Listen TTS] Starting generation for', turns.length, 'turns')
+
+    const finalize = (urls: (string | null)[], timedOut = false) => {
+      if (cancelled || settled) return
+      settled = true
+      const successCount = urls.filter(Boolean).length
+      console.log('[Listen TTS] Finalize:', successCount, '/', turns.length,
+        'in', Date.now() - start, 'ms', timedOut ? '(timeout)' : '')
+      listenAudiosRef.current = urls.map(u => u ?? '')
+      if (successCount === 0) {
+        setListenAudioError(true)
+        setListenNotice('ElevenLabs холбогдсонгүй, өөр дуу ашиглаж байна')
+      } else {
+        if (successCount < turns.length) {
+          setListenNotice('Зарим хэсэгт өөр дуу ашиглана')
+        }
+        setListenAudioReady(true)
+      }
+      setListenAudioLoading(false)
+    }
+
+    const urls: (string | null)[] = new Array(turns.length).fill(null)
+
+    const timeoutId = setTimeout(() => {
+      if (!settled) {
+        console.warn('[Listen TTS] 30s timeout reached, using partial results')
+        finalize(urls, true)
+      }
+    }, 30000)
+
+    Promise.allSettled(
+      turns.map(async (turn, i) => {
+        const voice: ElevenVoice = turn.speaker === 'A' ? 'alice' : 'george'
+        try {
+          const url = await generateTTS(turn.text, voice)
+          if (cancelled) return
+          urls[i] = url
+          console.log('[Listen TTS] Turn', i + 1, '/', turns.length, 'OK (', voice, ')')
+        } catch (e) {
+          console.error('[Listen TTS] Turn', i + 1, '/', turns.length, 'FAILED (', voice, '):', e)
+        }
+      })
+    ).then(() => {
+      clearTimeout(timeoutId)
+      finalize(urls)
+    })
+
+    return () => { cancelled = true; clearTimeout(timeoutId) }
   }, [phase, content, listenAudioReady, listenAudioLoading, listenAudioError])
 
   // ── Pre-generate Part 1 examiner audio in background when entering speaking phase ──
@@ -278,10 +307,10 @@ export function IELTSTest() {
     let cancelled = false
     ;(async () => {
       try {
-        await generateTTS(GREETING, 'rachel')
+        await generateTTS(GREETING, 'alice')
         for (const q of content.speaking.part1Questions) {
           if (cancelled) return
-          await generateTTS(q, 'rachel')
+          await generateTTS(q, 'alice')
         }
       } catch { /* silent — on-demand fallback */ }
     })()
@@ -309,8 +338,9 @@ export function IELTSTest() {
         if (i > 0) { await new Promise<void>(r => setTimeout(r, 350)); if (!playingRef.current) break }
         setListenCurrentTurn(i)
 
-        if (useEleven) {
-          const handle = playAudioURL(listenAudiosRef.current[i])
+        const cachedUrl = useEleven ? listenAudiosRef.current[i] : ''
+        if (cachedUrl) {
+          const handle = playAudioURL(cachedUrl)
           listenCurrentHandleRef.current = handle
           await handle.promise
           listenCurrentHandleRef.current = null
@@ -349,7 +379,7 @@ export function IELTSTest() {
       setSpeakCurrentText(text)
     }
     try {
-      const url = await generateTTS(text, 'rachel')
+      const url = await generateTTS(text, 'alice')
       if (speakAbortRef.current) return
       const handle = playAudioURL(url)
       currentExaminerHandleRef.current = handle
