@@ -17,8 +17,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing text' }, { status: 400 })
     }
     const voiceId = VOICE_IDS[voice ?? 'alice'] ?? VOICE_IDS.alice
-    const apiKey = process.env.ELEVENLABS_API_KEY
-    console.log('EL key:', apiKey?.slice(0, 4), '(len:', apiKey?.length ?? 0, ') voice:', voice, 'chars:', text.length)
+    const rawKey = process.env.ELEVENLABS_API_KEY
+    const apiKey = rawKey?.trim()
+    console.log('EL key:', apiKey?.slice(0, 4),
+      '(raw len:', rawKey?.length ?? 0, 'trimmed len:', apiKey?.length ?? 0,
+      ') voice:', voice, 'chars:', text.length)
     if (!apiKey) {
       return NextResponse.json({ error: 'Server missing ELEVENLABS_API_KEY' }, { status: 500 })
     }
