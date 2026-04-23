@@ -1,0 +1,530 @@
+'use client'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { NavBar } from './NavBar'
+import type { IELTSContent } from '@/lib/ielts'
+
+type ConnectionState = 'idle' | 'connecting' | 'connected' | 'ended' | 'error'
+type OrbState = 'idle' | 'speaking' | 'listening' | 'thinking'
+type TestPart = 1 | 2 | 3
+
+export interface RealtimeCompletionPayload {
+  speakingPart1: string[]
+  speakingPart2: string
+  speakingPart3: string[]
+  fullTranscript: { role: 'examiner' | 'student'; text: string; part: TestPart }[]
+}
+
+interface Props {
+  content: IELTSContent
+  onComplete: (payload: RealtimeCompletionPayload) => void
+  onStop: (partial: RealtimeCompletionPayload | null) => void
+  onFallback: () => void
+}
+
+function mmss(sec: number): string {
+  const m = Math.floor(Math.max(0, sec) / 60)
+  const s = Math.max(0, sec) % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
+function stripMarkers(text: string): string {
+  return text
+    .replace(/\[PART_2_START\]/g, '')
+    .replace(/\[PART_3_START\]/g, '')
+    .replace(/\[PREP_START\]/g, '')
+    .replace(/\[PREP_END\]/g, '')
+    .replace(/\[TEST_COMPLETE\]/g, '')
+    .trim()
+}
+
+function SpeakOrb({ state }: { state: OrbState }) {
+  const colors: Record<OrbState, string> = {
+    idle: '#1E40AF',
+    speaking: '#F59E0B',
+    listening: '#38BDF8',
+    thinking: '#8B5CF6',
+  }
+  const c = colors[state]
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: 280, height: 280 }}>
+      <div className={`absolute rounded-full orb-ring-outer orb-${state}`}
+        style={{ width: 280, height: 280, border: `2px solid ${c}`, opacity: 0.2, boxShadow: `0 0 60px ${c}22` }} />
+      <div className={`absolute rounded-full orb-ring-middle orb-${state}`}
+        style={{ width: 200, height: 200, border: `2px solid ${c}`, opacity: 0.35, boxShadow: `0 0 40px ${c}33` }} />
+      <div className={`orb-inner orb-${state} rounded-full flex items-center justify-center`}
+        style={{
+          width: 120, height: 120,
+          background: `radial-gradient(circle, ${c}66 0%, ${c}33 50%, ${c}11 100%)`,
+          border: `2px solid ${c}99`,
+          boxShadow: `0 0 30px ${c}55, 0 0 60px ${c}33, 0 0 100px ${c}11`,
+        }} />
+    </div>
+  )
+}
+
+export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback }: Props) {
+  const [connState, setConnState] = useState<ConnectionState>('idle')
+  const [orbState, setOrbState] = useState<OrbState>('idle')
+  const [part, setPart] = useState<TestPart>(1)
+  const [examinerText, setExaminerText] = useState('')
+  const [studentLive, setStudentLive] = useState('')
+  const [showCard, setShowCard] = useState<string | null>(null)
+  const [prepCountdown, setPrepCountdown] = useState<number | null>(null)
+  const [part2Countdown, setPart2Countdown] = useState<number | null>(null)
+  const [statusLabel, setStatusLabel] = useState('')
+  const [connectionError, setConnectionError] = useState<string | null>(null)
+  const [micDenied, setMicDenied] = useState(false)
+
+  const pcRef = useRef<RTCPeerConnection | null>(null)
+  const dcRef = useRef<RTCDataChannel | null>(null)
+  const localStreamRef = useRef<MediaStream | null>(null)
+  const audioElRef = useRef<HTMLAudioElement | null>(null)
+  const partRef = useRef<TestPart>(1)
+  const currentExaminerRespRef = useRef<string>('')
+  const transcriptRef = useRef<RealtimeCompletionPayload['fullTranscript']>([])
+  const studentAnswersByPart = useRef<{ part1: string[]; part2: string[]; part3: string[] }>({
+    part1: [], part2: [], part3: [],
+  })
+  const finishedRef = useRef(false)
+  const prepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const part2TimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const cleanup = useCallback(() => {
+    if (prepTimerRef.current) { clearInterval(prepTimerRef.current); prepTimerRef.current = null }
+    if (part2TimerRef.current) { clearInterval(part2TimerRef.current); part2TimerRef.current = null }
+    try { dcRef.current?.close() } catch { /* ignore */ }
+    dcRef.current = null
+    try { pcRef.current?.close() } catch { /* ignore */ }
+    pcRef.current = null
+    localStreamRef.current?.getTracks().forEach(t => t.stop())
+    localStreamRef.current = null
+    if (audioElRef.current) {
+      try { audioElRef.current.pause() } catch { /* ignore */ }
+      audioElRef.current.srcObject = null
+    }
+  }, [])
+
+  const buildPayload = useCallback((): RealtimeCompletionPayload => {
+    const p1Count = content.speaking.part1Questions.length || 8
+    const p3Count = content.speaking.part3Questions.length || 4
+    const p1 = studentAnswersByPart.current.part1.slice(0, p1Count)
+    while (p1.length < p1Count) p1.push('')
+    const p2 = studentAnswersByPart.current.part2.join(' ').trim()
+    const p3 = studentAnswersByPart.current.part3.slice(0, p3Count)
+    while (p3.length < p3Count) p3.push('')
+    return {
+      speakingPart1: p1,
+      speakingPart2: p2,
+      speakingPart3: p3,
+      fullTranscript: [...transcriptRef.current],
+    }
+  }, [content])
+
+  const finishTest = useCallback(() => {
+    if (finishedRef.current) return
+    finishedRef.current = true
+    const payload = buildPayload()
+    cleanup()
+    setConnState('ended')
+    setOrbState('idle')
+    onComplete(payload)
+  }, [buildPayload, cleanup, onComplete])
+
+  const handleStop = useCallback(() => {
+    if (finishedRef.current) return
+    finishedRef.current = true
+    const anyAnswers =
+      studentAnswersByPart.current.part1.length > 0 ||
+      studentAnswersByPart.current.part2.length > 0 ||
+      studentAnswersByPart.current.part3.length > 0
+    const payload = anyAnswers ? buildPayload() : null
+    cleanup()
+    setConnState('ended')
+    onStop(payload)
+  }, [buildPayload, cleanup, onStop])
+
+  const startPrepCountdown = useCallback(() => {
+    setShowCard(content.speaking.part2Card || null)
+    setPrepCountdown(60)
+    setStatusLabel('Бэлдэх хугацаа')
+    setOrbState('thinking')
+    if (prepTimerRef.current) clearInterval(prepTimerRef.current)
+    prepTimerRef.current = setInterval(() => {
+      setPrepCountdown(c => {
+        if (c === null) return null
+        if (c <= 1) {
+          if (prepTimerRef.current) { clearInterval(prepTimerRef.current); prepTimerRef.current = null }
+          try {
+            const dc = dcRef.current
+            if (dc && dc.readyState === 'open') {
+              dc.send(JSON.stringify({
+                type: 'conversation.item.create',
+                item: {
+                  type: 'message',
+                  role: 'user',
+                  content: [{ type: 'input_text', text: 'CONTINUE_AFTER_PREP' }],
+                },
+              }))
+              dc.send(JSON.stringify({ type: 'response.create' }))
+            }
+          } catch { /* ignore */ }
+          return null
+        }
+        return c - 1
+      })
+    }, 1000)
+  }, [content.speaking.part2Card])
+
+  const startPart2SpeakingCountdown = useCallback(() => {
+    setPart2Countdown(120)
+    if (part2TimerRef.current) clearInterval(part2TimerRef.current)
+    part2TimerRef.current = setInterval(() => {
+      setPart2Countdown(c => {
+        if (c === null) return null
+        if (c <= 1) {
+          if (part2TimerRef.current) { clearInterval(part2TimerRef.current); part2TimerRef.current = null }
+          return 0
+        }
+        return c - 1
+      })
+    }, 1000)
+  }, [])
+
+  const processExaminerFinal = useCallback((text: string) => {
+    const cleaned = stripMarkers(text)
+    if (text.includes('[PART_2_START]')) {
+      partRef.current = 2
+      setPart(2)
+    }
+    if (text.includes('[PART_3_START]')) {
+      partRef.current = 3
+      setPart(3)
+      setShowCard(null)
+      setPart2Countdown(null)
+      if (part2TimerRef.current) { clearInterval(part2TimerRef.current); part2TimerRef.current = null }
+    }
+    if (text.includes('[PREP_START]')) {
+      startPrepCountdown()
+    }
+    if (text.includes('[PREP_END]')) {
+      setShowCard(content.speaking.part2Card || null)
+      setPrepCountdown(null)
+      if (prepTimerRef.current) { clearInterval(prepTimerRef.current); prepTimerRef.current = null }
+      startPart2SpeakingCountdown()
+    }
+    if (cleaned.length > 0) {
+      transcriptRef.current.push({ role: 'examiner', text: cleaned, part: partRef.current })
+    }
+    if (text.includes('[TEST_COMPLETE]')) {
+      setTimeout(() => { finishTest() }, 1500)
+    }
+  }, [content.speaking.part2Card, finishTest, startPart2SpeakingCountdown, startPrepCountdown])
+
+  const processStudentUtterance = useCallback((text: string) => {
+    const t = text.trim()
+    if (!t) return
+    transcriptRef.current.push({ role: 'student', text: t, part: partRef.current })
+    if (partRef.current === 1) studentAnswersByPart.current.part1.push(t)
+    else if (partRef.current === 2) studentAnswersByPart.current.part2.push(t)
+    else studentAnswersByPart.current.part3.push(t)
+  }, [])
+
+  const connect = useCallback(async () => {
+    if (connState === 'connecting' || connState === 'connected') return
+    setConnState('connecting')
+    setConnectionError(null)
+    setMicDenied(false)
+    setStatusLabel('AI шалгагчтай холбогдож байна...')
+
+    try {
+      const sessRes = await fetch('/api/ielts/realtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          part1Questions: content.speaking.part1Questions,
+          part2Card: content.speaking.part2Card,
+          part3Questions: content.speaking.part3Questions,
+        }),
+      })
+      if (!sessRes.ok) {
+        const detail = await sessRes.text().catch(() => '')
+        throw new Error(`Session error (${sessRes.status}): ${detail.slice(0, 200)}`)
+      }
+      const session = await sessRes.json() as { clientSecret: string; model: string }
+      if (!session.clientSecret) throw new Error('No client secret')
+
+      let stream: MediaStream
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        })
+      } catch {
+        setMicDenied(true)
+        throw new Error('Microphone permission denied')
+      }
+      localStreamRef.current = stream
+
+      const pc = new RTCPeerConnection()
+      pcRef.current = pc
+
+      if (!audioElRef.current) {
+        const el = document.createElement('audio')
+        el.autoplay = true
+        audioElRef.current = el
+      }
+      pc.ontrack = (ev) => {
+        if (audioElRef.current && ev.streams[0]) {
+          audioElRef.current.srcObject = ev.streams[0]
+          audioElRef.current.play().catch(() => { /* autoplay may fail briefly */ })
+        }
+      }
+
+      stream.getAudioTracks().forEach(t => pc.addTrack(t, stream))
+
+      const dc = pc.createDataChannel('oai-events')
+      dcRef.current = dc
+
+      dc.addEventListener('open', () => {
+        setConnState('connected')
+        setStatusLabel('Шалгагч ярьж эхэлж байна...')
+        setOrbState('speaking')
+        try {
+          dc.send(JSON.stringify({
+            type: 'response.create',
+            response: { modalities: ['text', 'audio'] },
+          }))
+        } catch { /* ignore */ }
+      })
+
+      dc.addEventListener('message', (ev) => {
+        try {
+          const msg = JSON.parse(ev.data as string) as {
+            type: string
+            transcript?: string
+            delta?: string
+            item?: { content?: Array<{ transcript?: string }> }
+            error?: { message?: string }
+          }
+          switch (msg.type) {
+            case 'response.audio_transcript.delta':
+              if (typeof msg.delta === 'string') {
+                currentExaminerRespRef.current += msg.delta
+                setExaminerText(stripMarkers(currentExaminerRespRef.current))
+                setOrbState('speaking')
+              }
+              break
+            case 'response.audio_transcript.done':
+              if (typeof msg.transcript === 'string') {
+                processExaminerFinal(msg.transcript)
+                currentExaminerRespRef.current = ''
+              }
+              break
+            case 'input_audio_buffer.speech_started':
+              setStudentLive('')
+              setOrbState('listening')
+              setStatusLabel('Сонсож байна...')
+              break
+            case 'input_audio_buffer.speech_stopped':
+              setOrbState('thinking')
+              setStatusLabel('Боловсруулж байна...')
+              break
+            case 'conversation.item.input_audio_transcription.completed':
+              if (typeof msg.transcript === 'string') {
+                const t = msg.transcript.trim()
+                if (t && t !== 'CONTINUE_AFTER_PREP') {
+                  processStudentUtterance(t)
+                  setStudentLive(t)
+                }
+              }
+              break
+            case 'response.done':
+              setOrbState('listening')
+              setStatusLabel('Ярина уу...')
+              setExaminerText('')
+              break
+            case 'error':
+              console.error('[Realtime] error event:', msg.error)
+              setConnectionError(msg.error?.message ?? 'OpenAI error')
+              break
+          }
+        } catch {
+          /* non-JSON frames — ignore */
+        }
+      })
+
+      dc.addEventListener('close', () => {
+        if (!finishedRef.current) {
+          setConnectionError('Холболт тасарлаа')
+          setConnState('error')
+        }
+      })
+
+      pc.addEventListener('connectionstatechange', () => {
+        if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+          if (!finishedRef.current) {
+            setConnectionError('WebRTC холболт амжилтгүй')
+            setConnState('error')
+          }
+        }
+      })
+
+      const offer = await pc.createOffer()
+      await pc.setLocalDescription(offer)
+
+      const sdpRes = await fetch(`https://api.openai.com/v1/realtime?model=${encodeURIComponent(session.model)}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.clientSecret}`,
+          'Content-Type': 'application/sdp',
+        },
+        body: offer.sdp,
+      })
+      if (!sdpRes.ok) {
+        const detail = await sdpRes.text().catch(() => '')
+        throw new Error(`SDP exchange failed (${sdpRes.status}): ${detail.slice(0, 200)}`)
+      }
+      const answerSdp = await sdpRes.text()
+      await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error('[Realtime] connect failed:', msg)
+      setConnectionError(msg)
+      setConnState('error')
+      cleanup()
+    }
+  }, [connState, content.speaking, cleanup, processExaminerFinal, processStudentUtterance])
+
+  useEffect(() => {
+    return () => { cleanup() }
+  }, [cleanup])
+
+  const statusColor =
+    orbState === 'speaking' ? '#F59E0B' :
+    orbState === 'listening' ? '#38BDF8' :
+    orbState === 'thinking' ? '#8B5CF6' : '#64748B'
+
+  return (
+    <div className="min-h-dvh flex flex-col" style={{ background: '#050D1A' }}>
+      {connState !== 'idle' && (
+        <div className="fixed top-4 right-4 z-50">
+          <button
+            onClick={handleStop}
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors"
+            style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #EF4444', color: '#FCA5A5' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.4)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)' }}>
+            ⏹ Дуусгах
+          </button>
+        </div>
+      )}
+
+      <NavBar lessonTitle="Speaking" />
+
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
+        {connState === 'connected' && (
+          <div className="mb-6 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
+            <span style={{ color: part === 1 ? '#F59E0B' : '#475569' }}>Part 1</span>
+            <span style={{ color: '#334155' }}>·</span>
+            <span style={{ color: part === 2 ? '#F59E0B' : '#475569' }}>Part 2</span>
+            <span style={{ color: '#334155' }}>·</span>
+            <span style={{ color: part === 3 ? '#F59E0B' : '#475569' }}>Part 3</span>
+          </div>
+        )}
+
+        <SpeakOrb state={orbState} />
+
+        {connState === 'idle' && (
+          <div className="mt-10 flex flex-col items-center gap-6 w-full max-w-xs">
+            <p className="text-sm text-center" style={{ color: '#64748B' }}>
+              AI шалгагч Sarah таныг асуулт асуух болно. Жинхэнэ IELTS адил яриа.
+            </p>
+            <button
+              onClick={connect}
+              className="w-52 py-4 rounded-2xl font-bold text-base transition-all hover:-translate-y-1 shadow-lg"
+              style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+              🎤 Ярианы шалгалт эхлэх
+            </button>
+          </div>
+        )}
+
+        {connState === 'connecting' && (
+          <div className="mt-10 flex flex-col items-center gap-4 w-full max-w-xs">
+            <div className="flex gap-1.5 justify-center">
+              {[0, 1, 2].map(i => <span key={i} className="w-3 h-3 rounded-full animate-bounce" style={{ background: '#F59E0B', animationDelay: `${i * 0.15}s` }} />)}
+            </div>
+            <p className="text-sm text-center" style={{ color: '#94A3B8' }}>
+              {statusLabel || 'AI шалгагчтай холбогдож байна...'}
+            </p>
+          </div>
+        )}
+
+        {connState === 'error' && (
+          <div className="mt-10 flex flex-col items-center gap-4 w-full max-w-sm">
+            <p className="text-sm text-center" style={{ color: '#F87171' }}>
+              {micDenied
+                ? 'Микрофон хэрэглэхийг зөвшөөрнө үү. Хөтчийн тохиргооноос микрофонд зөвшөөрөл өгөөд дахин оролдоно уу.'
+                : `Холболт амжилтгүй: ${connectionError ?? 'тодорхойгүй алдаа'}`}
+            </p>
+            <div className="flex gap-3 flex-wrap justify-center">
+              <button
+                onClick={() => { setConnState('idle'); setConnectionError(null); setMicDenied(false); connect() }}
+                className="px-5 py-3 rounded-xl font-semibold text-sm transition-all"
+                style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+                🔄 Дахин холбогдох
+              </button>
+              <button
+                onClick={onFallback}
+                className="px-5 py-3 rounded-xl font-semibold text-sm transition-all border"
+                style={{ background: '#1E293B', borderColor: '#334155', color: '#CBD5E1' }}>
+                Хуучин хувилбар
+              </button>
+            </div>
+          </div>
+        )}
+
+        {connState === 'connected' && (
+          <div className="mt-8 flex flex-col items-center gap-4 w-full max-w-md">
+            <div className="flex items-center gap-1 text-sm font-medium" style={{ color: statusColor }}>
+              {statusLabel}
+            </div>
+
+            {prepCountdown !== null && (
+              <div className="text-center">
+                <div className="text-5xl font-extrabold mb-2" style={{ color: '#FCD34D', letterSpacing: '-0.03em' }}>
+                  0:{String(prepCountdown).padStart(2, '0')}
+                </div>
+                <p className="text-xs" style={{ color: '#94A3B8' }}>Бэлдэх хугацаа</p>
+              </div>
+            )}
+
+            {showCard && (
+              <div className="text-left px-4 py-3 rounded-2xl w-full" style={{ background: '#0F172A', border: '1px solid #F59E0B55' }}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-xs font-semibold text-gold uppercase tracking-wide">📋 Topic Card</div>
+                  {part2Countdown !== null && (
+                    <span className="text-sm font-extrabold tabular-nums" style={{ color: part2Countdown === 0 ? '#F59E0B' : '#FCD34D' }}>
+                      ⏱ {mmss(part2Countdown)}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm leading-relaxed text-text-primary whitespace-pre-line">{showCard}</p>
+              </div>
+            )}
+
+            {orbState === 'speaking' && examinerText && (
+              <div className="text-center px-4 py-3 rounded-2xl w-full" style={{ background: '#0F172A55', border: '1px solid #334155' }}>
+                <p className="text-sm leading-relaxed text-text-primary">{examinerText}</p>
+              </div>
+            )}
+
+            {orbState !== 'speaking' && studentLive && (
+              <div className="text-center px-4 py-3 rounded-2xl w-full" style={{ background: '#38BDF808', border: '1px solid #38BDF822' }}>
+                <p className="text-lg leading-relaxed text-white">{studentLive}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

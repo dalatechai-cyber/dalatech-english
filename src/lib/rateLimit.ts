@@ -14,6 +14,7 @@ type LimitKey =
   | 'chat'
   | 'free-chat'
   | 'ielts-reaction'
+  | 'ielts-realtime'
 
 const LIMITS: Record<LimitKey, number> = {
   'ielts-generate': 5,
@@ -25,6 +26,7 @@ const LIMITS: Record<LimitKey, number> = {
   chat: 30,
   'free-chat': 30,
   'ielts-reaction': 30,
+  'ielts-realtime': 10,
 }
 
 let redis: Redis | null = null

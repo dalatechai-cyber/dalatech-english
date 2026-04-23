@@ -22,6 +22,10 @@ import {
   type AudioHandle,
   type ElevenVoice,
 } from '@/lib/elevenlabs'
+import { IELTSSpeakingRealtime, type RealtimeCompletionPayload } from './IELTSSpeakingRealtime'
+
+// Flip to false to revert to the legacy ElevenLabs + Claude speaking pipeline kept below.
+const USE_REALTIME = true
 
 interface GradeResult {
   overall: number
@@ -224,6 +228,8 @@ export function IELTSTest() {
   const [speakPart2Countdown, setSpeakPart2Countdown] = useState<number | null>(null)
   const [speakContinue, setSpeakContinue] = useState(false)
   const [speakNotice, setSpeakNotice] = useState<string | null>(null)
+  // When true, the Realtime component asked to fall back to the legacy speaking UI.
+  const [realtimeFallback, setRealtimeFallback] = useState(false)
   const speakAbortRef = useRef(false)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null)
@@ -643,6 +649,31 @@ export function IELTSTest() {
     }
   }
 
+  // ── Realtime (OpenAI) handlers ────────────────────────
+  // Stitches the Realtime transcript into the existing grade-submission pipeline.
+  const handleRealtimeComplete = async (payload: RealtimeCompletionPayload) => {
+    if (!content) return
+    const p1 = content.speaking.part1Questions.length
+    const p3 = content.speaking.part3Questions.length
+    speakAnswersRef.current = [
+      ...payload.speakingPart1.slice(0, p1),
+      payload.speakingPart2,
+      ...payload.speakingPart3.slice(0, p3),
+    ]
+    questionsAskedRef.current = p1 + 1 + p3
+    await gradeAndShowResults()
+  }
+
+  const handleRealtimeStop = (partial: RealtimeCompletionPayload | null) => {
+    if (partial) {
+      setIsPartialResult(true)
+      void handleRealtimeComplete(partial)
+    } else {
+      setError('Шалгалт эхлээгүй байна')
+      setPhase('intro')
+    }
+  }
+
   // Stop handler — aborts flow and shows partial results if any answers collected
   const handleStopSpeaking = () => {
     speakAbortRef.current = true
@@ -837,6 +868,7 @@ export function IELTSTest() {
     setSpeakPrepCountdown(null)
     setSpeakContinue(false)
     setSpeakNotice(null)
+    setRealtimeFallback(false)
     setGradeResult(null)
     setIsPartialResult(false)
 
@@ -1365,7 +1397,18 @@ export function IELTSTest() {
   }
 
   // ══════════════════════════════════════════
-  // ─── Speaking — Siri-style orb conversation (ElevenLabs) ───
+  // ─── Speaking — OpenAI Realtime (default) or legacy ElevenLabs fallback ───
+  if (phase === 'speaking' && USE_REALTIME && !realtimeFallback && content) {
+    return (
+      <IELTSSpeakingRealtime
+        content={content}
+        onComplete={handleRealtimeComplete}
+        onStop={handleRealtimeStop}
+        onFallback={() => setRealtimeFallback(true)}
+      />
+    )
+  }
+
   if (phase === 'speaking') {
     if (!sttSupported) {
       return (
