@@ -84,23 +84,34 @@ export function playAudioURL(url: string): AudioHandle {
 }
 
 export async function transcribeAudio(blob: Blob): Promise<string> {
-  // FormData is consumed by fetch — rebuild it per attempt so retries work
   const makeBody = () => {
     const fd = new FormData()
     fd.append('audio', blob, 'audio.webm')
     return fd
   }
 
+  // Try Deepgram Nova-2 first (~200ms typical, more accurate than Web Speech).
+  try {
+    const dg = await fetch('/api/ielts/stt/deepgram', { method: 'POST', body: makeBody() })
+    if (dg.ok) {
+      const data = (await dg.json()) as { text?: string }
+      const text = (data.text ?? '').trim()
+      if (text) return text
+    }
+  } catch (e) {
+    console.warn('[STT] Deepgram failed, falling back to ElevenLabs:', e)
+  }
+
+  // Fallback: ElevenLabs Scribe.
   let res = await fetch('/api/ielts/stt', { method: 'POST', body: makeBody() })
-  // ElevenLabs occasionally returns 401 mid-session; retry once with a fresh request.
   if (res.status === 401) {
     console.warn('[STT] 401 — retrying once with fresh request')
     await new Promise(r => setTimeout(r, 500))
     res = await fetch('/api/ielts/stt', { method: 'POST', body: makeBody() })
   }
   if (!res.ok) {
-    // Throwing here signals the caller (collectStudentAnswer) to fall back to
-    // the Web Speech transcript captured in parallel — the session continues.
+    // Throwing signals caller (collectStudentAnswer) to use the Web Speech
+    // transcript captured in parallel — session continues.
     throw new Error(`STT failed: ${res.status}`)
   }
   const data = (await res.json()) as { text?: string }

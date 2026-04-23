@@ -41,7 +41,19 @@ interface GradeResult {
   }
 }
 
-const SHORT_REACTIONS = ['I see.', 'Right.', 'Mm-hmm.', 'Okay.'] as const
+const SHORT_REACTIONS = [
+  'I see.',
+  'Right.',
+  'Mm-hmm.',
+  'Okay.',
+  'Indeed.',
+  'I understand.',
+  'Right, thank you.',
+] as const
+
+function pickShortReaction(): string {
+  return SHORT_REACTIONS[Math.floor(Math.random() * SHORT_REACTIONS.length)]
+}
 
 function isAnswered(a: IELTSAnswer): boolean {
   if (typeof a === 'number') return true
@@ -361,15 +373,17 @@ export function IELTSTest() {
     return () => { cancelled = true }
   }, [phase, content])
 
-  // ── Pre-cache short reactions so "I see." / "Right." plays instantly ──
+  // ── Pre-cache short reactions in parallel so "I see." / "Right." plays instantly ──
   useEffect(() => {
     if (phase !== 'speaking') return
     let cancelled = false
     ;(async () => {
-      for (const r of SHORT_REACTIONS) {
-        if (cancelled) return
-        try { await generateTTS(r, 'alice') } catch { /* ignore */ }
-      }
+      await Promise.all(
+        SHORT_REACTIONS.map(async (r) => {
+          if (cancelled) return
+          try { await generateTTS(r, 'alice') } catch { /* ignore */ }
+        })
+      )
     })()
     return () => { cancelled = true }
   }, [phase])
@@ -669,6 +683,24 @@ export function IELTSTest() {
     // If the examiner has a contextual follow-up (and no probe has been used
     // yet on this question), play it, collect one more answer, then always
     // move on. Maximum ONE follow-up per question.
+    // Play a cached short reaction INSTANTLY (0ms delay), while Claude generates
+    // the followUp/move-on decision in parallel. Then wait exactly 600ms before
+    // playing the next question — natural human pacing.
+    const reactAndDecide = async (args: {
+      transcript: string
+      question: string
+      part: 1 | 2 | 3
+      probeUsed: boolean
+    }) => {
+      const cachedText = pickShortReaction()
+      const reactionPromise = fetchReaction(args)
+      // Fire instant cached reaction; wait for it to finish before pause.
+      await playExaminer(cachedText)
+      const decision = await reactionPromise
+      await pause(600)
+      return decision
+    }
+
     const ask = async (
       question: string,
       part: 1 | 3,
@@ -679,43 +711,32 @@ export function IELTSTest() {
       questionsAskedRef.current += 1
       await playExaminer(question)
       if (speakAbortRef.current) return ''
-      await pause(200)
       const ans1 = await collectStudentAnswer({ minSpeakSec, silenceSec })
       if (speakAbortRef.current) return ans1
 
-      setSpeakStatus('Боловсруулж байна...')
-      const r1 = await fetchReaction({ transcript: ans1, question, part, probeUsed: false })
+      const r1 = await reactAndDecide({ transcript: ans1, question, part, probeUsed: false })
       if (speakAbortRef.current) return ans1
-      await playExaminer(r1.reaction)
 
       if (!r1.moveToNext && r1.followUp) {
-        await pause(250)
-        if (speakAbortRef.current) return ans1
-        // Follow-up question plays through the same examiner voice —
-        // playExaminer sets phase='speaking' so the orb pulses gold.
+        // Play the contextual follow-up question through the examiner voice.
         await playExaminer(r1.followUp)
         if (speakAbortRef.current) return ans1
-        await pause(200)
         const ans2 = await collectStudentAnswer({
           minSpeakSec: Math.max(4, minSpeakSec - 2),
           silenceSec,
         })
         if (speakAbortRef.current) return `${ans1} ${ans2}`.trim()
 
-        // Brief closing reaction to the follow-up answer — no further probes.
-        setSpeakStatus('Боловсруулж байна...')
-        const r2 = await fetchReaction({
+        // Closing reaction — instant cached ack, then move on.
+        await reactAndDecide({
           transcript: ans2,
           question: r1.followUp,
           part,
-          probeUsed: true, // force move-on; never probe twice on same question
+          probeUsed: true, // never probe twice on same question
         })
-        if (!speakAbortRef.current) await playExaminer(r2.reaction)
-        await pause(500)
         return `${ans1} ${ans2}`.trim()
       }
 
-      await pause(500)
       return ans1
     }
 
@@ -762,14 +783,12 @@ export function IELTSTest() {
       pushAnswer(p2Answer)
 
       if (!speakAbortRef.current) {
-        const p2Reaction = await fetchReaction({
+        await reactAndDecide({
           transcript: p2Answer,
           question: content.speaking.part2Card,
           part: 2,
           probeUsed: true, // never follow up after the long turn
         })
-        await playExaminer(p2Reaction.reaction)
-        await pause(500)
       }
 
       // 4. Part 3 — discussion, follow-ups may challenge the student's view

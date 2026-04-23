@@ -10,6 +10,7 @@ type LimitKey =
   | 'ielts-grade'
   | 'ielts-tts'
   | 'ielts-stt'
+  | 'ielts-stt-deepgram'
   | 'chat'
   | 'free-chat'
   | 'ielts-reaction'
@@ -20,6 +21,7 @@ const LIMITS: Record<LimitKey, number> = {
   'ielts-grade': 10,
   'ielts-tts': 60,
   'ielts-stt': 20,
+  'ielts-stt-deepgram': 30,
   chat: 30,
   'free-chat': 30,
   'ielts-reaction': 30,
