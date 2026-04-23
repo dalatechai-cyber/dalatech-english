@@ -11,7 +11,9 @@ interface CertificateModalProps {
   onClose: () => void
 }
 
-const DIAGONAL_PATTERN = `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 40L40 0M10 40L40 10M0 30L30 0M20 40L40 20M0 20L20 0M30 40L40 30M0 10L10 0' stroke='%23F59E0B' stroke-width='0.5' stroke-opacity='0.06'/%3E%3C/svg%3E")`
+const NAVY = '#1E293B'
+const GOLD = '#F59E0B'
+const DARK_GOLD = '#D97706'
 
 export function CertificateModal({ level, score, total, onClose }: CertificateModalProps) {
   const certRef = useRef<HTMLDivElement>(null)
@@ -22,33 +24,62 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Scale certificate (fixed 842x595 px) to fit container width responsively
+  useEffect(() => {
+    const el = certRef.current
+    if (!el) return
+    const update = () => {
+      const parent = el.parentElement
+      if (!parent) return
+      const w = parent.clientWidth
+      const scale = Math.min(1, w / 842)
+      el.style.transform = `scale(${scale})`
+      parent.style.height = `${595 * scale}px`
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+
   const handleDownload = async () => {
-    if (!certRef.current) return
+    const element = certRef.current
+    if (!element) return
+    const prevTransform = element.style.transform
+    const parent = element.parentElement
+    const prevHeight = parent?.style.height
     try {
+      // Reset scale so html2canvas captures at native A4 resolution
+      element.style.transform = 'scale(1)'
+      if (parent) parent.style.height = '595px'
       const { default: html2canvas } = await import('html2canvas')
-      const canvas = await html2canvas(certRef.current, { backgroundColor: '#0F172A', scale: 2 })
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+      })
       const link = document.createElement('a')
-      link.download = `core-english-${level}-certificate.png`
+      link.download = 'Core-English-Certificate.png'
       link.href = canvas.toDataURL('image/png')
       link.click()
     } catch (e) {
       console.error('Certificate download failed', e)
+    } finally {
+      element.style.transform = prevTransform
+      if (parent && prevHeight !== undefined) parent.style.height = prevHeight
     }
   }
 
-  const handleCopy = async () => {
-    if (!certRef.current) return
-    try {
-      const { default: html2canvas } = await import('html2canvas')
-      const canvas = await html2canvas(certRef.current, { backgroundColor: '#0F172A', scale: 2 })
-      canvas.toBlob(async blob => {
-        if (!blob) return
-        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
-      })
-    } catch {
-      const text = `Core English — ${level} гэрчилгээ — ${formatMongolianDate(today)}`
-      await navigator.clipboard.writeText(text).catch(() => {})
-    }
+  const handleFacebookShare = () => {
+    const shareUrl = 'https://www.facebook.com/sharer/sharer.php'
+    const url = encodeURIComponent('https://english.dalatech.online')
+    const quote = encodeURIComponent(
+      `Core English платформоос ${level} түвшний гэрчилгээ авлаа! Та ч англи хэл сурах уу? 🎓`
+    )
+    window.open(
+      `${shareUrl}?u=${url}&quote=${quote}`,
+      '_blank',
+      'width=600,height=400'
+    )
   }
 
   return (
@@ -57,95 +88,210 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[520px] my-auto"
+        className="w-full max-w-[880px] my-auto"
         onClick={e => e.stopPropagation()}
       >
-        {/* Outer double-border frame */}
+        {/* Certificate scaler — A4 landscape (842x595) */}
         <div
-          ref={certRef}
           style={{
-            background: '#0F172A',
-            backgroundImage: DIAGONAL_PATTERN,
-            border: '3px solid #F59E0B',
-            borderRadius: '16px',
-            padding: '8px',
-            minHeight: '600px',
-            fontFamily: 'Inter, sans-serif',
+            width: '100%',
+            position: 'relative',
+            overflow: 'hidden',
           }}
         >
-          {/* Inner border container */}
           <div
+            id="certificate"
+            ref={certRef}
             style={{
-              border: '1px solid rgba(245,158,11,0.6)',
-              borderRadius: '10px',
-              background: '#1E293B',
-              padding: '32px 28px',
-              minHeight: '580px',
+              width: '842px',
+              height: '595px',
+              transformOrigin: 'top left',
+              background: '#FFFFFF',
+              border: `8px solid ${DARK_GOLD}`,
+              boxSizing: 'border-box',
+              fontFamily: 'Georgia, "Times New Roman", serif',
+              color: NAVY,
               position: 'relative',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
             }}
           >
-            {/* Corner ornaments */}
-            <div style={{ position:'absolute', top:12, left:12, width:16, height:16, border:'2px solid #F59E0B', transform:'rotate(45deg)', opacity:0.8 }} />
-            <div style={{ position:'absolute', top:12, right:12, width:16, height:16, border:'2px solid #F59E0B', transform:'rotate(45deg)', opacity:0.8 }} />
-            <div style={{ position:'absolute', bottom:12, left:12, width:16, height:16, border:'2px solid #F59E0B', transform:'rotate(45deg)', opacity:0.8 }} />
-            <div style={{ position:'absolute', bottom:12, right:12, width:16, height:16, border:'2px solid #F59E0B', transform:'rotate(45deg)', opacity:0.8 }} />
+            {/* Inner gold border with gap */}
+            <div
+              style={{
+                position: 'absolute',
+                top: '8px',
+                left: '8px',
+                right: '8px',
+                bottom: '8px',
+                border: `2px solid ${GOLD}`,
+                boxSizing: 'border-box',
+                padding: '36px 56px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center',
+              }}
+            >
+              {/* Corner flourishes */}
+              <div style={{ position: 'absolute', top: 10, left: 14, color: GOLD, fontSize: '22px', lineHeight: 1 }}>✦</div>
+              <div style={{ position: 'absolute', top: 10, right: 14, color: GOLD, fontSize: '22px', lineHeight: 1 }}>✦</div>
+              <div style={{ position: 'absolute', bottom: 10, left: 14, color: GOLD, fontSize: '22px', lineHeight: 1 }}>✦</div>
+              <div style={{ position: 'absolute', bottom: 10, right: 14, color: GOLD, fontSize: '22px', lineHeight: 1 }}>✦</div>
 
-            {/* Brand */}
-            <div style={{ color:'#F59E0B', letterSpacing:'0.3em', fontSize:'12px', fontWeight:700, textTransform:'uppercase', marginBottom:'8px' }}>
-              CORE ENGLISH
-            </div>
+              {/* Gold seal/medal top right */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 36,
+                  right: 56,
+                  width: 68,
+                  height: 68,
+                  borderRadius: '50%',
+                  background: `radial-gradient(circle at 30% 30%, #FCD34D, ${GOLD} 55%, ${DARK_GOLD})`,
+                  border: `3px solid ${DARK_GOLD}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 8px rgba(217,119,6,0.4)',
+                }}
+              >
+                <div style={{ fontSize: '32px', lineHeight: 1 }}>🏅</div>
+              </div>
 
-            {/* Top ornament line */}
-            <div style={{ color:'#F59E0B', fontSize:'11px', letterSpacing:'0.15em', marginBottom:'16px', opacity:0.9 }}>
-              ◆───────────────◆
-            </div>
+              {/* Brand */}
+              <div
+                style={{
+                  color: NAVY,
+                  fontSize: '40px',
+                  fontWeight: 800,
+                  letterSpacing: '0.14em',
+                  fontFamily: 'Georgia, "Times New Roman", serif',
+                  marginTop: '4px',
+                }}
+              >
+                CORE ENGLISH
+              </div>
+              <div
+                style={{
+                  color: NAVY,
+                  fontSize: '12px',
+                  letterSpacing: '0.25em',
+                  textTransform: 'uppercase',
+                  marginTop: '4px',
+                  opacity: 0.7,
+                  fontFamily: 'Arial, Helvetica, sans-serif',
+                }}
+              >
+                AI Суралцахуйн Платформ
+              </div>
 
-            {/* "АКАДЕМИК АМЖИЛТЫН" */}
-            <div style={{ color:'#F59E0B', letterSpacing:'0.2em', fontSize:'11px', fontWeight:600, textTransform:'uppercase', marginBottom:'6px', opacity:0.8 }}>
-              АКАДЕМИК АМЖИЛТЫН
-            </div>
+              {/* Gold divider */}
+              <div
+                style={{
+                  width: '60%',
+                  height: '2px',
+                  background: `linear-gradient(to right, transparent, ${GOLD}, transparent)`,
+                  marginTop: '18px',
+                  marginBottom: '14px',
+                }}
+              />
 
-            {/* "ГЭРЧИЛГЭЭ" */}
-            <div style={{ color:'#FFFFFF', fontSize:'36px', fontWeight:800, letterSpacing:'0.1em', marginBottom:'20px' }}>
-              {t('certificate')}
-            </div>
+              {/* Гэрчилгээ (script) */}
+              <div
+                style={{
+                  color: DARK_GOLD,
+                  fontSize: '58px',
+                  fontFamily: '"Brush Script MT", "Lucida Handwriting", Georgia, cursive',
+                  fontStyle: 'italic',
+                  fontWeight: 400,
+                  lineHeight: 1,
+                  marginBottom: '10px',
+                }}
+              >
+                {t('certificate')}
+              </div>
 
-            {/* Trophy */}
-            <div style={{ fontSize:'48px', marginBottom:'16px', lineHeight:1 }}>🏆</div>
+              {/* Proudly presented to */}
+              <div
+                style={{
+                  color: NAVY,
+                  fontSize: '13px',
+                  letterSpacing: '0.18em',
+                  textTransform: 'uppercase',
+                  marginBottom: '12px',
+                  opacity: 0.75,
+                  fontFamily: 'Arial, Helvetica, sans-serif',
+                }}
+              >
+                Proudly presented to
+              </div>
 
-            {/* Level */}
-            <div style={{
-              color:'#F59E0B',
-              fontSize:'72px',
-              fontWeight:900,
-              lineHeight:1,
-              marginBottom:'8px',
-              textShadow: '0 0 40px rgba(245,158,11,0.5), 0 0 80px rgba(245,158,11,0.2)',
-            }}>
-              {level}
-            </div>
+              {/* Student name placeholder (level-based) */}
+              <div
+                style={{
+                  color: DARK_GOLD,
+                  fontSize: '44px',
+                  fontFamily: '"Brush Script MT", "Lucida Handwriting", Georgia, cursive',
+                  fontStyle: 'italic',
+                  fontWeight: 400,
+                  lineHeight: 1.15,
+                  marginBottom: '6px',
+                }}
+              >
+                {level} Level Student
+              </div>
 
-            <div style={{ color:'#FFFFFF', fontSize:'16px', marginBottom:'20px', opacity:0.9 }}>
-              түвшний тестийг амжилттай өглөө
-            </div>
+              {/* Divider */}
+              <div
+                style={{
+                  width: '40%',
+                  height: '1px',
+                  background: GOLD,
+                  marginTop: '10px',
+                  marginBottom: '16px',
+                }}
+              />
 
-            {/* Bottom ornament */}
-            <div style={{ color:'#F59E0B', fontSize:'11px', letterSpacing:'0.15em', marginBottom:'12px', opacity:0.9 }}>
-              ◆───────────────◆
-            </div>
+              {/* Achievement text */}
+              <div
+                style={{
+                  color: NAVY,
+                  fontSize: '15px',
+                  lineHeight: 1.6,
+                  maxWidth: '620px',
+                  fontFamily: 'Arial, Helvetica, sans-serif',
+                  marginBottom: '14px',
+                }}
+              >
+                Энэхүү гэрчилгээг <b>{level}</b> түвшний шалгалтыг амжилттай
+                давсны баталгаа болгон олгов.
+              </div>
 
-            {/* Date */}
-            <div style={{ color:'rgba(248,250,252,0.6)', fontSize:'13px', marginBottom:'12px' }}>
-              {formatMongolianDate(today)}
-            </div>
+              {/* Date */}
+              <div
+                style={{
+                  color: NAVY,
+                  fontSize: '13px',
+                  marginTop: 'auto',
+                  fontFamily: 'Arial, Helvetica, sans-serif',
+                  opacity: 0.85,
+                }}
+              >
+                {formatMongolianDate(today)}
+              </div>
 
-            {/* Attribution */}
-            <div style={{ color:'rgba(245,158,11,0.45)', fontSize:'11px', letterSpacing:'0.1em', marginTop:'auto', paddingTop:'8px' }}>
-              Powered by Dalatech.ai
+              {/* Footer attribution */}
+              <div
+                style={{
+                  color: NAVY,
+                  fontSize: '10px',
+                  marginTop: '10px',
+                  opacity: 0.55,
+                  fontFamily: 'Arial, Helvetica, sans-serif',
+                  letterSpacing: '0.08em',
+                }}
+              >
+                Powered by Dalatech.ai · dalatech.online
+              </div>
             </div>
           </div>
         </div>
@@ -154,25 +300,27 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
         <div className="flex flex-col gap-2 mt-4">
           <button
             onClick={handleDownload}
-            className="w-full bg-[#F59E0B] hover:bg-[#D97706] text-[#0F172A] font-bold py-3 min-h-[48px] rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
+            className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
+            style={{ background: GOLD, color: NAVY }}
           >
             📥 {t('download')}
           </button>
           <button
-            onClick={handleCopy}
-            className="w-full bg-navy-surface border border-navy-surface-2 text-text-primary hover:border-gold/40 font-semibold py-3 min-h-[48px] rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
+            onClick={handleFacebookShare}
+            className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-colors text-sm flex items-center justify-center gap-2 text-white hover:opacity-90"
+            style={{ background: '#1877F2' }}
           >
-            📋 Хуулах
+            Facebook-т хуваалцах 📘
           </button>
+          <p className="text-center text-xs mt-1" style={{ color: '#94A3B8' }}>
+            Гэрчилгээгээ татаж аваад найзуудтайгаа хуваалцаарай 🎉
+          </p>
           <button
             onClick={onClose}
-            className="w-full bg-navy-surface border border-navy-surface-2 text-text-secondary hover:text-text-primary py-3 min-h-[44px] rounded-xl transition-colors text-sm"
+            className="w-full bg-navy-surface border border-navy-surface-2 text-text-secondary hover:text-text-primary py-3 min-h-[44px] rounded-xl transition-colors text-sm mt-2"
           >
             {t('close')} ✕
           </button>
-          <p className="text-center text-xs mt-1" style={{ color: '#64748B' }}>
-            Гэрчилгээгээ татаж аваад найзуудтайгаа хуваалцаарай 🎉
-          </p>
         </div>
       </div>
     </div>
