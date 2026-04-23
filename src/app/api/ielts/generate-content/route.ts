@@ -57,7 +57,7 @@ Return ONLY valid JSON matching this exact structure:
 }
 
 READING section rules:
-- Exactly 2 passages. Each passage 250-300 words on a DIFFERENT academic topic (e.g., passage 1 science/environment, passage 2 history/social sciences/technology/culture). Vary topics per seed so no two sessions share a topic.
+- Exactly 2 passages. Each passage 250-300 words on a DIFFERENT academic topic (e.g., passage 1 science/environment, passage 2 history/social sciences/technology/culture). Vary topics per seed so no two sessions share a topic. The passage topics MUST be fresh — never reuse specific subjects, case studies, or examples from likely previous sessions.
 - Passage 1: 5 questions — MIX of multiple-choice and True/False/Not Given. For True/False/Not Given items, put the statement in "question" and use options ["True","False","Not Given"] with "correct" being the 0-based index.
 - Passage 2: 5 questions — MIX of multiple-choice and matching (e.g. match a statement to the paragraph/person that expresses it). Use 4 options for multiple-choice and matching items.
 - 10 reading questions total across the 2 passages. "correct" is always a 0-based index into the options array for that question.

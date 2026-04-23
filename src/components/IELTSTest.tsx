@@ -169,6 +169,8 @@ export function IELTSTest() {
   // ── Reading ──
   const [readAnswers, setReadAnswers] = useState<(number | null)[]>(Array(10).fill(null))
   const [readSubmitted, setReadSubmitted] = useState(false)
+  const [readPassageIdx, setReadPassageIdx] = useState(0)
+  const [readMobileTab, setReadMobileTab] = useState<'passage' | 'questions'>('passage')
 
   // ── Writing ──
   const [writingTask1, setWritingTask1] = useState('')
@@ -746,7 +748,7 @@ export function IELTSTest() {
     setListenAudioError(false)
     setListenCurrentTurn(-1)
     setListenNotice(null)
-    setReadAnswers(Array(10).fill(null)); setReadSubmitted(false)
+    setReadAnswers(Array(10).fill(null)); setReadSubmitted(false); setReadPassageIdx(0); setReadMobileTab('passage')
     setWritingTask1(''); setWritingTask2(''); setWritingTaskView(1)
     setSpeakPhase('ready')
     setSpeakTranscript('')
@@ -1030,74 +1032,127 @@ export function IELTSTest() {
   if (phase === 'reading' && content) {
     const passages = content.reading.passages
     const totalReadQs = passages.reduce((n, p) => n + p.questions.length, 0)
+    const pi = Math.min(readPassageIdx, passages.length - 1)
+    const pg = passages[pi]
+    // Offset of current passage's first question in the flat readAnswers array.
+    const startIdx = passages.slice(0, pi).reduce((n, p) => n + p.questions.length, 0)
+    const pageAnswered = pg ? pg.questions.every((_, qi) => readAnswers[startIdx + qi] !== null) : false
+    const answeredOnPage = pg ? pg.questions.filter((_, qi) => readAnswers[startIdx + qi] !== null).length : 0
+    const isLastPassage = pi === passages.length - 1
     const allReadAnswered = readAnswers.length === totalReadQs && readAnswers.every(a => a !== null)
-    let runningIdx = 0
-    return (
-      <div className="min-h-dvh bg-navy flex flex-col">
-        <NavBar lessonTitle="Reading" />
-        <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
-          <SectionProgress idx={sectionIdx} />
-          <p className="text-xs mb-3 font-semibold" style={{ color: '#64748B' }}>Бүх {totalReadQs} асуултад хариулна уу ({passages.length} нийтлэл)</p>
 
-          {passages.map((pg, pi) => {
-            const startIdx = runningIdx
-            runningIdx += pg.questions.length
+    const advance = () => {
+      if (isLastPassage) {
+        setReadSubmitted(true)
+      } else {
+        setReadPassageIdx(pi + 1)
+        setReadMobileTab('passage')
+      }
+    }
+
+    const PassagePane = (
+      <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 h-full overflow-y-auto">
+        <div className="text-xs font-semibold text-gold uppercase tracking-wide mb-2 sticky top-0 bg-navy-surface pb-2">
+          📖 Нийтлэл {pi + 1}/{passages.length}
+        </div>
+        <p className="text-sm leading-relaxed text-text-primary whitespace-pre-line">{pg?.passage}</p>
+      </div>
+    )
+
+    const QuestionsPane = (
+      <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 h-full overflow-y-auto flex flex-col">
+        <div className="space-y-4 flex-1">
+          {pg?.questions.map((q, qi) => {
+            const globalIdx = startIdx + qi
             return (
-              <div key={pi} className="mb-6">
-                <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 mb-4">
-                  <div className="text-xs font-semibold text-gold uppercase tracking-wide mb-2">📖 Нийтлэл {pi + 1}</div>
-                  <p className="text-sm leading-relaxed text-text-primary whitespace-pre-line">{pg.passage}</p>
-                </div>
-                <div className="space-y-4">
-                  {pg.questions.map((q, qi) => {
-                    const globalIdx = startIdx + qi
+              <div key={globalIdx}>
+                <p className="text-sm font-semibold text-text-primary mb-3">
+                  <span style={{ color: '#F59E0B' }}>{globalIdx + 1}.</span> {q.question}
+                </p>
+                <div className="space-y-2">
+                  {q.options.map((opt, oi) => {
+                    const selected = readAnswers[globalIdx] === oi
+                    const correct = readSubmitted && oi === q.correct
+                    const wrong = readSubmitted && selected && oi !== q.correct
+                    const neutral = readSubmitted && !selected && oi !== q.correct
                     return (
-                      <div key={globalIdx} className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4">
-                        <p className="text-sm font-semibold text-text-primary mb-3">
-                          <span style={{ color: '#F59E0B' }}>{globalIdx + 1}.</span> {q.question}
-                        </p>
-                        <div className="space-y-2">
-                          {q.options.map((opt, oi) => {
-                            const selected = readAnswers[globalIdx] === oi
-                            const correct = readSubmitted && oi === q.correct
-                            const wrong = readSubmitted && selected && oi !== q.correct
-                            const neutral = readSubmitted && !selected && oi !== q.correct
-                            return (
-                              <button key={oi}
-                                onClick={() => { if (readSubmitted) return; const a = [...readAnswers]; a[globalIdx] = oi; setReadAnswers(a) }}
-                                disabled={readSubmitted}
-                                className="w-full text-left px-4 py-2.5 min-h-[44px] flex items-center rounded-xl border text-sm transition-all"
-                                style={{
-                                  background: correct ? 'rgba(52,211,153,0.1)' : wrong ? 'rgba(248,113,113,0.1)' : selected ? 'rgba(245,158,11,0.08)' : 'transparent',
-                                  borderColor: correct ? '#34D399' : wrong ? '#F87171' : selected ? '#F59E0B' : '#334155',
-                                  color: neutral ? '#64748B' : correct ? '#34D399' : wrong ? '#F87171' : '#F8FAFC',
-                                }}>
-                                <span className="font-medium mr-2">{String.fromCharCode(65 + oi)}.</span>{opt}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
+                      <button key={oi}
+                        onClick={() => { if (readSubmitted) return; const a = [...readAnswers]; a[globalIdx] = oi; setReadAnswers(a) }}
+                        disabled={readSubmitted}
+                        className="w-full text-left px-4 py-2.5 min-h-[44px] flex items-center rounded-xl border text-sm transition-all"
+                        style={{
+                          background: correct ? 'rgba(52,211,153,0.1)' : wrong ? 'rgba(248,113,113,0.1)' : selected ? 'rgba(245,158,11,0.08)' : 'transparent',
+                          borderColor: correct ? '#34D399' : wrong ? '#F87171' : selected ? '#F59E0B' : '#334155',
+                          color: neutral ? '#64748B' : correct ? '#34D399' : wrong ? '#F87171' : '#F8FAFC',
+                        }}>
+                        <span className="font-medium mr-2">{String.fromCharCode(65 + oi)}.</span>{opt}
+                      </button>
                     )
                   })}
                 </div>
               </div>
             )
           })}
-
+        </div>
+        <div className="sticky bottom-0 pt-3 bg-navy-surface mt-4">
           {!readSubmitted ? (
-            <button onClick={() => setReadSubmitted(true)} disabled={!allReadAnswered}
+            <button onClick={advance} disabled={!pageAnswered}
               className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
-              Хариултаа илгээх
+              {isLastPassage ? 'Хариултаа илгээх' : 'Дараагийн нийтлэл →'}
             </button>
           ) : (
             <button onClick={() => setPhase('writing')}
-              className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5"
+              disabled={!allReadAnswered}
+              className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5 disabled:opacity-40"
               style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
               Writing →
             </button>
           )}
+        </div>
+      </div>
+    )
+
+    return (
+      <div className="min-h-dvh bg-navy flex flex-col">
+        <NavBar lessonTitle="Reading" />
+        <div className="px-4 pt-3 max-w-6xl mx-auto w-full">
+          <SectionProgress idx={sectionIdx} />
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold" style={{ color: '#64748B' }}>Нийтлэл {pi + 1}/{passages.length}</p>
+            <p className="text-xs font-semibold" style={{ color: '#64748B' }}>{readAnswers.filter(a => a !== null).length}/{totalReadQs} хариулсан</p>
+          </div>
+        </div>
+
+        {/* Mobile tabs */}
+        <div className="md:hidden flex-1 flex flex-col px-4 pb-4 min-h-0">
+          <div className="flex border-b border-navy-surface-2 mb-3">
+            <button onClick={() => setReadMobileTab('passage')}
+              className="flex-1 py-2.5 text-sm font-semibold transition-colors"
+              style={{
+                color: readMobileTab === 'passage' ? '#F59E0B' : '#64748B',
+                borderBottom: readMobileTab === 'passage' ? '2px solid #F59E0B' : '2px solid transparent',
+              }}>
+              📖 Нийтлэл
+            </button>
+            <button onClick={() => setReadMobileTab('questions')}
+              className="flex-1 py-2.5 text-sm font-semibold transition-colors"
+              style={{
+                color: readMobileTab === 'questions' ? '#F59E0B' : '#64748B',
+                borderBottom: readMobileTab === 'questions' ? '2px solid #F59E0B' : '2px solid transparent',
+              }}>
+              ❓ Асуулт ({answeredOnPage}/{pg?.questions.length ?? 0})
+            </button>
+          </div>
+          <div className="flex-1 min-h-0">
+            {readMobileTab === 'passage' ? PassagePane : QuestionsPane}
+          </div>
+        </div>
+
+        {/* Desktop split screen */}
+        <div className="hidden md:flex flex-1 gap-4 px-4 pb-4 max-w-6xl mx-auto w-full min-h-0">
+          <div className="w-1/2 min-h-0">{PassagePane}</div>
+          <div className="w-1/2 min-h-0">{QuestionsPane}</div>
         </div>
       </div>
     )

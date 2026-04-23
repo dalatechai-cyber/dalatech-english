@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
   const seed = typeof body.seed === 'number' ? body.seed : Date.now()
 
   const systemPrompt = `You are an IELTS Academic listening section generator. Session seed: ${seed}.
+Generate completely fresh content different from previous sessions — never reuse conversations, characters, or question phrasings.
 Return ONLY valid JSON matching this exact structure (no prose, no markdown fences):
 
 {
