@@ -261,10 +261,24 @@ export function IELTSTest() {
     setListenLoadProgress({ done: 0, total })
 
     ;(async () => {
-      const BATCH_SIZE = 8
+      const BATCH_SIZE = 4
       const urls: (string | null)[] = new Array(total).fill(null)
       const preloadStart = Date.now()
       console.log('[IELTS] TTS preload START — total turns:', total)
+
+      // Retry once on 502/upstream errors before falling back to Web Speech.
+      const loadWithRetry = async (text: string, voice: ElevenVoice): Promise<string> => {
+        try {
+          return await generateTTS(text, voice)
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err)
+          if (/502|503|504/.test(msg)) {
+            await new Promise(r => setTimeout(r, 1000))
+            return await generateTTS(text, voice)
+          }
+          throw err
+        }
+      }
 
       for (let i = 0; i < total; i += BATCH_SIZE) {
         if (cancelled) return
@@ -277,7 +291,7 @@ export function IELTSTest() {
             const voice: ElevenVoice = turn.speaker === 'A' ? 'alice' : 'george'
             const t = Date.now()
             try {
-              const url = await generateTTS(turn.text, voice)
+              const url = await loadWithRetry(turn.text, voice)
               urls[idx] = url
               console.log('[IELTS] TTS turn', idx, 'took', Date.now() - t, 'ms')
             } catch (err) {

@@ -1,8 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
-import { CLAUDE_MODEL } from '@/lib/constants'
 import { checkRateLimit } from '@/lib/rateLimit'
 
+// Haiku is ~10x faster than Sonnet for this small generation — acceptable
+// because listening conversation + 6 MCQ is simple structured output.
+const LISTENING_MODEL = 'claude-haiku-4-5-20251001'
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
@@ -13,35 +15,19 @@ export async function POST(req: NextRequest) {
     if (!body) return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
     const seed = typeof body.seed === 'number' ? body.seed : Date.now()
 
-    const systemPrompt = `You are an IELTS Academic listening section generator. Session seed: ${seed}.
-Return ONLY valid JSON matching this exact structure:
+    const systemPrompt = `Seed: ${seed}. Return ONLY valid JSON, no prose.
 
-{
-  "listening": {
-    "conversation": [
-      {"speaker": "A", "text": "..."},
-      {"speaker": "B", "text": "..."}
-    ],
-    "questions": [
-      {"question": "...", "options": ["A","B","C","D"], "correct": 0}
-    ]
-  }
-}
+{"listening":{"conversation":[{"speaker":"A","text":"..."},{"speaker":"B","text":"..."}],"questions":[{"question":"...","options":["A","B","C","D"],"correct":0}]}}
 
-LISTENING section rules:
-- 2 speakers: Speaker A and Speaker B
-- Academic context: university enrollment office, library orientation, student services, accommodation office, or study group
-- EXACTLY 12 turns total (6 exchanges × 2 speakers, alternating A then B)
-- Each turn 1-3 sentences
-- 6 multiple-choice questions testing key information from the conversation
-- "correct" is 0-based index
-- Vary context per seed so sessions feel distinct`
+Rules:
+- conversation: EXACTLY 10 turns (alternating A, B, A, B, ... 5 exchanges). Short academic context (university services / study group / library). Each turn 1-2 sentences.
+- questions: 6 multiple-choice, 4 options each, "correct" 0-based index.`
 
     const response = await client.messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: 2000,
+      model: LISTENING_MODEL,
+      max_tokens: 800,
       system: systemPrompt,
-      messages: [{ role: 'user', content: 'Generate the IELTS listening section now.' }],
+      messages: [{ role: 'user', content: 'Generate now.' }],
     })
 
     const text = response.content[0].type === 'text' ? response.content[0].text : ''
