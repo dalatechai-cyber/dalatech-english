@@ -37,27 +37,37 @@ function stripMarkers(text: string): string {
     .trim()
 }
 
+const ORB_COLORS: Record<OrbState, string> = {
+  idle: '#1E40AF',
+  speaking: '#F59E0B',
+  listening: '#38BDF8',
+  thinking: '#8B5CF6',
+}
+
+const ORB_STYLES: Record<OrbState, { outer: React.CSSProperties; middle: React.CSSProperties; inner: React.CSSProperties }> =
+  (Object.keys(ORB_COLORS) as OrbState[]).reduce((acc, state) => {
+    const c = ORB_COLORS[state]
+    acc[state] = {
+      outer: { width: 280, height: 280, border: `2px solid ${c}`, opacity: 0.2, boxShadow: `0 0 60px ${c}22` },
+      middle: { width: 200, height: 200, border: `2px solid ${c}`, opacity: 0.35, boxShadow: `0 0 40px ${c}33` },
+      inner: {
+        width: 120,
+        height: 120,
+        background: `radial-gradient(circle, ${c}66 0%, ${c}33 50%, ${c}11 100%)`,
+        border: `2px solid ${c}99`,
+        boxShadow: `0 0 30px ${c}55, 0 0 60px ${c}33, 0 0 100px ${c}11`,
+      },
+    }
+    return acc
+  }, {} as Record<OrbState, { outer: React.CSSProperties; middle: React.CSSProperties; inner: React.CSSProperties }>)
+
 function SpeakOrb({ state }: { state: OrbState }) {
-  const colors: Record<OrbState, string> = {
-    idle: '#1E40AF',
-    speaking: '#F59E0B',
-    listening: '#38BDF8',
-    thinking: '#8B5CF6',
-  }
-  const c = colors[state]
+  const s = ORB_STYLES[state]
   return (
     <div className="relative flex items-center justify-center" style={{ width: 280, height: 280 }}>
-      <div className={`absolute rounded-full orb-ring-outer orb-${state}`}
-        style={{ width: 280, height: 280, border: `2px solid ${c}`, opacity: 0.2, boxShadow: `0 0 60px ${c}22` }} />
-      <div className={`absolute rounded-full orb-ring-middle orb-${state}`}
-        style={{ width: 200, height: 200, border: `2px solid ${c}`, opacity: 0.35, boxShadow: `0 0 40px ${c}33` }} />
-      <div className={`orb-inner orb-${state} rounded-full flex items-center justify-center`}
-        style={{
-          width: 120, height: 120,
-          background: `radial-gradient(circle, ${c}66 0%, ${c}33 50%, ${c}11 100%)`,
-          border: `2px solid ${c}99`,
-          boxShadow: `0 0 30px ${c}55, 0 0 60px ${c}33, 0 0 100px ${c}11`,
-        }} />
+      <div className={`absolute rounded-full orb-ring-outer orb-${state}`} style={s.outer} />
+      <div className={`absolute rounded-full orb-ring-middle orb-${state}`} style={s.middle} />
+      <div className={`orb-inner orb-${state} rounded-full flex items-center justify-center`} style={s.inner} />
     </div>
   )
 }
@@ -88,19 +98,29 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
   const finishedRef = useRef(false)
   const prepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const part2TimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const finishTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const cleanup = useCallback(() => {
     if (prepTimerRef.current) { clearInterval(prepTimerRef.current); prepTimerRef.current = null }
     if (part2TimerRef.current) { clearInterval(part2TimerRef.current); part2TimerRef.current = null }
-    try { dcRef.current?.close() } catch { /* ignore */ }
-    dcRef.current = null
-    try { pcRef.current?.close() } catch { /* ignore */ }
-    pcRef.current = null
-    localStreamRef.current?.getTracks().forEach(t => t.stop())
-    localStreamRef.current = null
+    if (finishTimeoutRef.current) { clearTimeout(finishTimeoutRef.current); finishTimeoutRef.current = null }
+    if (dcRef.current) {
+      try { dcRef.current.close() } catch { /* ignore */ }
+      dcRef.current = null
+    }
+    if (pcRef.current) {
+      try { pcRef.current.close() } catch { /* ignore */ }
+      pcRef.current = null
+    }
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(t => { try { t.stop() } catch { /* ignore */ } })
+      localStreamRef.current = null
+    }
     if (audioElRef.current) {
       try { audioElRef.current.pause() } catch { /* ignore */ }
       audioElRef.current.srcObject = null
+      try { document.body.removeChild(audioElRef.current) } catch { /* ignore */ }
+      audioElRef.current = null
     }
   }, [])
 
@@ -216,7 +236,8 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
       transcriptRef.current.push({ role: 'examiner', text: cleaned, part: partRef.current })
     }
     if (text.includes('[TEST_COMPLETE]')) {
-      setTimeout(() => { finishTest() }, 1500)
+      if (finishTimeoutRef.current) clearTimeout(finishTimeoutRef.current)
+      finishTimeoutRef.current = setTimeout(finishTest, 1500)
     }
   }, [content.speaking.part2Card, finishTest, startPart2SpeakingCountdown, startPrepCountdown])
 
@@ -318,6 +339,8 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
       if (!audioElRef.current) {
         const el = document.createElement('audio')
         el.autoplay = true
+        el.style.display = 'none'
+        document.body.appendChild(el)
         audioElRef.current = el
       }
       pc.ontrack = (ev) => {
@@ -442,6 +465,15 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
     }
   }, [connState, content.speaking, cleanup, processExaminerFinal, processStudentUtterance])
 
+  const handleReconnect = useCallback(async () => {
+    cleanup()
+    await new Promise(resolve => setTimeout(resolve, 500))
+    setConnState('idle')
+    setConnectionError(null)
+    setMicDenied(false)
+    connect()
+  }, [cleanup, connect])
+
   useEffect(() => {
     return () => { cleanup() }
   }, [cleanup])
@@ -515,7 +547,7 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
             </p>
             <div className="flex gap-3 flex-wrap justify-center">
               <button
-                onClick={() => { setConnState('idle'); setConnectionError(null); setMicDenied(false); connect() }}
+                onClick={handleReconnect}
                 className="px-5 py-3 rounded-xl font-semibold text-sm transition-all"
                 style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
                 🔄 Дахин оролдох

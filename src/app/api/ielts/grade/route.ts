@@ -6,18 +6,33 @@ import { checkRateLimit } from '@/lib/rateLimit'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-function normalizeText(s: string): string {
-  return s.toLowerCase().trim().replace(/[.,!?;:"'`]/g, '').replace(/\s+/g, ' ')
+function normalize(s: string): string {
+  return s
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ')
+}
+
+function isCorrect(studentAnswer: string, acceptedAnswer: string): boolean {
+  const s = normalize(studentAnswer)
+  const a = normalize(acceptedAnswer)
+
+  if (s === a) return true
+
+  const acceptedWords = a.split(' ').filter(w => w.length > 2)
+  const studentWords = s.split(' ')
+
+  if (acceptedWords.length === 0) return s === a
+
+  const matches = acceptedWords.filter(w => studentWords.includes(w))
+  return matches.length / acceptedWords.length >= 0.8
 }
 
 function isTextCorrect(student: string, accepted: string[] | undefined): boolean {
   if (!accepted || accepted.length === 0) return false
-  const n = normalizeText(student)
-  if (!n) return false
-  return accepted.some(a => {
-    const na = normalizeText(a)
-    return na === n || n.includes(na) || na.includes(n)
-  })
+  if (!student || !student.trim()) return false
+  return accepted.some(a => isCorrect(student, a))
 }
 
 function countCorrect(answers: IELTSAnswer[], questions: IELTSQuestion[]): number {
@@ -159,12 +174,6 @@ Score each criterion 1-9. Return this JSON:
       speakingFeedback,
       writingCriteria,
       speakingCriteria,
-      rawCounts: {
-        listeningCorrect: listenCorrect,
-        listeningTotal: listenTotal,
-        readingCorrect: readCorrect,
-        readingTotal: readTotal,
-      },
     })
   } catch (e) {
     console.error('IELTS grade error:', e)

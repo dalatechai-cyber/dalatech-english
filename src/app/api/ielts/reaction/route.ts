@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import { CLAUDE_HAIKU_MODEL } from '@/lib/constants'
 import { checkRateLimit } from '@/lib/rateLimit'
+import { sanitizeForPrompt } from '@/lib/sanitize'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -84,8 +85,8 @@ export async function POST(req: NextRequest) {
     const raw = await req.json().catch(() => null) as RequestBody | null
     if (!raw) return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
     const body = raw
-    const transcript = (body.transcript ?? '').trim().slice(0, 1000)
-    const question = (body.question ?? '').trim().slice(0, 500)
+    const transcript = sanitizeForPrompt(body.transcript ?? '', 1000)
+    const question = sanitizeForPrompt(body.question ?? '', 500)
     const part = (body.part ?? 1) as 1 | 2 | 3
     const probeUsed = !!body.probeUsed
 

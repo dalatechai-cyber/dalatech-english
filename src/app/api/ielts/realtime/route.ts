@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit } from '@/lib/rateLimit'
+import { sanitizeForPrompt } from '@/lib/sanitize'
 
 export const runtime = 'nodejs'
 
@@ -11,9 +12,15 @@ function buildInstructions(ctx: {
   part1Questions?: string[]
   part3Questions?: string[]
 }): string {
-  const card = (ctx.part2Card ?? '').trim()
-  const p1 = (ctx.part1Questions ?? []).filter(q => q && q.trim()).slice(0, 8)
-  const p3 = (ctx.part3Questions ?? []).filter(q => q && q.trim()).slice(0, 4)
+  const card = sanitizeForPrompt(ctx.part2Card ?? '', 1000)
+  const p1 = (ctx.part1Questions ?? [])
+    .map(q => sanitizeForPrompt(q ?? '', 300))
+    .filter(q => q.length > 0)
+    .slice(0, 8)
+  const p3 = (ctx.part3Questions ?? [])
+    .map(q => sanitizeForPrompt(q ?? '', 300))
+    .filter(q => q.length > 0)
+    .slice(0, 4)
 
   const part1List = p1.length
     ? `\nUse these 8 Part 1 questions in order:\n${p1.map((q, i) => `  ${i + 1}. ${q}`).join('\n')}`
@@ -131,8 +138,9 @@ export async function POST(req: NextRequest) {
 
     if (!res.ok) {
       const errText = await res.text().catch(() => '')
+      console.error('[Realtime] OpenAI error:', res.status, errText)
       return NextResponse.json(
-        { error: 'OpenAI session creation failed', detail: errText.slice(0, 400), status: res.status },
+        { error: 'Speaking service unavailable. Please try again.' },
         { status: 502 },
       )
     }
@@ -143,8 +151,9 @@ export async function POST(req: NextRequest) {
     }
 
     if (!session.client_secret?.value) {
+      console.error('[Realtime] OpenAI returned no client_secret')
       return NextResponse.json(
-        { error: 'OpenAI did not return a client_secret' },
+        { error: 'Speaking service unavailable. Please try again.' },
         { status: 502 },
       )
     }
@@ -157,10 +166,10 @@ export async function POST(req: NextRequest) {
       voice: VOICE,
     })
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[Realtime] OpenAI error:', err)
     return NextResponse.json(
-      { error: 'Realtime session error', detail: msg.slice(0, 400) },
-      { status: 500 },
+      { error: 'Speaking service unavailable. Please try again.' },
+      { status: 502 },
     )
   }
 }

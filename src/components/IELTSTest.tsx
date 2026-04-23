@@ -37,12 +37,6 @@ interface GradeResult {
   speakingFeedback: string
   writingCriteria?: { taskAchievement: number; coherenceCohesion: number; lexicalResource: number; grammaticalRange: number }
   speakingCriteria?: { fluencyCohesion: number; lexicalResource: number; grammaticalRange: number; pronunciation: number }
-  rawCounts?: {
-    listeningCorrect: number
-    listeningTotal: number
-    readingCorrect: number
-    readingTotal: number
-  }
 }
 
 const SHORT_REACTIONS = [
@@ -338,12 +332,16 @@ export function IELTSTest() {
   // ── Pre-generate listening audio in small parallel batches ──
   // ElevenLabs free tier caps at 4 concurrent requests; BATCH_SIZE=3 stays safely under it.
   // Gate on a ref (not state) so setState inside the effect doesn't retrigger cleanup.
+  const ttsAbortRef = useRef<AbortController | null>(null)
   useEffect(() => {
     if (phase !== 'listening' || !content) return
     if (listenLoadStartedRef.current) return
     listenLoadStartedRef.current = true
 
     let cancelled = false
+    const controller = new AbortController()
+    ttsAbortRef.current = controller
+    const { signal } = controller
     setListenAudioLoading(true)
     setListenNotice(null)
 
@@ -358,22 +356,25 @@ export function IELTSTest() {
       // Retry once on 502/upstream errors before falling back to Web Speech.
       const loadWithRetry = async (text: string, voice: ElevenVoice): Promise<string> => {
         try {
-          return await generateTTS(text, voice)
+          return await generateTTS(text, voice, signal)
         } catch (err) {
+          if (signal.aborted) throw err
           const msg = err instanceof Error ? err.message : String(err)
           if (/502|503|504/.test(msg)) {
             await new Promise(r => setTimeout(r, 1000))
-            return await generateTTS(text, voice)
+            if (signal.aborted) throw err
+            return await generateTTS(text, voice, signal)
           }
           throw err
         }
       }
 
       for (let i = 0; i < total; i += BATCH_SIZE) {
-        if (cancelled) return
+        if (cancelled || signal.aborted) return
         const batch = turns.slice(i, i + BATCH_SIZE)
         await Promise.all(
           batch.map(async (turn, j) => {
+            if (signal.aborted) return
             const idx = i + j
             const voice: ElevenVoice = turn.speaker === 'A' ? 'alice' : 'george'
             try {
@@ -390,7 +391,7 @@ export function IELTSTest() {
         )
       }
 
-      if (cancelled) return
+      if (cancelled || signal.aborted) return
       const successCount = urls.filter(u => u !== null).length
       const failedCount = total - successCount
       listenAudiosRef.current = urls.map(u => u ?? '')
@@ -406,7 +407,11 @@ export function IELTSTest() {
       setListenAudioLoading(false)
     })()
 
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+      controller.abort()
+      if (ttsAbortRef.current === controller) ttsAbortRef.current = null
+    }
   }, [phase, content])
 
   // ── Pre-generate Part 1 examiner audio in background when entering speaking phase ──
@@ -484,14 +489,23 @@ export function IELTSTest() {
   }, [writingTask1, writingTask2, phase, content, listenAnswers, readAnswers, readPassageIdx])
 
   // ── Writing countdown timers ──
+  const writingTaskViewRef = useRef<1 | 2>(1)
+  useEffect(() => { writingTaskViewRef.current = writingTaskView }, [writingTaskView])
+  const writingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   useEffect(() => {
     if (phase !== 'writing') return
-    const id = setInterval(() => {
-      if (writingTaskView === 1) setTask1Remaining(t => Math.max(0, t - 1))
+    if (writingTimerRef.current) clearInterval(writingTimerRef.current)
+    writingTimerRef.current = setInterval(() => {
+      if (writingTaskViewRef.current === 1) setTask1Remaining(t => Math.max(0, t - 1))
       else setTask2Remaining(t => Math.max(0, t - 1))
     }, 1000)
-    return () => clearInterval(id)
-  }, [phase, writingTaskView])
+    return () => {
+      if (writingTimerRef.current) {
+        clearInterval(writingTimerRef.current)
+        writingTimerRef.current = null
+      }
+    }
+  }, [phase])
 
   // ── Part 2 long-turn countdown tick ──
   useEffect(() => {
@@ -1742,10 +1756,10 @@ export function IELTSTest() {
       { label: 'Pronunciation', value: gradeResult.speakingCriteria.pronunciation },
     ] : []
 
-    const listenTotal = gradeResult.rawCounts?.listeningTotal ?? 10
-    const listenCorrect = gradeResult.rawCounts?.listeningCorrect ?? 0
-    const readTotal = gradeResult.rawCounts?.readingTotal ?? 30
-    const readCorrect = gradeResult.rawCounts?.readingCorrect ?? 0
+    const listenTotal = content?.listening.questions.length ?? 10
+    const readTotal = content?.reading.passages.reduce((n, p) => n + p.questions.length, 0) ?? 30
+    const listenCorrect = Math.round((gradeResult.listening / 9) * listenTotal)
+    const readCorrect = Math.round((gradeResult.reading / 9) * readTotal)
     const writingPts = Math.round((gradeResult.writing * 6) / 9)
     const speakPts = Math.round((gradeResult.speaking * 15) / 9)
     const totalPts = listenCorrect + readCorrect + writingPts + speakPts
