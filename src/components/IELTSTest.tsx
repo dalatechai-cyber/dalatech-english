@@ -146,6 +146,8 @@ export function IELTSTest() {
   const [error, setError] = useState<string | null>(null)
   const [content, setContent] = useState<IELTSContent | null>(null)
   const [gradeResult, setGradeResult] = useState<GradeResult | null>(null)
+  const [isPartialResult, setIsPartialResult] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   // ── Listening ──
   const [listenAnswers, setListenAnswers] = useState<(number | null)[]>(Array(6).fill(null))
@@ -198,6 +200,7 @@ export function IELTSTest() {
   useEffect(() => {
     setTtsSupported(isSpeechSupported())
     setSttSupported(isSpeechRecognitionSupported())
+    setMounted(true)
   }, [])
 
   // ── Cleanup on unmount / phase change ──
@@ -240,8 +243,8 @@ export function IELTSTest() {
     }
   }, [phase])
 
-  // ── Pre-generate listening audio SEQUENTIALLY when entering listening phase ──
-  // ElevenLabs free tier caps at 4 concurrent requests; generate one turn at a time.
+  // ── Pre-generate listening audio in small parallel batches ──
+  // ElevenLabs free tier caps at 4 concurrent requests; BATCH_SIZE=3 stays safely under it.
   // Gate on a ref (not state) so setState inside the effect doesn't retrigger cleanup.
   useEffect(() => {
     if (phase !== 'listening' || !content) return
@@ -253,45 +256,51 @@ export function IELTSTest() {
     setListenNotice(null)
 
     const turns = content.listening.conversation
-    setListenLoadProgress({ done: 0, total: turns.length })
+    const total = turns.length
+    setListenLoadProgress({ done: 0, total })
 
     ;(async () => {
-      const urls: string[] = new Array(turns.length).fill('')
+      const urls: string[] = new Array(total).fill('')
       let failedCount = 0
+      let completed = 0
 
-      for (let i = 0; i < turns.length; i++) {
-        if (cancelled) return
-        const turn = turns[i]
+      const loadOne = async (turnIdx: number): Promise<boolean> => {
+        const turn = turns[turnIdx]
         const voice: ElevenVoice = turn.speaker === 'A' ? 'alice' : 'george'
-
-        let success = false
         for (let attempt = 1; attempt <= 2; attempt++) {
-          if (cancelled) return
+          if (cancelled) return false
           const ctrl = new AbortController()
           const timeoutId = setTimeout(() => ctrl.abort(), 10000)
           try {
             const url = await generateTTS(turn.text, voice, ctrl.signal)
-            if (cancelled) return
-            urls[i] = url
-            success = true
-            break
+            if (cancelled) return false
+            urls[turnIdx] = url
+            return true
           } catch {
-            if (attempt < 2) {
-              await new Promise(r => setTimeout(r, 800))
-            }
+            if (attempt < 2) await new Promise(r => setTimeout(r, 800))
           } finally {
             clearTimeout(timeoutId)
           }
         }
-        if (!success) {
-          failedCount++
-        }
-        // Update progress immediately so UI reflects each turn as it completes
-        setListenLoadProgress({ done: i + 1, total: turns.length })
+        return false
+      }
+
+      const BATCH_SIZE = 3
+      for (let i = 0; i < total; i += BATCH_SIZE) {
+        if (cancelled) return
+        const indices: number[] = []
+        for (let j = 0; j < BATCH_SIZE && i + j < total; j++) indices.push(i + j)
+        const results = await Promise.all(indices.map(idx => loadOne(idx)))
+        if (cancelled) return
+        results.forEach(ok => {
+          if (!ok) failedCount++
+          completed++
+        })
+        setListenLoadProgress({ done: completed, total })
       }
 
       if (cancelled) return
-      const successCount = turns.length - failedCount
+      const successCount = total - failedCount
       listenAudiosRef.current = urls
       if (successCount === 0) {
         setListenAudioError(true)
@@ -577,9 +586,11 @@ export function IELTSTest() {
     setSpeakContinue(false)
 
     if (speakAnswersRef.current.length > 0) {
+      setIsPartialResult(true)
       gradeAndShowResults()
     } else {
-      setSpeakPhase('ready')
+      setError('Шалгалт эхлээгүй байна')
+      setPhase('intro')
     }
   }
 
@@ -742,6 +753,7 @@ export function IELTSTest() {
     setSpeakContinue(false)
     setSpeakNotice(null)
     setGradeResult(null)
+    setIsPartialResult(false)
 
     const usedTopics = (() => { try { return JSON.parse(localStorage.getItem('core-ielts-used-topics') ?? '[]') as string[] } catch { return [] } })()
 
@@ -768,6 +780,8 @@ export function IELTSTest() {
   const sectionIdx = (['listening', 'reading', 'writing', 'speaking'] as Phase[]).indexOf(phase)
 
   // ══════════════════════════════════════════
+  // Prevent SSR/hydration flash on direct /ielts navigation
+  if (!mounted) return <Spinner label="Ачаалж байна..." />
   // ─── Intro ───
   if (phase === 'intro') {
     return (
@@ -1260,6 +1274,11 @@ export function IELTSTest() {
       <div className="min-h-dvh bg-navy flex flex-col">
         <NavBar lessonTitle="IELTS — Үр дүн" />
         <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full page-enter-up">
+          {isPartialResult && (
+            <div className="mb-4 rounded-xl border p-3 text-sm" style={{ background: '#78350F', borderColor: '#F59E0B', color: '#FEF3C7' }}>
+              Шалгалт дутуу дууссан. Өгсөн хариултуудын үндсэн дээр үнэлгээ:
+            </div>
+          )}
           <div className="text-center mb-6 py-6">
             <div className="text-8xl font-extrabold mb-2 leading-none" style={{ color: bandColor(gradeResult.overall), letterSpacing: '-0.04em' }}>{gradeResult.overall}</div>
             <div className="text-text-secondary text-sm mb-1">Нийт IELTS Band оноо</div>
@@ -1307,7 +1326,7 @@ export function IELTSTest() {
             </div>
           )}
           <div className="flex flex-col gap-3">
-            <button onClick={() => { stopSpeech(); setPhase('intro'); setGradeResult(null) }} className="w-full font-bold py-3 min-h-[48px] rounded-xl hover:-translate-y-0.5 transition-all" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>Дахин өгөх</button>
+            <button onClick={() => { stopSpeech(); setPhase('intro'); setGradeResult(null); setIsPartialResult(false) }} className="w-full font-bold py-3 min-h-[48px] rounded-xl hover:-translate-y-0.5 transition-all" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>Дахин өгөх</button>
             <a href="/profile" className="w-full font-semibold py-3 min-h-[48px] rounded-xl border text-center text-sm" style={{ background: '#1E293B', borderColor: '#334155', color: '#94A3B8' }}>Профайл руу буцах →</a>
           </div>
         </div>
