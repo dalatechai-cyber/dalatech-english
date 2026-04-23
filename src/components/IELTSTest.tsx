@@ -261,7 +261,7 @@ export function IELTSTest() {
     setListenLoadProgress({ done: 0, total })
 
     ;(async () => {
-      const BATCH_SIZE = 4
+      const BATCH_SIZE = 3
       const urls: (string | null)[] = new Array(total).fill(null)
 
       // Retry once on 502/upstream errors before falling back to Web Speech.
