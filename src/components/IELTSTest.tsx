@@ -263,8 +263,6 @@ export function IELTSTest() {
     ;(async () => {
       const BATCH_SIZE = 4
       const urls: (string | null)[] = new Array(total).fill(null)
-      const preloadStart = Date.now()
-      console.log('[IELTS] TTS preload START — total turns:', total)
 
       // Retry once on 502/upstream errors before falling back to Web Speech.
       const loadWithRetry = async (text: string, voice: ElevenVoice): Promise<string> => {
@@ -283,20 +281,15 @@ export function IELTSTest() {
       for (let i = 0; i < total; i += BATCH_SIZE) {
         if (cancelled) return
         const batch = turns.slice(i, i + BATCH_SIZE)
-        const batchLabel = `[IELTS] batch-${i}`
-        console.time(batchLabel)
         await Promise.all(
           batch.map(async (turn, j) => {
             const idx = i + j
             const voice: ElevenVoice = turn.speaker === 'A' ? 'alice' : 'george'
-            const t = Date.now()
             try {
               const url = await loadWithRetry(turn.text, voice)
               urls[idx] = url
-              console.log('[IELTS] TTS turn', idx, 'took', Date.now() - t, 'ms')
-            } catch (err) {
+            } catch {
               urls[idx] = null
-              console.log('[IELTS] TTS turn', idx, 'FAILED after', Date.now() - t, 'ms', err)
             }
             setListenLoadProgress({
               done: urls.filter(u => u !== null).length,
@@ -304,9 +297,7 @@ export function IELTSTest() {
             })
           })
         )
-        console.timeEnd(batchLabel)
       }
-      console.log('[IELTS] TTS preload DONE', Date.now() - preloadStart, 'ms')
 
       if (cancelled) return
       const successCount = urls.filter(u => u !== null).length
@@ -772,17 +763,14 @@ export function IELTSTest() {
 
     try {
       const seed = Date.now()
-      const pipelineStart = Date.now()
 
       // Fire both endpoints in parallel: listening is fast and unblocks TTS preload;
       // content (reading/writing/speaking) generates in background.
-      console.log('[IELTS] /api/ielts/generate-listening START')
       const listenPromise = fetch('/api/ielts/generate-listening', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ seed }),
       })
-      console.log('[IELTS] /api/ielts/generate-content START')
       const contentPromise = fetch('/api/ielts/generate-content', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -790,9 +778,11 @@ export function IELTSTest() {
       })
 
       const listenRes = await listenPromise
-      if (!listenRes.ok) throw new Error('Listening failed')
+      if (!listenRes.ok) {
+        const errBody = await listenRes.text().catch(() => '')
+        throw new Error(`Listening failed (${listenRes.status}): ${errBody.slice(0, 200)}`)
+      }
       const listenData = await listenRes.json() as { listening: IELTSContent['listening'] }
-      console.log('[IELTS] /api/ielts/generate-listening DONE', Date.now() - pipelineStart, 'ms')
       if (!listenData.listening?.conversation) throw new Error('Invalid listening')
 
       // Set partial content so the listening preload effect fires immediately.
@@ -808,9 +798,8 @@ export function IELTSTest() {
       // Merge reading/writing/speaking when they arrive (in parallel with TTS preload).
       contentPromise
         .then(async res => {
-          if (!res.ok) throw new Error('Content failed')
+          if (!res.ok) throw new Error(`Content failed (${res.status})`)
           const contentData = await res.json() as { reading: IELTSContent['reading']; writing: IELTSContent['writing']; speaking: IELTSContent['speaking'] }
-          console.log('[IELTS] /api/ielts/generate-content DONE', Date.now() - pipelineStart, 'ms')
           if (!contentData.reading || !contentData.writing || !contentData.speaking) throw new Error('Invalid content')
 
           const part2Topic = contentData.speaking.part2Card.split('\n')[0]?.slice(0, 60) ?? ''
@@ -826,7 +815,7 @@ export function IELTSTest() {
           setReadAnswers(Array(totalReadQs).fill(null))
         })
         .catch(err => {
-          console.error('[IELTS] content fetch failed:', err)
+          console.error('IELTS content fetch failed:', err)
         })
     } catch {
       setError('Тест ачаалахад алдаа гарлаа. Дахин оролдоно уу.')
