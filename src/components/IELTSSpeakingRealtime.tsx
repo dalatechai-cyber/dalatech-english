@@ -27,6 +27,13 @@ function mmss(sec: number): string {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
+function isEnglishText(text: string): boolean {
+  if (!text) return false
+  const latinChars = text.match(/[a-zA-Z\s.,!?]/g)
+  if (!latinChars) return false
+  return latinChars.length / text.length > 0.5
+}
+
 function stripMarkers(text: string): string {
   return text
     .replace(/\[PART_2_START\]/g, '')
@@ -406,7 +413,7 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
             case 'conversation.item.input_audio_transcription.completed':
               if (typeof msg.transcript === 'string') {
                 const t = msg.transcript.trim()
-                if (t && t !== 'CONTINUE_AFTER_PREP') {
+                if (t && t !== 'CONTINUE_AFTER_PREP' && isEnglishText(t)) {
                   processStudentUtterance(t)
                   setStudentLive(t)
                 }
@@ -490,16 +497,34 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
   return (
     <div className="min-h-dvh flex flex-col" style={{ background: '#050D1A' }}>
       {connState !== 'idle' && (
-        <div className="fixed top-4 right-4 z-50">
-          <button
-            onClick={handleStop}
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors"
-            style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #EF4444', color: '#FCA5A5' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.4)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)' }}>
-            ⏹ Дуусгах
-          </button>
-        </div>
+        <>
+          <div className="hidden md:block fixed top-4 right-4 z-50">
+            <button
+              onClick={handleStop}
+              className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors"
+              style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #EF4444', color: '#FCA5A5' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.4)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)' }}>
+              ⏹ Дуусгах
+            </button>
+          </div>
+          <div className="md:hidden fixed z-50" style={{ bottom: 24, left: '50%', transform: 'translateX(-50%)' }}>
+            <button
+              onClick={handleStop}
+              className="rounded-xl font-semibold text-sm"
+              style={{
+                minWidth: 160,
+                minHeight: 52,
+                padding: '14px 32px',
+                background: 'rgba(239, 68, 68, 0.9)',
+                border: '1px solid #EF4444',
+                color: '#FFF5F5',
+                boxShadow: '0 8px 24px rgba(239,68,68,0.4)',
+              }}>
+              ⏹ Дуусгах
+            </button>
+          </div>
+        </>
       )}
 
       <NavBar lessonTitle="Speaking" />

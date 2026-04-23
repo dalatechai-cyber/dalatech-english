@@ -1,6 +1,5 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { flushSync } from 'react-dom'
 import { useSearchParams } from 'next/navigation'
 import type { Message, LevelCode } from '@/lib/types'
 import { getLevelMeta } from '@/lib/levels'
@@ -26,6 +25,17 @@ export function FreeChatInterface({ level }: FreeChatInterfaceProps) {
   const [hasRecordedStreak, setHasRecordedStreak] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const streamBufferRef = useRef('')
+  const streamTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (streamTimerRef.current) {
+        clearTimeout(streamTimerRef.current)
+        streamTimerRef.current = null
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const greeting = drillTopic
@@ -85,19 +95,34 @@ export function FreeChatInterface({ level }: FreeChatInterfaceProps) {
       if (!res.body) throw new Error('No stream body')
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
-      let fullContent = ''
+      streamBufferRef.current = ''
+
+      const flush = () => {
+        const snapshot = streamBufferRef.current
+        setMessages(prev =>
+          prev.map(m => (m.id === aiMsgId ? { ...m, content: snapshot } : m))
+        )
+        streamTimerRef.current = null
+      }
 
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
         const chunk = decoder.decode(value, { stream: true })
-        fullContent += chunk
-        flushSync(() => {
-          setMessages(prev =>
-            prev.map(m => (m.id === aiMsgId ? { ...m, content: fullContent } : m))
-          )
-        })
+        streamBufferRef.current += chunk
+        if (!streamTimerRef.current) {
+          streamTimerRef.current = setTimeout(flush, 30)
+        }
       }
+
+      if (streamTimerRef.current) {
+        clearTimeout(streamTimerRef.current)
+        streamTimerRef.current = null
+      }
+      const fullContent = streamBufferRef.current
+      setMessages(prev =>
+        prev.map(m => (m.id === aiMsgId ? { ...m, content: fullContent } : m))
+      )
 
       const corrections = parseCorrectionsFromContent(fullContent, level)
       corrections.forEach(c => saveMistake(c))

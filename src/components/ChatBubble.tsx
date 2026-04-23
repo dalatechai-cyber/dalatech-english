@@ -1,5 +1,6 @@
 'use client'
 import type { Message } from '@/lib/types'
+import ReactMarkdown from 'react-markdown'
 import { ErrorCorrection } from './ErrorCorrection'
 import { PronunciationHint } from './PronunciationHint'
 
@@ -43,6 +44,10 @@ export function ChatBubble({ message }: ChatBubbleProps) {
       >
         {isAI && hasCorrection ? (
           <ErrorCorrection content={message.content} />
+        ) : isAI ? (
+          <div className="prose prose-invert prose-sm max-w-none text-sm leading-relaxed">
+            <ReactMarkdown>{cleanContent || message.content}</ReactMarkdown>
+          </div>
         ) : (
           <p className="text-sm whitespace-pre-wrap leading-relaxed">{cleanContent || message.content}</p>
         )}

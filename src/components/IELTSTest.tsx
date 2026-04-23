@@ -1411,16 +1411,33 @@ export function IELTSTest() {
     }
 
     const PassagePane = (
-      <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 h-full overflow-y-auto">
-        <div className="text-xs font-semibold text-gold uppercase tracking-wide mb-2 sticky top-0 z-20 bg-[#0F172A] border-b border-slate-700 pb-2 -mx-4 px-4">
+      <div
+        className="bg-navy-surface border border-navy-surface-2 rounded-2xl h-full overflow-y-auto"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
+        <div
+          className="text-xs font-semibold text-gold uppercase tracking-wide"
+          style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 30,
+            backgroundColor: '#0F172A',
+            padding: '12px 16px',
+            marginBottom: '12px',
+            borderBottom: '1px solid #334155',
+          }}
+        >
           📖 Нийтлэл {pi + 1}/{passages.length}
         </div>
-        <p className="text-sm leading-relaxed text-text-primary whitespace-pre-line">{pg?.passage}</p>
+        <p className="text-sm leading-relaxed text-text-primary whitespace-pre-line px-4 pb-4">{pg?.passage}</p>
       </div>
     )
 
     const QuestionsPane = (
-      <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 h-full overflow-y-auto flex flex-col">
+      <div
+        className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 h-full overflow-y-auto flex flex-col"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <div className="space-y-4 flex-1">
           {pg?.questions.map((q, qi) => {
             const globalIdx = startIdx + qi
@@ -1477,7 +1494,15 @@ export function IELTSTest() {
 
         {/* Mobile tabs */}
         <div className="md:hidden flex-1 flex flex-col px-4 pb-4 min-h-0">
-          <div className="flex border-b border-navy-surface-2 mb-3 flex-shrink-0 sticky top-0 z-10 bg-navy">
+          <div
+            className="flex border-b border-navy-surface-2 mb-3 flex-shrink-0"
+            style={{
+              position: 'sticky',
+              top: 48,
+              zIndex: 20,
+              backgroundColor: '#0F172A',
+            }}
+          >
             <button onClick={() => setReadMobileTab('passage')}
               className="flex-1 py-2.5 min-h-[44px] text-sm font-semibold transition-colors"
               style={{
@@ -1495,7 +1520,7 @@ export function IELTSTest() {
               ❓ Асуулт ({answeredOnPage}/{pg?.questions.length ?? 0})
             </button>
           </div>
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0" style={{ paddingTop: 4 }}>
             {readMobileTab === 'passage' ? PassagePane : QuestionsPane}
           </div>
         </div>
