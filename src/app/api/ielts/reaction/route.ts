@@ -5,19 +5,38 @@ import { checkRateLimit } from '@/lib/rateLimit'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-const BRITISH_ACK = [
-  'I see, thank you.',
+// Natural reactions for the IELTS examiner — avoid "Great!", "Excellent!",
+// "Amazing!", "Perfect!" (feel fake). Mix short acknowledgments, genuine
+// interest, natural transitions, and light chuckles.
+const ACK_PART1 = [
+  'Mm-hmm.',
   'Right.',
-  'Indeed.',
-  'Thank you.',
-  "That's interesting.",
-  'Mmm, I see.',
+  'I see.',
+  'Okay.',
+  'Sure.',
+  "Oh, that's interesting.",
+  "That's a good point.",
+  "Ha, yes, that's quite common actually.",
+  "Right, I know what you mean!",
+]
+const ACK_PART3 = [
+  'Right.',
+  'I see.',
+  'Mm-hmm.',
+  "That's an interesting point.",
+  "Yes, I can see why you'd think that.",
+  'Okay.',
 ]
 const PROBES = [
   'Could you elaborate on that a little more?',
   'Can you give me an example?',
   'Tell me a bit more about that.',
 ]
+
+function pickAck(part: 1 | 2 | 3): string {
+  const pool = part === 3 ? ACK_PART3 : ACK_PART1
+  return pool[Math.floor(Math.random() * pool.length)]
+}
 
 function wordCount(t: string) {
   return t.trim().split(/\s+/).filter(Boolean).length
@@ -30,7 +49,7 @@ interface ReactionPayload {
   probeUsed: boolean
 }
 
-function fallback(transcript: string, probeUsed: boolean): ReactionPayload {
+function fallback(transcript: string, probeUsed: boolean, part: 1 | 2 | 3 = 1): ReactionPayload {
   const wc = wordCount(transcript)
   if (wc < 30 && !probeUsed) {
     return {
@@ -41,7 +60,7 @@ function fallback(transcript: string, probeUsed: boolean): ReactionPayload {
     }
   }
   return {
-    reaction: BRITISH_ACK[Math.floor(Math.random() * BRITISH_ACK.length)],
+    reaction: pickAck(part),
     followUp: null,
     moveToNext: true,
     probeUsed,
@@ -70,15 +89,15 @@ export async function POST(req: NextRequest) {
     const part = (body.part ?? 1) as 1 | 2 | 3
     const probeUsed = !!body.probeUsed
 
-    if (!transcript) return NextResponse.json(fallback('', probeUsed))
-    if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json(fallback(transcript, probeUsed))
+    if (!transcript) return NextResponse.json(fallback('', probeUsed, part))
+    if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json(fallback(transcript, probeUsed, part))
 
     const wc = wordCount(transcript)
     const partGuide = part === 3
-      ? 'This is Part 3 (discussion). A follow-up may gently challenge the student — reference their own words, ask whether it might change in the future, or compare Mongolia to other countries. Feel intellectually engaged.'
+      ? 'This is Part 3 (discussion). Be more intellectual and debate-style. A follow-up may gently challenge the student — reference their own words, ask whether it might change in the future, or compare Mongolia to other countries. Feel intellectually engaged.'
       : part === 2
       ? 'This comes right after the Part 2 long turn. Give a brief warm reaction and move on — no follow-up.'
-      : 'This is Part 1 (warm-up). Any follow-up should feel warm and conversational, and should reference a specific word or detail the student actually said.'
+      : 'This is Part 1 (warm-up). Be warm and conversational. Any follow-up should feel warm and should reference a specific word or detail the student actually said.'
 
     const instruction = `You are Sarah, a professional British IELTS examiner who actually listens to the student and responds like a real human examiner.
 
@@ -93,8 +112,11 @@ Decide ONE of:
   MOVE_ON — when the answer is 30+ words and complete, OR when probeUsed is already true (never probe twice).
 
 Strict rules:
-- Never say "Great!" or "Excellent!" — too fake.
-- Use natural British phrases where appropriate: "I see", "Right", "Indeed", "That's interesting", "Mmm".
+- NEVER say "Great!", "Excellent!", "Amazing!", or "Perfect!" — they feel fake.
+- Prefer short natural acknowledgments: "Mm-hmm.", "Right.", "I see.", "Okay.", "Sure."
+- Genuine interest phrases are fine: "Oh, that's interesting.", "That's a good point."
+- Natural transitions between questions are fine: "Right, moving on...", "Okay, let's talk about something else."
+- A light chuckle sometimes fits: "Ha, yes, that's quite common actually.", "Right, I know what you mean!"
 - Reaction must be 1 short sentence.
 - Any follow-up must be a single clear question, under 18 words.
 - Any follow-up must feel like it came from listening — it must reference the student's actual answer, not be generic.
@@ -114,11 +136,11 @@ Rules for the JSON:
 
     const rawText = response.content[0]?.type === 'text' ? response.content[0].text : ''
     const jsonMatch = rawText.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) return NextResponse.json(fallback(transcript, probeUsed))
+    if (!jsonMatch) return NextResponse.json(fallback(transcript, probeUsed, part))
 
     try {
       const parsed = JSON.parse(jsonMatch[0]) as Partial<ReactionPayload>
-      const reaction = (parsed.reaction ?? '').trim() || BRITISH_ACK[0]
+      const reaction = (parsed.reaction ?? '').trim() || pickAck(part)
       const rawFollowUp =
         typeof parsed.followUp === 'string' ? parsed.followUp.trim() : ''
       const followUp =
@@ -135,9 +157,9 @@ Rules for the JSON:
         probeUsed: !!parsed.probeUsed || probeUsed,
       } as ReactionPayload)
     } catch {
-      return NextResponse.json(fallback(transcript, probeUsed))
+      return NextResponse.json(fallback(transcript, probeUsed, part))
     }
   } catch {
-    return NextResponse.json(fallback('', false))
+    return NextResponse.json(fallback('', false, 1))
   }
 }

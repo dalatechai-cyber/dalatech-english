@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { NavBar } from './NavBar'
-import type { IELTSContent, IELTSAnswers } from '@/lib/ielts'
+import type { IELTSContent, IELTSAnswers, IELTSAnswer, IELTSQuestion } from '@/lib/ielts'
 import { saveIELTSResult } from '@/lib/ielts'
 import { saveTestResult } from '@/lib/testHistory'
 import {
@@ -33,6 +33,26 @@ interface GradeResult {
   speakingFeedback: string
   writingCriteria?: { taskAchievement: number; coherenceCohesion: number; lexicalResource: number; grammaticalRange: number }
   speakingCriteria?: { fluencyCohesion: number; lexicalResource: number; grammaticalRange: number; pronunciation: number }
+  rawCounts?: {
+    listeningCorrect: number
+    listeningTotal: number
+    readingCorrect: number
+    readingTotal: number
+  }
+}
+
+const SHORT_REACTIONS = ['I see.', 'Right.', 'Mm-hmm.', 'Okay.'] as const
+
+function isAnswered(a: IELTSAnswer): boolean {
+  if (typeof a === 'number') return true
+  if (typeof a === 'string') return a.trim().length > 0
+  return false
+}
+
+function mmss(sec: number): string {
+  const m = Math.floor(Math.max(0, sec) / 60)
+  const s = Math.max(0, sec) % 60
+  return `${m}:${String(s).padStart(2, '0')}`
 }
 
 const GREETING = "Hello, my name is Sarah and I'll be conducting your IELTS Speaking test today. Let's begin with some questions about yourself."
@@ -150,7 +170,7 @@ export function IELTSTest() {
   const [mounted, setMounted] = useState(false)
 
   // ── Listening ──
-  const [listenAnswers, setListenAnswers] = useState<(number | null)[]>(Array(6).fill(null))
+  const [listenAnswers, setListenAnswers] = useState<IELTSAnswer[]>(Array(10).fill(null))
   const [listenPlayCount, setListenPlayCount] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [listenSubmitted, setListenSubmitted] = useState(false)
@@ -167,7 +187,7 @@ export function IELTSTest() {
   const listenLoadStartedRef = useRef(false)
 
   // ── Reading ──
-  const [readAnswers, setReadAnswers] = useState<(number | null)[]>(Array(10).fill(null))
+  const [readAnswers, setReadAnswers] = useState<IELTSAnswer[]>(Array(30).fill(null))
   const [readSubmitted, setReadSubmitted] = useState(false)
   const [readPassageIdx, setReadPassageIdx] = useState(0)
   const [readMobileTab, setReadMobileTab] = useState<'passage' | 'questions'>('passage')
@@ -176,6 +196,10 @@ export function IELTSTest() {
   const [writingTask1, setWritingTask1] = useState('')
   const [writingTask2, setWritingTask2] = useState('')
   const [writingTaskView, setWritingTaskView] = useState<1 | 2>(1)
+  // Countdown timers: Task 1 = 20:00, Task 2 = 40:00. Does NOT block submission;
+  // when the timer reaches 0 we show a Mongolian warning but let the user continue.
+  const [task1Remaining, setTask1Remaining] = useState(20 * 60)
+  const [task2Remaining, setTask2Remaining] = useState(40 * 60)
 
   // ── Speaking (state machine) ──
   type SpeakPhase = 'ready' | 'speaking' | 'listening' | 'thinking' | 'prep'
@@ -185,6 +209,7 @@ export function IELTSTest() {
   const [speakCurrentText, setSpeakCurrentText] = useState('')
   const [speakShowCard, setSpeakShowCard] = useState<string | null>(null)
   const [speakPrepCountdown, setSpeakPrepCountdown] = useState<number | null>(null)
+  const [speakPart2Countdown, setSpeakPart2Countdown] = useState<number | null>(null)
   const [speakContinue, setSpeakContinue] = useState(false)
   const [speakNotice, setSpeakNotice] = useState<string | null>(null)
   const speakAbortRef = useRef(false)
@@ -335,6 +360,39 @@ export function IELTSTest() {
     })()
     return () => { cancelled = true }
   }, [phase, content])
+
+  // ── Pre-cache short reactions so "I see." / "Right." plays instantly ──
+  useEffect(() => {
+    if (phase !== 'speaking') return
+    let cancelled = false
+    ;(async () => {
+      for (const r of SHORT_REACTIONS) {
+        if (cancelled) return
+        try { await generateTTS(r, 'alice') } catch { /* ignore */ }
+      }
+    })()
+    return () => { cancelled = true }
+  }, [phase])
+
+  // ── Writing countdown timers ──
+  useEffect(() => {
+    if (phase !== 'writing') return
+    const id = setInterval(() => {
+      if (writingTaskView === 1) setTask1Remaining(t => Math.max(0, t - 1))
+      else setTask2Remaining(t => Math.max(0, t - 1))
+    }, 1000)
+    return () => clearInterval(id)
+  }, [phase, writingTaskView])
+
+  // ── Part 2 long-turn countdown tick ──
+  useEffect(() => {
+    if (speakPart2Countdown === null || speakPart2Countdown <= 0) return
+    const id = setTimeout(
+      () => setSpeakPart2Countdown(c => (c === null ? null : Math.max(0, c - 1))),
+      1000,
+    )
+    return () => clearTimeout(id)
+  }, [speakPart2Countdown])
 
   // ── Play conversation twice (ElevenLabs with Web-Speech fallback) ──
   const playConversationTwice = async () => {
@@ -696,8 +754,10 @@ export function IELTSTest() {
       await playExaminer(PART2_BEGIN)
       await pause(200)
 
-      // Part 2 answer — min 45s, 4s silence
+      // Part 2 answer — min 45s, 4s silence, 2:00 countdown visible to student
+      setSpeakPart2Countdown(120)
       const p2Answer = await collectStudentAnswer({ minSpeakSec: 45, silenceSec: 4 })
+      setSpeakPart2Countdown(null)
       setSpeakShowCard(null)
       pushAnswer(p2Answer)
 
@@ -739,7 +799,7 @@ export function IELTSTest() {
     setError(null)
     clearTTSCache()
     listenAudiosRef.current = []
-    setListenAnswers(Array(6).fill(null))
+    setListenAnswers(Array(10).fill(null))
     setListenPlayCount(0)
     setListenSubmitted(false)
     setShowTranscript(false)
@@ -748,8 +808,8 @@ export function IELTSTest() {
     setListenAudioError(false)
     setListenCurrentTurn(-1)
     setListenNotice(null)
-    setReadAnswers(Array(10).fill(null)); setReadSubmitted(false); setReadPassageIdx(0); setReadMobileTab('passage')
-    setWritingTask1(''); setWritingTask2(''); setWritingTaskView(1)
+    setReadAnswers(Array(30).fill(null)); setReadSubmitted(false); setReadPassageIdx(0); setReadMobileTab('passage')
+    setWritingTask1(''); setWritingTask2(''); setWritingTaskView(1); setTask1Remaining(20 * 60); setTask2Remaining(40 * 60)
     setSpeakPhase('ready')
     setSpeakTranscript('')
     setSpeakStatus('')
@@ -825,6 +885,83 @@ export function IELTSTest() {
     }
   }
 
+  // Renders the answer UI for a question based on its type.
+  // Choice types (mc / tfng / matching) → option buttons.
+  // Text types (fill / short) → text input; graded on submit via acceptedAnswers.
+  const renderQuestionBody = (
+    q: IELTSQuestion,
+    globalIdx: number,
+    answers: IELTSAnswer[],
+    setAnswers: (a: IELTSAnswer[]) => void,
+    submitted: boolean,
+  ) => {
+    const type = q.type ?? 'mc'
+    const ans = answers[globalIdx]
+    const update = (v: IELTSAnswer) => {
+      if (submitted) return
+      const a = [...answers]
+      a[globalIdx] = v
+      setAnswers(a)
+    }
+
+    if (type === 'fill' || type === 'short') {
+      const text = typeof ans === 'string' ? ans : ''
+      const normalize = (s: string) =>
+        s.toLowerCase().trim().replace(/[.,!?;:"'`]/g, '').replace(/\s+/g, ' ')
+      const nt = normalize(text)
+      const isCorrect = submitted && nt.length > 0 && !!q.acceptedAnswers?.some(acc => {
+        const na = normalize(acc)
+        return na === nt || nt.includes(na) || na.includes(nt)
+      })
+      const borderColor = !submitted ? '#334155' : isCorrect ? '#34D399' : '#F87171'
+      const textColor = !submitted ? '#F8FAFC' : isCorrect ? '#34D399' : '#F87171'
+      return (
+        <div>
+          <input
+            type="text"
+            value={text}
+            onChange={e => update(e.target.value)}
+            disabled={submitted}
+            placeholder="Хариулт (макс 3 үг)"
+            maxLength={50}
+            className="w-full min-h-[44px] rounded-xl px-4 py-2.5 text-sm outline-none"
+            style={{ background: '#1E293B', border: `1px solid ${borderColor}`, color: textColor }}
+          />
+          {submitted && !isCorrect && q.acceptedAnswers && q.acceptedAnswers.length > 0 && (
+            <p className="text-xs mt-2" style={{ color: '#94A3B8' }}>
+              Зөв: <span style={{ color: '#34D399' }}>{q.acceptedAnswers[0]}</span>
+            </p>
+          )}
+        </div>
+      )
+    }
+
+    const opts = q.options ?? []
+    return (
+      <div className="space-y-2">
+        {opts.map((opt, oi) => {
+          const selected = ans === oi
+          const correct = submitted && oi === q.correct
+          const wrong = submitted && selected && oi !== q.correct
+          const neutral = submitted && !selected && oi !== q.correct
+          return (
+            <button key={oi}
+              onClick={() => update(oi)}
+              disabled={submitted}
+              className="w-full text-left px-4 py-2.5 min-h-[44px] flex items-center rounded-xl border text-sm transition-all"
+              style={{
+                background: correct ? 'rgba(52,211,153,0.1)' : wrong ? 'rgba(248,113,113,0.1)' : selected ? 'rgba(245,158,11,0.08)' : 'transparent',
+                borderColor: correct ? '#34D399' : wrong ? '#F87171' : selected ? '#F59E0B' : '#334155',
+                color: neutral ? '#64748B' : correct ? '#34D399' : wrong ? '#F87171' : '#F8FAFC',
+              }}>
+              <span className="font-medium mr-2">{String.fromCharCode(65 + oi)}.</span>{opt}
+            </button>
+          )
+        })}
+      </div>
+    )
+  }
+
   const sectionIdx = (['listening', 'reading', 'writing', 'speaking'] as Phase[]).indexOf(phase)
 
   // ══════════════════════════════════════════
@@ -842,8 +979,8 @@ export function IELTSTest() {
           {error && <p className="text-rose-400 text-sm mb-4">{error}</p>}
           <div className="grid grid-cols-2 gap-3 w-full mb-8">
             {[
-              { icon: '🎧', label: 'Listening', detail: '6 асуулт · Яриа 2 удаа' },
-              { icon: '📖', label: 'Reading', detail: '10 асуулт · 2 нийтлэл' },
+              { icon: '🎧', label: 'Listening', detail: '10 асуулт · Яриа 2 удаа' },
+              { icon: '📖', label: 'Reading', detail: '30 асуулт · 3 нийтлэл' },
               { icon: '✍️', label: 'Writing', detail: 'Task 1 + Task 2' },
               { icon: '🗣️', label: 'Speaking', detail: sttSupported ? 'AI яриа · Автомат' : 'Дуу таних боломжгүй' },
             ].map(s => (
@@ -869,7 +1006,7 @@ export function IELTSTest() {
   // ─── Listening — ElevenLabs with fallback ───
   if (phase === 'listening' && content) {
     const conv = content.listening.conversation
-    const allAnswered = listenAnswers.every(a => a !== null)
+    const allAnswered = listenAnswers.length === content.listening.questions.length && listenAnswers.every(isAnswered)
 
     const playStatusText =
       listenPlayCount === 1 ? '1-р удаа тоглуулж байна...' :
@@ -963,28 +1100,14 @@ export function IELTSTest() {
               <div key={qi} className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4">
                 <p className="text-sm font-semibold text-text-primary mb-3">
                   <span style={{ color: '#F59E0B' }}>{qi + 1}.</span> {q.question}
+                  {(q.type === 'fill') && (
+                    <span className="ml-2 text-xs font-medium" style={{ color: '#94A3B8' }}>· Нөхөх</span>
+                  )}
+                  {(q.type === 'tfng') && (
+                    <span className="ml-2 text-xs font-medium" style={{ color: '#94A3B8' }}>· True/False/NG</span>
+                  )}
                 </p>
-                <div className="space-y-2">
-                  {q.options.map((opt, oi) => {
-                    const selected = listenAnswers[qi] === oi
-                    const correct = listenSubmitted && oi === q.correct
-                    const wrong = listenSubmitted && selected && oi !== q.correct
-                    const neutral = listenSubmitted && !selected && oi !== q.correct
-                    return (
-                      <button key={oi}
-                        onClick={() => { if (listenSubmitted) return; const a = [...listenAnswers]; a[qi] = oi; setListenAnswers(a) }}
-                        disabled={listenSubmitted}
-                        className="w-full text-left px-4 py-2.5 min-h-[44px] flex items-center rounded-xl border text-sm transition-all"
-                        style={{
-                          background: correct ? 'rgba(52,211,153,0.1)' : wrong ? 'rgba(248,113,113,0.1)' : selected ? 'rgba(245,158,11,0.08)' : 'transparent',
-                          borderColor: correct ? '#34D399' : wrong ? '#F87171' : selected ? '#F59E0B' : '#334155',
-                          color: neutral ? '#64748B' : correct ? '#34D399' : wrong ? '#F87171' : '#F8FAFC',
-                        }}>
-                        <span className="font-medium mr-2">{String.fromCharCode(65 + oi)}.</span>{opt}
-                      </button>
-                    )
-                  })}
-                </div>
+                {renderQuestionBody(q, qi, listenAnswers, setListenAnswers, listenSubmitted)}
               </div>
             ))}
           </div>
@@ -1036,10 +1159,11 @@ export function IELTSTest() {
     const pg = passages[pi]
     // Offset of current passage's first question in the flat readAnswers array.
     const startIdx = passages.slice(0, pi).reduce((n, p) => n + p.questions.length, 0)
-    const pageAnswered = pg ? pg.questions.every((_, qi) => readAnswers[startIdx + qi] !== null) : false
-    const answeredOnPage = pg ? pg.questions.filter((_, qi) => readAnswers[startIdx + qi] !== null).length : 0
+    const pageAnswered = pg ? pg.questions.every((_, qi) => isAnswered(readAnswers[startIdx + qi])) : false
+    const answeredOnPage = pg ? pg.questions.filter((_, qi) => isAnswered(readAnswers[startIdx + qi])).length : 0
     const isLastPassage = pi === passages.length - 1
-    const allReadAnswered = readAnswers.length === totalReadQs && readAnswers.every(a => a !== null)
+    const allReadAnswered = readAnswers.length === totalReadQs && readAnswers.every(isAnswered)
+    const totalAnswered = readAnswers.filter(isAnswered).length
 
     const advance = () => {
       if (isLastPassage) {
@@ -1064,32 +1188,18 @@ export function IELTSTest() {
         <div className="space-y-4 flex-1">
           {pg?.questions.map((q, qi) => {
             const globalIdx = startIdx + qi
+            const typeLabel = q.type === 'tfng' ? '· True/False/NG'
+              : q.type === 'matching' ? '· Зохицуулах'
+              : q.type === 'short' ? '· Богино хариулт'
+              : q.type === 'fill' ? '· Нөхөх'
+              : ''
             return (
               <div key={globalIdx}>
                 <p className="text-sm font-semibold text-text-primary mb-3">
                   <span style={{ color: '#F59E0B' }}>{globalIdx + 1}.</span> {q.question}
+                  {typeLabel && <span className="ml-2 text-xs font-medium" style={{ color: '#94A3B8' }}>{typeLabel}</span>}
                 </p>
-                <div className="space-y-2">
-                  {q.options.map((opt, oi) => {
-                    const selected = readAnswers[globalIdx] === oi
-                    const correct = readSubmitted && oi === q.correct
-                    const wrong = readSubmitted && selected && oi !== q.correct
-                    const neutral = readSubmitted && !selected && oi !== q.correct
-                    return (
-                      <button key={oi}
-                        onClick={() => { if (readSubmitted) return; const a = [...readAnswers]; a[globalIdx] = oi; setReadAnswers(a) }}
-                        disabled={readSubmitted}
-                        className="w-full text-left px-4 py-2.5 min-h-[44px] flex items-center rounded-xl border text-sm transition-all"
-                        style={{
-                          background: correct ? 'rgba(52,211,153,0.1)' : wrong ? 'rgba(248,113,113,0.1)' : selected ? 'rgba(245,158,11,0.08)' : 'transparent',
-                          borderColor: correct ? '#34D399' : wrong ? '#F87171' : selected ? '#F59E0B' : '#334155',
-                          color: neutral ? '#64748B' : correct ? '#34D399' : wrong ? '#F87171' : '#F8FAFC',
-                        }}>
-                        <span className="font-medium mr-2">{String.fromCharCode(65 + oi)}.</span>{opt}
-                      </button>
-                    )
-                  })}
-                </div>
+                {renderQuestionBody(q, globalIdx, readAnswers, setReadAnswers, readSubmitted)}
               </div>
             )
           })}
@@ -1118,9 +1228,14 @@ export function IELTSTest() {
         <NavBar lessonTitle="Reading" />
         <div className="px-4 pt-3 max-w-6xl mx-auto w-full">
           <SectionProgress idx={sectionIdx} />
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-semibold" style={{ color: '#64748B' }}>Нийтлэл {pi + 1}/{passages.length}</p>
-            <p className="text-xs font-semibold" style={{ color: '#64748B' }}>{readAnswers.filter(a => a !== null).length}/{totalReadQs} хариулсан</p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold" style={{ color: '#F59E0B' }}>НИЙТЛЭЛ {pi + 1}/{passages.length}</p>
+            <p className="text-xs font-semibold" style={{ color: '#64748B' }}>{totalAnswered}/{totalReadQs} хариулсан · Буцах боломжгүй</p>
+          </div>
+          <div className="flex gap-1 mb-3">
+            {passages.map((_, i) => (
+              <div key={i} className="flex-1 h-1 rounded-full" style={{ background: i < pi ? '#34D39988' : i === pi ? '#F59E0B' : '#334155' }} />
+            ))}
           </div>
         </div>
 
@@ -1176,6 +1291,12 @@ export function IELTSTest() {
           </div>
           {writingTaskView === 1 ? (
             <>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-2xl font-extrabold tabular-nums" style={{ color: task1Remaining === 0 ? '#F59E0B' : '#F8FAFC' }}>⏱ {mmss(task1Remaining)}</span>
+                {task1Remaining === 0 && (
+                  <span className="text-xs font-semibold" style={{ color: '#F59E0B' }}>Цаг дууслаа! Гэхдээ үргэлжлүүлж болно</span>
+                )}
+              </div>
               <div className="bg-navy-surface border border-gold/20 rounded-2xl p-4 mb-3">
                 <div className="text-xs font-semibold text-gold uppercase tracking-wide mb-2">✍️ Task 1 — дор хаяж 150 үг</div>
                 <Task1Prompt prompt={content.writing.task1Prompt} />
@@ -1193,6 +1314,12 @@ export function IELTSTest() {
             </>
           ) : (
             <>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-2xl font-extrabold tabular-nums" style={{ color: task2Remaining === 0 ? '#F59E0B' : '#F8FAFC' }}>⏱ {mmss(task2Remaining)}</span>
+                {task2Remaining === 0 && (
+                  <span className="text-xs font-semibold" style={{ color: '#F59E0B' }}>Цаг дууслаа! Гэхдээ үргэлжлүүлж болно</span>
+                )}
+              </div>
               <div className="bg-navy-surface border border-gold/20 rounded-2xl p-4 mb-3">
                 <div className="text-xs font-semibold text-gold uppercase tracking-wide mb-2">✍️ Task 2 — дор хаяж 250 үг</div>
                 <p className="text-sm text-text-primary leading-relaxed">{content.writing.task2Prompt}</p>
@@ -1318,7 +1445,14 @@ export function IELTSTest() {
               {/* Part 2 topic card */}
               {speakShowCard && (
                 <div className="text-left px-4 py-3 rounded-2xl w-full" style={{ background: '#0F172A', border: '1px solid #F59E0B55' }}>
-                  <div className="text-xs font-semibold text-gold uppercase tracking-wide mb-2">📋 Topic Card</div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-xs font-semibold text-gold uppercase tracking-wide">📋 Topic Card</div>
+                    {speakPart2Countdown !== null && (
+                      <span className="text-sm font-extrabold tabular-nums" style={{ color: speakPart2Countdown === 0 ? '#F59E0B' : '#FCD34D' }}>
+                        ⏱ {mmss(speakPart2Countdown)}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm leading-relaxed text-text-primary whitespace-pre-line">{speakShowCard}</p>
                 </div>
               )}
@@ -1363,14 +1497,16 @@ export function IELTSTest() {
       { label: 'Pronunciation', value: gradeResult.speakingCriteria.pronunciation },
     ] : []
 
-    const listenQs = content?.listening.questions ?? []
-    const listenCorrect = listenAnswers.filter((a, i) => a !== null && a === listenQs[i]?.correct).length
-    const flatReadQs = content?.reading.passages.flatMap(p => p.questions) ?? []
-    const readCorrect = readAnswers.filter((a, i) => a !== null && a === flatReadQs[i]?.correct).length
+    const listenTotal = gradeResult.rawCounts?.listeningTotal ?? 10
+    const listenCorrect = gradeResult.rawCounts?.listeningCorrect ?? 0
+    const readTotal = gradeResult.rawCounts?.readingTotal ?? 30
+    const readCorrect = gradeResult.rawCounts?.readingCorrect ?? 0
     const writingPts = Math.round((gradeResult.writing * 6) / 9)
-    const testPts = Math.round((gradeResult.speaking * 15) / 9)
-    const totalPts = testPts + readCorrect + writingPts
-    const passedPts = totalPts >= 23
+    const speakPts = Math.round((gradeResult.speaking * 15) / 9)
+    const totalPts = listenCorrect + readCorrect + writingPts + speakPts
+    const maxTotal = listenTotal + readTotal + 6 + 15
+    const passThreshold = Math.round(maxTotal * 0.7)
+    const passedPts = totalPts >= passThreshold
     return (
       <div className="min-h-dvh bg-navy flex flex-col">
         <NavBar lessonTitle="IELTS — Үр дүн" />
@@ -1400,16 +1536,20 @@ export function IELTSTest() {
 
           <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 mb-4">
             <div className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>Түүхий оноо (мэдээллийн зорилгоор)</div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-1">
               <span className="text-xs" style={{ color: '#94A3B8' }}>🎧 Listening</span>
-              <span className="text-sm font-semibold text-text-primary">{listenCorrect}/6</span>
+              <span className="text-sm font-semibold text-text-primary">{listenCorrect}/{listenTotal}</span>
+            </div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs" style={{ color: '#94A3B8' }}>📖 Reading</span>
+              <span className="text-sm font-semibold text-text-primary">{readCorrect}/{readTotal}</span>
             </div>
             <div className="h-px bg-navy-surface-2 my-2" />
             <p className="text-sm leading-relaxed text-text-primary">
-              Тест <span className="font-semibold">{testPts}</span>/15 · Уншлага <span className="font-semibold">{readCorrect}</span>/10 · Бичих <span className="font-semibold">{writingPts}</span>/6 · Нийт: <span className="font-bold" style={{ color: passedPts ? '#34D399' : '#F59E0B' }}>{totalPts}</span>/31
+              Сонсох <span className="font-semibold">{listenCorrect}</span>/{listenTotal} · Уншлага <span className="font-semibold">{readCorrect}</span>/{readTotal} · Бичих <span className="font-semibold">{writingPts}</span>/6 · Ярих <span className="font-semibold">{speakPts}</span>/15 · Нийт: <span className="font-bold" style={{ color: passedPts ? '#34D399' : '#F59E0B' }}>{totalPts}</span>/{maxTotal}
             </p>
             <p className="text-xs mt-1" style={{ color: '#64748B' }}>
-              Тэнцэх оноо: 23/31
+              Тэнцэх оноо: {passThreshold}/{maxTotal}
             </p>
           </div>
           {criteriaRows.length > 0 && (

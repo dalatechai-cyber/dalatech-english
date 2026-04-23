@@ -22,9 +22,8 @@ export async function POST(req: NextRequest) {
       ? `Previously used Part 2 topics to AVOID: ${usedTopics.join('; ')}. Choose a completely different topic.`
       : ''
 
-    const systemPrompt = `You are an IELTS Academic test generator (reading, writing, speaking sections). Session seed: ${seed}.
+    const systemPrompt = `You are an IELTS Academic test generator (reading, writing, speaking sections). Session: ${seed}. Generate completely fresh academic content. Never repeat topics from previous sessions.
 ${avoidTopics}
-Generate completely fresh, unique content every time — never repeat questions from previous sessions.
 
 Return ONLY valid JSON matching this exact structure:
 
@@ -34,13 +33,10 @@ Return ONLY valid JSON matching this exact structure:
       {
         "passage": "...",
         "questions": [
-          {"question": "...", "options": ["A","B","C","D"], "correct": 0}
-        ]
-      },
-      {
-        "passage": "...",
-        "questions": [
-          {"question": "...", "options": ["A","B","C","D"], "correct": 0}
+          {"type": "mc",       "question": "...", "options": ["...","...","...","..."], "correct": 0},
+          {"type": "tfng",     "question": "...", "options": ["True","False","Not Given"], "correct": 0},
+          {"type": "matching", "question": "...", "options": ["...","...","...","..."], "correct": 0},
+          {"type": "short",    "question": "...", "acceptedAnswers": ["...","..."]}
         ]
       }
     ]
@@ -50,17 +46,21 @@ Return ONLY valid JSON matching this exact structure:
     "task2Prompt": "..."
   },
   "speaking": {
-    "part1Questions": ["...", "...", "...", "...", "..."],
+    "part1Questions": ["...", "...", "...", "...", "...", "...", "...", "..."],
     "part2Card": "...",
     "part3Questions": ["...", "...", "...", "..."]
   }
 }
 
 READING section rules:
-- Exactly 2 passages. Each passage 250-300 words on a DIFFERENT academic topic (e.g., passage 1 science/environment, passage 2 history/social sciences/technology/culture). Vary topics per seed so no two sessions share a topic. The passage topics MUST be fresh — never reuse specific subjects, case studies, or examples from likely previous sessions.
-- Passage 1: 5 questions — MIX of multiple-choice and True/False/Not Given. For True/False/Not Given items, put the statement in "question" and use options ["True","False","Not Given"] with "correct" being the 0-based index.
-- Passage 2: 5 questions — MIX of multiple-choice and matching (e.g. match a statement to the paragraph/person that expresses it). Use 4 options for multiple-choice and matching items.
-- 10 reading questions total across the 2 passages. "correct" is always a 0-based index into the options array for that question.
+- EXACTLY 3 passages. Each passage 250-300 words on a DIFFERENT academic topic. Rotate across: science, environment, history, social science, technology, culture, medicine, psychology, economics, linguistics. Pick 3 different areas per seed. Never reuse specific subjects, case studies, or examples from previous sessions.
+- Each passage has EXACTLY 10 questions, in this exact order and count:
+  * items 1-4: "type":"mc" — 4 plausible options, "correct" is 0-based
+  * items 5-7: "type":"tfng" — statement in "question", options EXACTLY ["True","False","Not Given"], "correct" 0-based (0=True, 1=False, 2=Not Given)
+  * items 8-9: "type":"matching" — match a heading or statement to a paragraph/person. Options are 4 paragraph-labels or roles. "correct" is 0-based.
+  * item 10: "type":"short" — one short-answer item; student types up to 3 words. "acceptedAnswers" is a list of 1-4 acceptable short phrases (lowercase, singular variants where relevant). Do NOT include "options" on short items.
+- Do NOT include "options" on short items. Do NOT include "acceptedAnswers" on mc/tfng/matching items.
+- 30 reading questions total across the 3 passages.
 
 WRITING section rules:
 - task1Prompt: describe a chart/table/graph. Include data using <data-table> tags exactly like this example:
@@ -81,17 +81,17 @@ WRITING section rules:
 - task2Prompt: opinion/discussion essay question requiring at least 250 words. Vary the topic (education, environment, technology, society). Never repeat topics.
 
 SPEAKING section rules (seed ${seed} — make every session unique):
-- part1Questions: exactly 5 personal questions on DIFFERENT topics. Rotate through: work, study, hobbies, hometown, daily routine, technology, food, travel, family, sports. Pick 5 different topics based on the seed. Keep questions short and direct.
+- part1Questions: EXACTLY 8 personal questions on DIFFERENT topics. Rotate through: work, study, hobbies, hometown, daily routine, technology, food, travel, family, sports, music, weather, shopping, weekends. Pick 8 different topics based on the seed. Keep questions short and direct, warm and conversational.
 - part2Card: one topic cue card with a main prompt sentence + 3 bullet points using line breaks. Topics to rotate: environment, technology, education, culture, health, media, architecture, transportation, art, sport, food, travel, science. Pick one based on the seed that is NOT in the avoided topics list. Format:
   "Talk about [topic]. You should say:
   • [point 1]
   • [point 2]
   • [point 3]"
-- part3Questions: exactly 4 abstract discussion questions derived from and extending the Part 2 topic. Make them thought-provoking and different from Part 1.`
+- part3Questions: EXACTLY 4 abstract discussion questions derived from and extending the Part 2 topic. Make them thought-provoking, intellectual, and debate-style — different from Part 1.`
 
     const response = await client.messages.create({
       model: CLAUDE_MODEL,
-      max_tokens: 3500,
+      max_tokens: 6000,
       system: systemPrompt,
       messages: [{ role: 'user', content: 'Generate the IELTS reading, writing, and speaking sections now.' }],
     })
@@ -101,8 +101,8 @@ SPEAKING section rules (seed ${seed} — make every session unique):
     if (!jsonMatch) return NextResponse.json({ error: 'Invalid response format' }, { status: 500 })
 
     const parsed = JSON.parse(jsonMatch[0])
-    if (!parsed.reading?.passages || !Array.isArray(parsed.reading.passages) || parsed.reading.passages.length < 2) {
-      return NextResponse.json({ error: 'Invalid reading structure' }, { status: 500 })
+    if (!parsed.reading?.passages || !Array.isArray(parsed.reading.passages) || parsed.reading.passages.length < 3) {
+      return NextResponse.json({ error: 'Invalid reading structure (expected 3 passages)' }, { status: 500 })
     }
     if (!parsed.writing || !parsed.speaking) {
       return NextResponse.json({ error: 'Invalid content structure' }, { status: 500 })

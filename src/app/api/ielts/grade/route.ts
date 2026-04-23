@@ -1,14 +1,38 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
-import type { IELTSContent, IELTSAnswers } from '@/lib/ielts'
+import type { IELTSContent, IELTSAnswers, IELTSAnswer, IELTSQuestion } from '@/lib/ielts'
 import { CLAUDE_MODEL } from '@/lib/constants'
 import { checkRateLimit } from '@/lib/rateLimit'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-function scoreObjective(answers: (number | null)[], questions: { correct: number }[]): number {
-  const correct = answers.filter((a, i) => a === questions[i]?.correct).length
-  const pct = correct / questions.length
+function normalizeText(s: string): string {
+  return s.toLowerCase().trim().replace(/[.,!?;:"'`]/g, '').replace(/\s+/g, ' ')
+}
+
+function isTextCorrect(student: string, accepted: string[] | undefined): boolean {
+  if (!accepted || accepted.length === 0) return false
+  const n = normalizeText(student)
+  if (!n) return false
+  return accepted.some(a => {
+    const na = normalizeText(a)
+    return na === n || n.includes(na) || na.includes(n)
+  })
+}
+
+function countCorrect(answers: IELTSAnswer[], questions: IELTSQuestion[]): number {
+  return answers.reduce<number>((n, ans, i) => {
+    const q = questions[i]
+    if (!q) return n
+    const type = q.type ?? 'mc'
+    if (type === 'fill' || type === 'short') {
+      return typeof ans === 'string' && isTextCorrect(ans, q.acceptedAnswers) ? n + 1 : n
+    }
+    return typeof ans === 'number' && ans === q.correct ? n + 1 : n
+  }, 0)
+}
+
+function pctToBand(pct: number): number {
   if (pct >= 0.9) return 9
   if (pct >= 0.8) return 8
   if (pct >= 0.7) return 7
@@ -31,9 +55,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
     }
 
-    const listeningBand = scoreObjective(answers.listeningAnswers, content.listening.questions)
+    const listenTotal = content.listening.questions.length || 1
+    const listenCorrect = countCorrect(answers.listeningAnswers, content.listening.questions)
+    const listeningBand = pctToBand(listenCorrect / listenTotal)
+
     const readingQuestions = content.reading.passages.flatMap(p => p.questions)
-    const readingBand = scoreObjective(answers.readingAnswers, readingQuestions)
+    const readTotal = readingQuestions.length || 1
+    const readCorrect = countCorrect(answers.readingAnswers, readingQuestions)
+    const readingBand = pctToBand(readCorrect / readTotal)
 
     const speakingText = [
       'PART 1 QUESTIONS AND ANSWERS:\n' + content.speaking.part1Questions.map((q, i) =>
@@ -130,6 +159,12 @@ Score each criterion 1-9. Return this JSON:
       speakingFeedback,
       writingCriteria,
       speakingCriteria,
+      rawCounts: {
+        listeningCorrect: listenCorrect,
+        listeningTotal: listenTotal,
+        readingCorrect: readCorrect,
+        readingTotal: readTotal,
+      },
     })
   } catch (e) {
     console.error('IELTS grade error:', e)

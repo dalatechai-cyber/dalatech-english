@@ -10,11 +10,24 @@ export interface IELTSResult {
   feedback: string
 }
 
+// IELTS question shape supports mixed types:
+//   'mc'       — multiple choice (4 options, numeric correct)
+//   'tfng'     — True/False/Not Given (options ["True","False","Not Given"], numeric correct)
+//   'matching' — matching headings / statements (numeric correct into options)
+//   'fill'     — fill-in-the-blank (student types up to 3 words; acceptedAnswers list)
+//   'short'    — short-answer (student types a phrase; acceptedAnswers list)
+// Legacy content without a `type` is treated as 'mc'.
+export type IELTSQuestionType = 'mc' | 'tfng' | 'matching' | 'fill' | 'short'
+
 export interface IELTSQuestion {
+  type?: IELTSQuestionType
   question: string
-  options: string[]
-  correct: number
+  options?: string[]
+  correct?: number
+  acceptedAnswers?: string[]
 }
+
+export type IELTSAnswer = number | string | null
 
 // New: a single speaker turn in the listening conversation
 export interface IELTSConversationTurn {
@@ -55,8 +68,8 @@ export interface IELTSContent {
 }
 
 export interface IELTSAnswers {
-  listeningAnswers: (number | null)[]
-  readingAnswers: (number | null)[]
+  listeningAnswers: IELTSAnswer[]
+  readingAnswers: IELTSAnswer[]
   writingTask1: string
   writingTask2: string
   speakingPart1: string[]
