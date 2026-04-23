@@ -1243,9 +1243,9 @@ export function IELTSTest() {
     )
 
     return (
-      <div className="min-h-dvh bg-navy flex flex-col">
+      <div className="h-dvh bg-navy flex flex-col overflow-hidden">
         <NavBar lessonTitle="Reading" />
-        <div className="px-4 pt-3 max-w-6xl mx-auto w-full">
+        <div className="px-4 pt-3 max-w-6xl mx-auto w-full flex-shrink-0">
           <SectionProgress idx={sectionIdx} />
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold" style={{ color: '#F59E0B' }}>НИЙТЛЭЛ {pi + 1}/{passages.length}</p>
@@ -1260,9 +1260,9 @@ export function IELTSTest() {
 
         {/* Mobile tabs */}
         <div className="md:hidden flex-1 flex flex-col px-4 pb-4 min-h-0">
-          <div className="flex border-b border-navy-surface-2 mb-3">
+          <div className="flex border-b border-navy-surface-2 mb-3 flex-shrink-0">
             <button onClick={() => setReadMobileTab('passage')}
-              className="flex-1 py-2.5 text-sm font-semibold transition-colors"
+              className="flex-1 py-2.5 min-h-[44px] text-sm font-semibold transition-colors"
               style={{
                 color: readMobileTab === 'passage' ? '#F59E0B' : '#64748B',
                 borderBottom: readMobileTab === 'passage' ? '2px solid #F59E0B' : '2px solid transparent',
@@ -1270,7 +1270,7 @@ export function IELTSTest() {
               📖 Нийтлэл
             </button>
             <button onClick={() => setReadMobileTab('questions')}
-              className="flex-1 py-2.5 text-sm font-semibold transition-colors"
+              className="flex-1 py-2.5 min-h-[44px] text-sm font-semibold transition-colors"
               style={{
                 color: readMobileTab === 'questions' ? '#F59E0B' : '#64748B',
                 borderBottom: readMobileTab === 'questions' ? '2px solid #F59E0B' : '2px solid transparent',
@@ -1283,10 +1283,10 @@ export function IELTSTest() {
           </div>
         </div>
 
-        {/* Desktop split screen */}
+        {/* Desktop split screen — each pane scrolls independently */}
         <div className="hidden md:flex flex-1 gap-4 px-4 pb-4 max-w-6xl mx-auto w-full min-h-0">
-          <div className="w-1/2 min-h-0">{PassagePane}</div>
-          <div className="w-1/2 min-h-0">{QuestionsPane}</div>
+          <div className="w-1/2 h-full">{PassagePane}</div>
+          <div className="w-1/2 h-full">{QuestionsPane}</div>
         </div>
       </div>
     )

@@ -57,7 +57,7 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
           </>
         )}
 
-        <div className="ml-auto flex items-center gap-3" ref={menuRef}>
+        <div className="ml-auto flex items-center gap-3">
           {streak > 0 && (
             <span className="text-gold text-sm font-medium flex items-center gap-1 flex-shrink-0">
               🔥 {streak} <span className="hidden sm:inline">{t('streak')}</span>
@@ -73,68 +73,64 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
           <Link href="/profile" className="text-text-secondary hover:text-text-primary text-xs transition-colors hidden sm:block">
             {t('profile')}
           </Link>
-          {/* Mobile hamburger */}
-          <button
-            className="sm:hidden w-9 h-9 flex items-center justify-center rounded-lg transition-colors"
-            style={{ color: '#F59E0B' }}
-            onClick={() => setMenuOpen(o => !o)}
-            aria-label="Цэс нээх"
-          >
-            {menuOpen ? (
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+          {/* Mobile hamburger + dropdown — ref wraps both so dropdown taps don't count as "outside" */}
+          <div className="sm:hidden relative" ref={menuRef}>
+            <button
+              className="w-11 h-11 flex items-center justify-center rounded-lg transition-colors"
+              style={{ color: '#F59E0B' }}
+              onClick={() => setMenuOpen(o => !o)}
+              aria-label="Цэс нээх"
+              aria-expanded={menuOpen}
+            >
+              {menuOpen ? (
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
+
+            {menuOpen && (
+              <div
+                className="absolute top-full right-0 mt-2 rounded-xl overflow-hidden z-50 w-[220px]"
+                style={{
+                  background: '#1E293B',
+                  border: '1px solid #F59E0B',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.4), 0 0 20px rgba(245,158,11,0.15)',
+                }}
+              >
+                <Link
+                  href="/ielts"
+                  className="flex items-center gap-3 px-4 min-h-12 text-sm font-medium active:bg-gold/10"
+                  style={{ color: '#F59E0B' }}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  📝 IELTS
+                </Link>
+                <Link
+                  href="/mistakes"
+                  className="flex items-center gap-3 px-4 min-h-12 text-sm font-medium active:bg-gold/10 border-t"
+                  style={{ color: '#F59E0B', borderColor: '#334155' }}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  📓 {t('mistakes')}
+                </Link>
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-3 px-4 min-h-12 text-sm font-medium active:bg-gold/10 border-t"
+                  style={{ color: '#F59E0B', borderColor: '#334155' }}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  👤 {t('profile')}
+                </Link>
+              </div>
             )}
-          </button>
+          </div>
         </div>
       </div>
-
-      {/* Mobile dropdown menu */}
-      {menuOpen && (
-        <div
-          className="sm:hidden absolute top-full right-4 mt-2 rounded-xl overflow-hidden z-50 min-w-[180px]"
-          style={{
-            background: '#1E293B',
-            border: '1px solid #F59E0B',
-            boxShadow: '0 10px 25px rgba(0,0,0,0.4), 0 0 20px rgba(245,158,11,0.15)',
-          }}
-        >
-          <Link
-            href="/ielts"
-            className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors"
-            style={{ color: '#F59E0B' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.12)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-            onClick={() => setMenuOpen(false)}
-          >
-            📝 IELTS
-          </Link>
-          <Link
-            href="/mistakes"
-            className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors"
-            style={{ color: '#F59E0B' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.12)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-            onClick={() => setMenuOpen(false)}
-          >
-            📓 {t('mistakes')}
-          </Link>
-          <Link
-            href="/profile"
-            className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors"
-            style={{ color: '#F59E0B' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.12)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-            onClick={() => setMenuOpen(false)}
-          >
-            👤 {t('profile')}
-          </Link>
-        </div>
-      )}
     </nav>
   )
 }

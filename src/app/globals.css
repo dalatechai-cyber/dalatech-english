@@ -18,6 +18,13 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Prevent iOS from auto-zooming on input focus (requires ≥16px font-size) */
+input,
+textarea,
+select {
+  font-size: 16px !important;
+}
+
 body {
   background-color: var(--navy);
   background-image: radial-gradient(ellipse 80% 60% at 50% 0%, #1a2744 0%, #0F172A 70%);
