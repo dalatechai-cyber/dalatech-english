@@ -34,11 +34,11 @@ export function ErrorCorrection({ content }: ErrorCorrectionProps) {
         ) : (
           <div
             key={i}
-            className="rounded-lg p-3 text-sm leading-relaxed whitespace-pre-wrap"
+            className="font-serif-display rounded-xl p-4 text-[15px] leading-relaxed whitespace-pre-wrap italic shadow-editorial"
             style={{
-              background: '#3D2E00',
+              background: 'rgba(245,158,11,0.08)',
               borderLeft: '3px solid #F59E0B',
-              color: '#FEF3C7',
+              color: '#FDE68A',
             }}
           >
             {part.content}

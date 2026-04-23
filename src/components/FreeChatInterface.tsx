@@ -156,46 +156,120 @@ export function FreeChatInterface({ level }: FreeChatInterfaceProps) {
     <div className="flex flex-col h-dvh bg-navy">
       <NavBar levelCode={level} lessonTitle="Чөлөөт яриа" />
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
-        {messages.map(msg => (
-          msg.content ? <ChatBubble key={msg.id} message={msg} /> : null
-        ))}
-        {isLoading && (
-          <div className="flex justify-start mb-3">
-            <div className="w-8 h-8 rounded-full bg-gold flex items-center justify-center text-navy text-xs font-bold mr-2 flex-shrink-0">AI</div>
-            <div className="bg-navy-surface rounded-2xl rounded-tl-sm px-4 py-3">
-              <div className="flex gap-1 items-center h-5">
-                {[0, 1, 2].map(i => (
-                  <span key={i} className="w-2 h-2 bg-gold rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-        <div ref={bottomRef} />
+      {/* Editorial header */}
+      <div
+        className="px-4 sm:px-6 py-4 sticky top-0 z-10"
+        style={{
+          background: 'rgba(11, 18, 34, 0.85)',
+          borderBottom: '1px solid var(--hairline)',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
+        <div className="max-w-3xl mx-auto flex items-baseline gap-3">
+          <span
+            className="font-serif-display text-2xl sm:text-3xl font-bold leading-none nums-tabular"
+            style={{ color: 'var(--gold)', letterSpacing: '-0.02em' }}
+          >
+            {level}
+          </span>
+          <span
+            className="font-serif-display text-base sm:text-lg italic"
+            style={{ color: 'var(--champagne)' }}
+          >
+            {levelMeta?.label.split(' — ')[1] ?? 'Чөлөөт яриа'}
+          </span>
+        </div>
       </div>
 
-      <div className="px-4 pt-3 pb-input-area bg-navy-surface border-t border-navy-surface-2">
-        <div className="flex items-end gap-2 bg-navy rounded-2xl px-4 py-2 border border-navy-surface-2">
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Англиар бичнэ үү... (Enter = илгээх, Shift+Enter = шинэ мөр)"
-            rows={1}
-            className="flex-1 bg-transparent text-text-primary text-[16px] sm:text-sm resize-none outline-none placeholder:text-text-secondary py-1 max-h-[120px]"
-            disabled={isLoading}
-          />
-          <button
-            onClick={sendMessage}
-            disabled={isLoading || !input.trim()}
-            className="w-9 h-9 bg-gold hover:bg-gold-dark disabled:opacity-40 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors"
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5">
+        <div className="max-w-3xl mx-auto space-y-1">
+          {messages.map(msg => (
+            msg.content ? <ChatBubble key={msg.id} message={msg} /> : null
+          ))}
+          {isLoading && (
+            <div className="flex justify-start mb-3 animate-fade-in">
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold mr-2 flex-shrink-0 mt-1"
+                style={{
+                  background: 'linear-gradient(135deg, #F59E0B, #D97706)',
+                  color: '#0B1222',
+                }}
+              >
+                AI
+              </div>
+              <div
+                className="rounded-2xl rounded-tl-sm px-5 py-3.5 shadow-editorial"
+                style={{ background: '#1E293B', borderLeft: '3px solid var(--gold)' }}
+              >
+                <div className="flex gap-1.5 items-center h-5">
+                  {[0, 1, 2].map(i => (
+                    <span
+                      key={i}
+                      className="w-2 h-2 rounded-full"
+                      style={{
+                        background: 'var(--gold)',
+                        animation: 'orbIdleBreath 1.2s ease-in-out infinite',
+                        animationDelay: `${i * 0.18}s`,
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
+      </div>
+
+      <div
+        className="px-4 sm:px-6 pt-3 pb-input-area"
+        style={{
+          background: 'rgba(11, 18, 34, 0.92)',
+          borderTop: '1px solid var(--hairline)',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
+        <div className="max-w-3xl mx-auto">
+          <div
+            className="flex items-end gap-2 rounded-full px-5 py-2 transition-all"
+            style={{
+              background: '#141C30',
+              border: '1px solid var(--hairline)',
+            }}
+            onFocusCapture={e => {
+              e.currentTarget.style.borderColor = 'var(--gold)'
+              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.18)'
+            }}
+            onBlurCapture={e => {
+              e.currentTarget.style.borderColor = 'var(--hairline)'
+              e.currentTarget.style.boxShadow = 'none'
+            }}
           >
-            <svg className="w-4 h-4 text-navy" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-            </svg>
-          </button>
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Англиар бичнэ үү..."
+              rows={1}
+              className="flex-1 bg-transparent text-text-primary text-[16px] sm:text-sm resize-none outline-none placeholder:text-text-secondary py-2 max-h-[120px]"
+              disabled={isLoading}
+            />
+            <button
+              onClick={sendMessage}
+              disabled={isLoading || !input.trim()}
+              className="w-10 h-10 disabled:opacity-40 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:-translate-y-0.5"
+              style={{
+                background: 'linear-gradient(135deg, #F59E0B, #D97706)',
+                color: '#0F172A',
+              }}
+              aria-label="Илгээх"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 

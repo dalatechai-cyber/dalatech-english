@@ -489,6 +489,16 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
     return () => { cleanup() }
   }, [cleanup])
 
+  // Mute the local mic while the examiner is speaking so AI playback
+  // (via speakers on mobile) doesn't get re-captured and transcribed
+  // as student input. Re-enable for any non-speaking orb state.
+  useEffect(() => {
+    const stream = localStreamRef.current
+    if (!stream) return
+    const enable = orbState !== 'speaking'
+    stream.getAudioTracks().forEach(track => { track.enabled = enable })
+  }, [orbState])
+
   const statusColor =
     orbState === 'speaking' ? '#F59E0B' :
     orbState === 'listening' ? '#38BDF8' :
