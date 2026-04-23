@@ -165,7 +165,7 @@ export function IELTSTest() {
   const listenLoadStartedRef = useRef(false)
 
   // ── Reading ──
-  const [readAnswers, setReadAnswers] = useState<(number | null)[]>(Array(8).fill(null))
+  const [readAnswers, setReadAnswers] = useState<(number | null)[]>(Array(10).fill(null))
   const [readSubmitted, setReadSubmitted] = useState(false)
 
   // ── Writing ──
@@ -731,7 +731,7 @@ export function IELTSTest() {
     setListenAudioError(false)
     setListenCurrentTurn(-1)
     setListenNotice(null)
-    setReadAnswers(Array(8).fill(null)); setReadSubmitted(false)
+    setReadAnswers(Array(10).fill(null)); setReadSubmitted(false)
     setWritingTask1(''); setWritingTask2(''); setWritingTaskView(1)
     setSpeakPhase('ready')
     setSpeakTranscript('')
@@ -756,7 +756,8 @@ export function IELTSTest() {
 
       setContent(data)
       setListenAnswers(Array(data.listening.questions.length).fill(null))
-      setReadAnswers(Array(data.reading.questions.length).fill(null))
+      const totalReadQs = data.reading.passages.reduce((n, p) => n + p.questions.length, 0)
+      setReadAnswers(Array(totalReadQs).fill(null))
       setPhase('listening')
     } catch {
       setError('Тест ачаалахад алдаа гарлаа. Дахин оролдоно уу.')
@@ -780,7 +781,7 @@ export function IELTSTest() {
           <div className="grid grid-cols-2 gap-3 w-full mb-8">
             {[
               { icon: '🎧', label: 'Listening', detail: '6 асуулт · Яриа 2 удаа' },
-              { icon: '📖', label: 'Reading', detail: '8 асуулт · Нийтлэл' },
+              { icon: '📖', label: 'Reading', detail: '10 асуулт · 2 нийтлэл' },
               { icon: '✍️', label: 'Writing', detail: 'Task 1 + Task 2' },
               { icon: '🗣️', label: 'Speaking', detail: sttSupported ? 'AI яриа · Автомат' : 'Дуу таних боломжгүй' },
             ].map(s => (
@@ -884,26 +885,13 @@ export function IELTSTest() {
                       </button>
                     )}
                     <p className="text-xs" style={{ color: '#64748B' }}>
-                      {listenAudioError ? 'Аудио ачаалагдсангүй — доорх ярианы текстийг уншаад хариулна уу' : 'Яриа 2 удаа автоматаар тоглуулна'}
+                      {listenAudioError ? 'Аудио ачаалагдсангүй — дахин оролдоно уу' : 'Яриа 2 удаа автоматаар тоглуулна'}
                     </p>
                   </div>
                 )}
               </div>
             )}
 
-            {listenAudioError && (
-              <div className="mt-3 pt-3 border-t border-navy-surface-2 space-y-2 max-h-60 overflow-y-auto">
-                {conv.map((turn, i) => (
-                  <div key={i} className="flex gap-2 text-sm">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center"
-                      style={{ background: turn.speaker === 'A' ? 'linear-gradient(135deg, #F59E0B, #D97706)' : '#334155', color: turn.speaker === 'A' ? '#0F172A' : '#F8FAFC' }}>
-                      {turn.speaker}
-                    </span>
-                    <p className="flex-1 leading-relaxed text-text-secondary text-xs">{turn.text}</p>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* All questions at once */}
@@ -980,48 +968,62 @@ export function IELTSTest() {
   // ══════════════════════════════════════════
   // ─── Reading ───
   if (phase === 'reading' && content) {
-    const allReadAnswered = readAnswers.every(a => a !== null)
+    const passages = content.reading.passages
+    const totalReadQs = passages.reduce((n, p) => n + p.questions.length, 0)
+    const allReadAnswered = readAnswers.length === totalReadQs && readAnswers.every(a => a !== null)
+    let runningIdx = 0
     return (
       <div className="min-h-dvh bg-navy flex flex-col">
         <NavBar lessonTitle="Reading" />
         <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
           <SectionProgress idx={sectionIdx} />
-          <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 mb-4">
-            <div className="text-xs font-semibold text-gold uppercase tracking-wide mb-2">📖 Нийтлэл</div>
-            <p className="text-sm leading-relaxed text-text-primary">{content.reading.passage}</p>
-          </div>
+          <p className="text-xs mb-3 font-semibold" style={{ color: '#64748B' }}>Бүх {totalReadQs} асуултад хариулна уу ({passages.length} нийтлэл)</p>
 
-          <p className="text-xs mb-3 font-semibold" style={{ color: '#64748B' }}>Бүх {content.reading.questions.length} асуултад хариулна уу</p>
-          <div className="space-y-4 mb-6">
-            {content.reading.questions.map((q, qi) => (
-              <div key={qi} className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4">
-                <p className="text-sm font-semibold text-text-primary mb-3">
-                  <span style={{ color: '#F59E0B' }}>{qi + 1}.</span> {q.question}
-                </p>
-                <div className="space-y-2">
-                  {q.options.map((opt, oi) => {
-                    const selected = readAnswers[qi] === oi
-                    const correct = readSubmitted && oi === q.correct
-                    const wrong = readSubmitted && selected && oi !== q.correct
-                    const neutral = readSubmitted && !selected && oi !== q.correct
+          {passages.map((pg, pi) => {
+            const startIdx = runningIdx
+            runningIdx += pg.questions.length
+            return (
+              <div key={pi} className="mb-6">
+                <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 mb-4">
+                  <div className="text-xs font-semibold text-gold uppercase tracking-wide mb-2">📖 Нийтлэл {pi + 1}</div>
+                  <p className="text-sm leading-relaxed text-text-primary whitespace-pre-line">{pg.passage}</p>
+                </div>
+                <div className="space-y-4">
+                  {pg.questions.map((q, qi) => {
+                    const globalIdx = startIdx + qi
                     return (
-                      <button key={oi}
-                        onClick={() => { if (readSubmitted) return; const a = [...readAnswers]; a[qi] = oi; setReadAnswers(a) }}
-                        disabled={readSubmitted}
-                        className="w-full text-left px-4 py-2.5 min-h-[44px] flex items-center rounded-xl border text-sm transition-all"
-                        style={{
-                          background: correct ? 'rgba(52,211,153,0.1)' : wrong ? 'rgba(248,113,113,0.1)' : selected ? 'rgba(245,158,11,0.08)' : 'transparent',
-                          borderColor: correct ? '#34D399' : wrong ? '#F87171' : selected ? '#F59E0B' : '#334155',
-                          color: neutral ? '#64748B' : correct ? '#34D399' : wrong ? '#F87171' : '#F8FAFC',
-                        }}>
-                        <span className="font-medium mr-2">{String.fromCharCode(65 + oi)}.</span>{opt}
-                      </button>
+                      <div key={globalIdx} className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4">
+                        <p className="text-sm font-semibold text-text-primary mb-3">
+                          <span style={{ color: '#F59E0B' }}>{globalIdx + 1}.</span> {q.question}
+                        </p>
+                        <div className="space-y-2">
+                          {q.options.map((opt, oi) => {
+                            const selected = readAnswers[globalIdx] === oi
+                            const correct = readSubmitted && oi === q.correct
+                            const wrong = readSubmitted && selected && oi !== q.correct
+                            const neutral = readSubmitted && !selected && oi !== q.correct
+                            return (
+                              <button key={oi}
+                                onClick={() => { if (readSubmitted) return; const a = [...readAnswers]; a[globalIdx] = oi; setReadAnswers(a) }}
+                                disabled={readSubmitted}
+                                className="w-full text-left px-4 py-2.5 min-h-[44px] flex items-center rounded-xl border text-sm transition-all"
+                                style={{
+                                  background: correct ? 'rgba(52,211,153,0.1)' : wrong ? 'rgba(248,113,113,0.1)' : selected ? 'rgba(245,158,11,0.08)' : 'transparent',
+                                  borderColor: correct ? '#34D399' : wrong ? '#F87171' : selected ? '#F59E0B' : '#334155',
+                                  color: neutral ? '#64748B' : correct ? '#34D399' : wrong ? '#F87171' : '#F8FAFC',
+                                }}>
+                                <span className="font-medium mr-2">{String.fromCharCode(65 + oi)}.</span>{opt}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
                     )
                   })}
                 </div>
               </div>
-            ))}
-          </div>
+            )
+          })}
 
           {!readSubmitted ? (
             <button onClick={() => setReadSubmitted(true)} disabled={!allReadAnswered}

@@ -18,7 +18,7 @@ const LIMITS: Record<LimitKey, number> = {
   'ielts-generate': 5,
   quiz: 5,
   'ielts-grade': 10,
-  'ielts-tts': 20,
+  'ielts-tts': 60,
   'ielts-stt': 20,
   chat: 30,
   'free-chat': 30,

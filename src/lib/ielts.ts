@@ -38,8 +38,10 @@ export interface IELTSContent {
     questions: IELTSQuestion[]
   }
   reading: {
-    passage: string
-    questions: IELTSQuestion[]
+    passages: Array<{
+      passage: string
+      questions: IELTSQuestion[]
+    }>
   }
   writing: {
     task1Prompt: string

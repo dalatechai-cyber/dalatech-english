@@ -32,7 +32,8 @@ export async function POST(req: NextRequest) {
     }
 
     const listeningBand = scoreObjective(answers.listeningAnswers, content.listening.questions)
-    const readingBand = scoreObjective(answers.readingAnswers, content.reading.questions)
+    const readingQuestions = content.reading.passages.flatMap(p => p.questions)
+    const readingBand = scoreObjective(answers.readingAnswers, readingQuestions)
 
     const speakingText = [
       'PART 1 QUESTIONS AND ANSWERS:\n' + content.speaking.part1Questions.map((q, i) =>

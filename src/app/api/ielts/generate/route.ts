@@ -39,9 +39,19 @@ Return ONLY valid JSON matching this exact structure:
     ]
   },
   "reading": {
-    "passage": "...",
-    "questions": [
-      {"question": "...", "options": ["A","B","C","D"], "correct": 0}
+    "passages": [
+      {
+        "passage": "...",
+        "questions": [
+          {"question": "...", "options": ["A","B","C","D"], "correct": 0}
+        ]
+      },
+      {
+        "passage": "...",
+        "questions": [
+          {"question": "...", "options": ["A","B","C","D"], "correct": 0}
+        ]
+      }
     ]
   },
   "writing": {
@@ -63,9 +73,10 @@ LISTENING section rules:
 - "correct" is 0-based index
 
 READING section rules:
-- Academic passage, 200-250 words, topic varies per seed (science, environment, history, technology, social sciences)
-- 8 multiple-choice questions
-- "correct" is 0-based index
+- Exactly 2 passages. Each passage 250-300 words on a DIFFERENT academic topic (e.g., passage 1 science/environment, passage 2 history/social sciences/technology/culture). Vary topics per seed so no two sessions share a topic.
+- Passage 1: 5 questions — MIX of multiple-choice and True/False/Not Given. For True/False/Not Given items, put the statement in "question" and use options ["True","False","Not Given"] with "correct" being the 0-based index.
+- Passage 2: 5 questions — MIX of multiple-choice and matching (e.g. match a statement to the paragraph/person that expresses it). Use 4 options for multiple-choice and matching items.
+- 10 reading questions total across the 2 passages. "correct" is always a 0-based index into the options array for that question.
 
 WRITING section rules:
 - task1Prompt: describe a chart/table/graph. Include data using <data-table> tags exactly like this example:
@@ -108,6 +119,9 @@ SPEAKING section rules (seed ${seed} — make every session unique):
     const parsed = JSON.parse(jsonMatch[0])
     if (!parsed.listening?.conversation || !Array.isArray(parsed.listening.conversation)) {
       return NextResponse.json({ error: 'Invalid listening structure' }, { status: 500 })
+    }
+    if (!parsed.reading?.passages || !Array.isArray(parsed.reading.passages) || parsed.reading.passages.length < 2) {
+      return NextResponse.json({ error: 'Invalid reading structure' }, { status: 500 })
     }
     return NextResponse.json(parsed)
   } catch (e) {
