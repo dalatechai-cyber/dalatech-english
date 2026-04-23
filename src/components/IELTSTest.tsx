@@ -261,7 +261,7 @@ export function IELTSTest() {
     setListenLoadProgress({ done: 0, total })
 
     ;(async () => {
-      const BATCH_SIZE = 3
+      const BATCH_SIZE = 8
       const urls: (string | null)[] = new Array(total).fill(null)
       const preloadStart = Date.now()
       console.log('[IELTS] TTS preload START — total turns:', total)
@@ -757,22 +757,63 @@ export function IELTSTest() {
     const usedTopics = (() => { try { return JSON.parse(localStorage.getItem('core-ielts-used-topics') ?? '[]') as string[] } catch { return [] } })()
 
     try {
-      const genStart = Date.now()
-      console.log('[IELTS] /api/ielts/generate START')
-      const res = await fetch('/api/ielts/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seed: Date.now(), usedTopics }) })
-      if (!res.ok) throw new Error('Failed')
-      const data = await res.json() as IELTSContent
-      console.log('[IELTS] /api/ielts/generate DONE', Date.now() - genStart, 'ms')
-      if (!data.listening?.conversation || !data.reading || !data.writing || !data.speaking) throw new Error('Invalid')
+      const seed = Date.now()
+      const pipelineStart = Date.now()
 
-      const part2Topic = data.speaking.part2Card.split('\n')[0]?.slice(0, 60) ?? ''
-      if (part2Topic) try { const s = JSON.parse(localStorage.getItem('core-ielts-used-topics') ?? '[]') as string[]; localStorage.setItem('core-ielts-used-topics', JSON.stringify([part2Topic, ...s].slice(0, 5))) } catch { /* ignore */ }
+      // Fire both endpoints in parallel: listening is fast and unblocks TTS preload;
+      // content (reading/writing/speaking) generates in background.
+      console.log('[IELTS] /api/ielts/generate-listening START')
+      const listenPromise = fetch('/api/ielts/generate-listening', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seed }),
+      })
+      console.log('[IELTS] /api/ielts/generate-content START')
+      const contentPromise = fetch('/api/ielts/generate-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seed, usedTopics }),
+      })
 
-      setContent(data)
-      setListenAnswers(Array(data.listening.questions.length).fill(null))
-      const totalReadQs = data.reading.passages.reduce((n, p) => n + p.questions.length, 0)
-      setReadAnswers(Array(totalReadQs).fill(null))
+      const listenRes = await listenPromise
+      if (!listenRes.ok) throw new Error('Listening failed')
+      const listenData = await listenRes.json() as { listening: IELTSContent['listening'] }
+      console.log('[IELTS] /api/ielts/generate-listening DONE', Date.now() - pipelineStart, 'ms')
+      if (!listenData.listening?.conversation) throw new Error('Invalid listening')
+
+      // Set partial content so the listening preload effect fires immediately.
+      setContent({
+        listening: listenData.listening,
+        reading: { passages: [] },
+        writing: { task1Prompt: '', task2Prompt: '' },
+        speaking: { part1Questions: [], part2Card: '', part3Questions: [] },
+      })
+      setListenAnswers(Array(listenData.listening.questions.length).fill(null))
       setPhase('listening')
+
+      // Merge reading/writing/speaking when they arrive (in parallel with TTS preload).
+      contentPromise
+        .then(async res => {
+          if (!res.ok) throw new Error('Content failed')
+          const contentData = await res.json() as { reading: IELTSContent['reading']; writing: IELTSContent['writing']; speaking: IELTSContent['speaking'] }
+          console.log('[IELTS] /api/ielts/generate-content DONE', Date.now() - pipelineStart, 'ms')
+          if (!contentData.reading || !contentData.writing || !contentData.speaking) throw new Error('Invalid content')
+
+          const part2Topic = contentData.speaking.part2Card.split('\n')[0]?.slice(0, 60) ?? ''
+          if (part2Topic) try { const s = JSON.parse(localStorage.getItem('core-ielts-used-topics') ?? '[]') as string[]; localStorage.setItem('core-ielts-used-topics', JSON.stringify([part2Topic, ...s].slice(0, 5))) } catch { /* ignore */ }
+
+          setContent(prev => prev ? {
+            ...prev,
+            reading: contentData.reading,
+            writing: contentData.writing,
+            speaking: contentData.speaking,
+          } : prev)
+          const totalReadQs = contentData.reading.passages.reduce((n, p) => n + p.questions.length, 0)
+          setReadAnswers(Array(totalReadQs).fill(null))
+        })
+        .catch(err => {
+          console.error('[IELTS] content fetch failed:', err)
+        })
     } catch {
       setError('Тест ачаалахад алдаа гарлаа. Дахин оролдоно уу.')
       setPhase('intro')
