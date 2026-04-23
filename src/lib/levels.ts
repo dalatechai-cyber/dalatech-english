@@ -75,7 +75,7 @@ export const LEVELS: LevelMeta[] = [
   },
   {
     code: 'C1',
-    label: 'С1 — Нарийн шат',
+    label: 'С1 — Гүнзгий шат',
     description: 'IELTS 7.5+, инверси, хэв шинжийн сайжруулалт',
     color: 'from-amber-600 to-orange-700',
     lessons: [
