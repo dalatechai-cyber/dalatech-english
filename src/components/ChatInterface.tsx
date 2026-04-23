@@ -27,22 +27,15 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [streamingId, setStreamingId] = useState<string | null>(null)
   const [isComplete, setIsComplete] = useState(lp.completedLessons.includes(lessonId))
   const [lastExamContent, setLastExamContent] = useState<string | null>(null)
   const [streakData, setStreakData] = useState<{ current: number; isNewDay: boolean } | null>(null)
   const [hasRecordedStreak, setHasRecordedStreak] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
-  const streamBufferRef = useRef('')
-  const streamTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    return () => {
-      if (streamTimerRef.current) {
-        clearTimeout(streamTimerRef.current)
-        streamTimerRef.current = null
-      }
-    }
-  }, [])
+  const streamingContentRef = useRef('')
+  const streamingIdRef = useRef<string | null>(null)
+  const rafPendingRef = useRef(false)
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -83,7 +76,23 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
     setIsLoading(true)
 
     const aiMsgId = `a-${Date.now()}`
+    streamingIdRef.current = aiMsgId
+    streamingContentRef.current = ''
     setMessages(prev => [...prev, { id: aiMsgId, role: 'assistant', content: '', timestamp: Date.now() }])
+    setStreamingId(aiMsgId)
+
+    const scheduleDomUpdate = () => {
+      if (rafPendingRef.current) return
+      rafPendingRef.current = true
+      requestAnimationFrame(() => {
+        rafPendingRef.current = false
+        const id = streamingIdRef.current
+        if (!id) return
+        const el = document.getElementById(`msg-${id}`)
+        if (el) el.textContent = streamingContentRef.current
+        bottomRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' })
+      })
+    }
 
     try {
       const apiMessages = newMessages.map(m => ({ role: m.role, content: m.content }))
@@ -97,31 +106,18 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
       if (!res.body) throw new Error('No stream body')
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
-      streamBufferRef.current = ''
-
-      const flush = () => {
-        const snapshot = streamBufferRef.current
-        setMessages(prev =>
-          prev.map(m => (m.id === aiMsgId ? { ...m, content: snapshot } : m))
-        )
-        streamTimerRef.current = null
-      }
 
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
         const chunk = decoder.decode(value, { stream: true })
-        streamBufferRef.current += chunk
-        if (!streamTimerRef.current) {
-          streamTimerRef.current = setTimeout(flush, 30)
-        }
+        streamingContentRef.current += chunk
+        scheduleDomUpdate()
       }
 
-      if (streamTimerRef.current) {
-        clearTimeout(streamTimerRef.current)
-        streamTimerRef.current = null
-      }
-      const fullContent = streamBufferRef.current
+      const fullContent = streamingContentRef.current
+      streamingIdRef.current = null
+      setStreamingId(null)
       setMessages(prev =>
         prev.map(m => (m.id === aiMsgId ? { ...m, content: fullContent } : m))
       )
@@ -144,6 +140,8 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
         }
       }
     } catch (err: unknown) {
+      streamingIdRef.current = null
+      setStreamingId(null)
       if ((err as Error).name !== 'AbortError') {
         setMessages(prev =>
           prev.map(m =>
@@ -212,10 +210,12 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
 
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5">
         <div className="max-w-3xl mx-auto space-y-1">
-          {messages.map(msg => (
-            msg.content ? <ChatBubble key={msg.id} message={msg} /> : null
-          ))}
-          {isLoading && (
+          {messages.map(msg => {
+            const isThisStreaming = msg.id === streamingId
+            if (!msg.content && !isThisStreaming) return null
+            return <ChatBubble key={msg.id} message={msg} isStreaming={isThisStreaming} />
+          })}
+          {isLoading && !streamingId && (
             <div className="flex justify-start mb-3 animate-fade-in">
               <div
                 className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold mr-2 flex-shrink-0 mt-1"

@@ -236,6 +236,18 @@ body::before {
   font-size: 0.9em;
 }
 
+.streaming-cursor::after {
+  content: '▋';
+  display: inline-block;
+  margin-left: 2px;
+  animation: blink 1s infinite;
+  color: #F59E0B;
+}
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
 *:focus-visible {
   outline: 2px solid #F59E0B;
   outline-offset: 2px;

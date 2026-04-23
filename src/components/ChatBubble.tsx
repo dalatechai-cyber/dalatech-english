@@ -6,9 +6,10 @@ import { PronunciationHint } from './PronunciationHint'
 
 interface ChatBubbleProps {
   message: Message
+  isStreaming?: boolean
 }
 
-export function ChatBubble({ message }: ChatBubbleProps) {
+export function ChatBubble({ message, isStreaming = false }: ChatBubbleProps) {
   const isAI = message.role === 'assistant'
   const hasCorrection = message.content.includes('<correction>')
 
@@ -45,13 +46,20 @@ export function ChatBubble({ message }: ChatBubbleProps) {
         {isAI && hasCorrection ? (
           <ErrorCorrection content={message.content} />
         ) : isAI ? (
-          <div className="prose prose-invert prose-sm max-w-none text-sm leading-relaxed">
-            <ReactMarkdown>{cleanContent || message.content}</ReactMarkdown>
+          <div
+            id={`msg-${message.id}`}
+            className={`prose prose-invert prose-sm max-w-none text-sm leading-relaxed${isStreaming ? ' streaming-cursor whitespace-pre-wrap' : ''}`}
+          >
+            {isStreaming ? (
+              cleanContent || message.content
+            ) : (
+              <ReactMarkdown>{cleanContent || message.content}</ReactMarkdown>
+            )}
           </div>
         ) : (
           <p className="text-sm whitespace-pre-wrap leading-relaxed">{cleanContent || message.content}</p>
         )}
-        {isAI && (
+        {isAI && !isStreaming && (
           <PronunciationHint content={cleanContent} />
         )}
       </div>
