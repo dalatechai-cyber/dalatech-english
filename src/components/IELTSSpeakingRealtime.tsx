@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { NavBar } from './NavBar'
 import type { IELTSContent } from '@/lib/ielts'
 
@@ -44,25 +44,29 @@ const ORB_COLORS: Record<OrbState, string> = {
   thinking: '#8B5CF6',
 }
 
-const ORB_STYLES: Record<OrbState, { outer: React.CSSProperties; middle: React.CSSProperties; inner: React.CSSProperties }> =
-  (Object.keys(ORB_COLORS) as OrbState[]).reduce((acc, state) => {
-    const c = ORB_COLORS[state]
-    acc[state] = {
-      outer: { width: 280, height: 280, border: `2px solid ${c}`, opacity: 0.2, boxShadow: `0 0 60px ${c}22` },
-      middle: { width: 200, height: 200, border: `2px solid ${c}`, opacity: 0.35, boxShadow: `0 0 40px ${c}33` },
-      inner: {
-        width: 120,
-        height: 120,
-        background: `radial-gradient(circle, ${c}66 0%, ${c}33 50%, ${c}11 100%)`,
-        border: `2px solid ${c}99`,
-        boxShadow: `0 0 30px ${c}55, 0 0 60px ${c}33, 0 0 100px ${c}11`,
-      },
-    }
-    return acc
-  }, {} as Record<OrbState, { outer: React.CSSProperties; middle: React.CSSProperties; inner: React.CSSProperties }>)
+type OrbStyleSet = Record<OrbState, { outer: React.CSSProperties; middle: React.CSSProperties; inner: React.CSSProperties }>
 
 function SpeakOrb({ state }: { state: OrbState }) {
-  const s = ORB_STYLES[state]
+  const orbStyles = useMemo<OrbStyleSet>(
+    () =>
+      (Object.keys(ORB_COLORS) as OrbState[]).reduce((acc, st) => {
+        const c = ORB_COLORS[st]
+        acc[st] = {
+          outer: { width: 280, height: 280, border: `2px solid ${c}`, opacity: 0.2, boxShadow: `0 0 60px ${c}22` },
+          middle: { width: 200, height: 200, border: `2px solid ${c}`, opacity: 0.35, boxShadow: `0 0 40px ${c}33` },
+          inner: {
+            width: 120,
+            height: 120,
+            background: `radial-gradient(circle, ${c}66 0%, ${c}33 50%, ${c}11 100%)`,
+            border: `2px solid ${c}99`,
+            boxShadow: `0 0 30px ${c}55, 0 0 60px ${c}33, 0 0 100px ${c}11`,
+          },
+        }
+        return acc
+      }, {} as OrbStyleSet),
+    [],
+  )
+  const s = orbStyles[state]
   return (
     <div className="relative flex items-center justify-center" style={{ width: 280, height: 280 }}>
       <div className={`absolute rounded-full orb-ring-outer orb-${state}`} style={s.outer} />

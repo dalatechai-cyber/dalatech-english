@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { IELTSContent, IELTSAnswers, IELTSAnswer, IELTSQuestion } from '@/lib/ielts'
 import { CLAUDE_MODEL } from '@/lib/constants'
 import { checkRateLimit } from '@/lib/rateLimit'
+import { sanitizeForPrompt } from '@/lib/sanitize'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -79,13 +80,19 @@ export async function POST(req: NextRequest) {
     const readCorrect = countCorrect(answers.readingAnswers, readingQuestions)
     const readingBand = pctToBand(readCorrect / readTotal)
 
+    const cleanWriting1 = sanitizeForPrompt(answers.writingTask1 || '', 2000)
+    const cleanWriting2 = sanitizeForPrompt(answers.writingTask2 || '', 3000)
+    const cleanSpeaking1 = (answers.speakingPart1 || []).map(a => sanitizeForPrompt(a || '', 500))
+    const cleanSpeaking2 = sanitizeForPrompt(answers.speakingPart2 || '', 1000)
+    const cleanSpeaking3 = (answers.speakingPart3 || []).map(a => sanitizeForPrompt(a || '', 500))
+
     const speakingText = [
       'PART 1 QUESTIONS AND ANSWERS:\n' + content.speaking.part1Questions.map((q, i) =>
-        `Q: ${q}\nA: ${answers.speakingPart1[i] || '(no answer)'}`
+        `Q: ${q}\nA: ${cleanSpeaking1[i] || '(no answer)'}`
       ).join('\n\n'),
-      `PART 2 TOPIC CARD:\n${content.speaking.part2Card}\nSTUDENT ANSWER:\n${answers.speakingPart2 || '(no answer)'}`,
+      `PART 2 TOPIC CARD:\n${content.speaking.part2Card}\nSTUDENT ANSWER:\n${cleanSpeaking2 || '(no answer)'}`,
       'PART 3 QUESTIONS AND ANSWERS:\n' + content.speaking.part3Questions.map((q, i) =>
-        `Q: ${q}\nA: ${answers.speakingPart3[i] || '(no answer)'}`
+        `Q: ${q}\nA: ${cleanSpeaking3[i] || '(no answer)'}`
       ).join('\n\n'),
     ].join('\n\n---\n\n')
 
@@ -93,11 +100,11 @@ export async function POST(req: NextRequest) {
 
 === WRITING TASK 1 ===
 Prompt: ${content.writing.task1Prompt}
-Answer: ${answers.writingTask1 || '(no answer provided)'}
+Answer: ${cleanWriting1 || '(no answer provided)'}
 
 === WRITING TASK 2 ===
 Prompt: ${content.writing.task2Prompt}
-Answer: ${answers.writingTask2 || '(no answer provided)'}
+Answer: ${cleanWriting2 || '(no answer provided)'}
 
 === SPEAKING ===
 ${speakingText}

@@ -1,12 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
-import { CLAUDE_MODEL } from '@/lib/constants'
+import { CLAUDE_HAIKU_MODEL } from '@/lib/constants'
 import { checkRateLimit } from '@/lib/rateLimit'
 
-// Fall back to Sonnet (CLAUDE_MODEL) to confirm the route works. Haiku
-// attempt produced HTTP 500s — re-enable once the exact Haiku ID is
-// verified via logs.
-const LISTENING_MODEL = CLAUDE_MODEL
+const LISTENING_MODEL = CLAUDE_HAIKU_MODEL
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
@@ -48,7 +45,7 @@ Rules:
   try {
     const response = await client.messages.create({
       model: LISTENING_MODEL,
-      max_tokens: 2200,
+      max_tokens: 1500,
       system: systemPrompt,
       messages: [{ role: 'user', content: 'Generate the IELTS listening section now.' }],
     })

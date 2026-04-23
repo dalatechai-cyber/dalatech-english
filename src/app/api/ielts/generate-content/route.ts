@@ -107,6 +107,20 @@ SPEAKING section rules (seed ${seed} — make every session unique):
     if (!parsed.writing || !parsed.speaking) {
       return NextResponse.json({ error: 'Invalid content structure' }, { status: 500 })
     }
+
+    // Cap questions per passage to 8 in case the model returns extras.
+    parsed.reading.passages = parsed.reading.passages.map((p: { passage?: string; questions?: unknown[] }) => ({
+      ...p,
+      questions: Array.isArray(p.questions) ? p.questions.slice(0, 8) : [],
+    }))
+
+    parsed.reading.passages.forEach((p: { passage?: string }, i: number) => {
+      const wordCount = (p.passage ?? '').split(/\s+/).filter(Boolean).length
+      if (wordCount > 250) {
+        console.warn('Passage', i, 'too long:', wordCount, 'words')
+      }
+    })
+
     return NextResponse.json(parsed)
   } catch (e) {
     console.error('IELTS generate-content error:', e)

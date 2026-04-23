@@ -218,6 +218,7 @@ export function IELTSTest() {
   const [mounted, setMounted] = useState(false)
   const [showRestorePrompt, setShowRestorePrompt] = useState(false)
   const [savedSession, setSavedSession] = useState<SavedSession | null>(null)
+  const [contentFullyLoaded, setContentFullyLoaded] = useState(false)
 
   // ── Listening ──
   const [listenAnswers, setListenAnswers] = useState<IELTSAnswer[]>(Array(10).fill(null))
@@ -448,6 +449,7 @@ export function IELTSTest() {
   // ── Persist session after content generates, on answer changes, on phase transitions ──
   // Writing text has its own debounced saver below to avoid thrashing localStorage.
   useEffect(() => {
+    if (!contentFullyLoaded) return
     if (!content) return
     if (phase === 'intro' || phase === 'loading' || phase === 'grading') return
     // Speaking phase is not safely restorable mid-session; still persist so refresh
@@ -467,12 +469,13 @@ export function IELTSTest() {
       writingTask2,
       currentPassage,
     })
-  }, [phase, content, listenAnswers, readAnswers, readPassageIdx])
+  }, [phase, content, listenAnswers, readAnswers, readPassageIdx, contentFullyLoaded])
 
-  // Debounced writing save (2s after last keystroke).
+  // Debounced writing save (2s after last keystroke). Only runs in writing phase.
   useEffect(() => {
-    if (!content) return
+    if (!contentFullyLoaded) return
     if (phase !== 'writing') return
+    if (!content) return
     const id = setTimeout(() => {
       const currentPassage = (Math.min(2, Math.max(0, readPassageIdx)) as 0 | 1 | 2)
       writeSavedSession({
@@ -486,7 +489,7 @@ export function IELTSTest() {
       })
     }, 2000)
     return () => clearTimeout(id)
-  }, [writingTask1, writingTask2, phase, content, listenAnswers, readAnswers, readPassageIdx])
+  }, [writingTask1, writingTask2, phase, contentFullyLoaded])
 
   // ── Writing countdown timers ──
   const writingTaskViewRef = useRef<1 | 2>(1)
@@ -953,6 +956,7 @@ export function IELTSTest() {
     const s = savedSession
     setShowRestorePrompt(false)
     setContent(s.content)
+    setContentFullyLoaded(true)
     setListenAnswers(s.listeningAnswers)
     setReadAnswers(s.readingAnswers)
     setWritingTask1(s.writingTask1)
@@ -1010,66 +1014,60 @@ export function IELTSTest() {
     setRealtimeFallback(false)
     setGradeResult(null)
     setIsPartialResult(false)
+    setContentFullyLoaded(false)
 
     const usedTopics = (() => { try { return JSON.parse(localStorage.getItem('core-ielts-used-topics') ?? '[]') as string[] } catch { return [] } })()
 
     try {
       const seed = Date.now()
 
-      // Fire both endpoints in parallel: listening is fast and unblocks TTS preload;
-      // content (reading/writing/speaking) generates in background.
-      const listenPromise = fetch('/api/ielts/generate-listening', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ seed }),
-      })
-      const contentPromise = fetch('/api/ielts/generate-content', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ seed, usedTopics }),
-      })
+      // Fire both endpoints in parallel via Promise.all so a failure on either
+      // surfaces in one catch block. The listening TTS preload still fires on
+      // phase change to 'listening' — both fetches complete before that.
+      const [listenData, contentData] = await Promise.all([
+        fetch('/api/ielts/generate-listening', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ seed }),
+        }).then(async res => {
+          if (!res.ok) {
+            const errBody = await res.text().catch(() => '')
+            throw new Error(`Listening failed (${res.status}): ${errBody.slice(0, 200)}`)
+          }
+          return res.json() as Promise<{ listening: IELTSContent['listening'] }>
+        }),
+        fetch('/api/ielts/generate-content', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ seed, usedTopics }),
+        }).then(async res => {
+          if (!res.ok) {
+            const errBody = await res.text().catch(() => '')
+            throw new Error(`Content failed (${res.status}): ${errBody.slice(0, 200)}`)
+          }
+          return res.json() as Promise<{ reading: IELTSContent['reading']; writing: IELTSContent['writing']; speaking: IELTSContent['speaking'] }>
+        }),
+      ])
 
-      const listenRes = await listenPromise
-      if (!listenRes.ok) {
-        const errBody = await listenRes.text().catch(() => '')
-        throw new Error(`Listening failed (${listenRes.status}): ${errBody.slice(0, 200)}`)
-      }
-      const listenData = await listenRes.json() as { listening: IELTSContent['listening'] }
       if (!listenData.listening?.conversation) throw new Error('Invalid listening')
+      if (!contentData.reading || !contentData.writing || !contentData.speaking) throw new Error('Invalid content')
 
-      // Set partial content so the listening preload effect fires immediately.
+      const part2Topic = contentData.speaking.part2Card.split('\n')[0]?.slice(0, 60) ?? ''
+      if (part2Topic) try { const s = JSON.parse(localStorage.getItem('core-ielts-used-topics') ?? '[]') as string[]; localStorage.setItem('core-ielts-used-topics', JSON.stringify([part2Topic, ...s].slice(0, 5))) } catch { /* ignore */ }
+
       setContent({
         listening: listenData.listening,
-        reading: { passages: [] },
-        writing: { task1Prompt: '', task2Prompt: '' },
-        speaking: { part1Questions: [], part2Card: '', part3Questions: [] },
+        reading: contentData.reading,
+        writing: contentData.writing,
+        speaking: contentData.speaking,
       })
       setListenAnswers(Array(listenData.listening.questions.length).fill(null))
+      const totalReadQs = contentData.reading.passages.reduce((n, p) => n + p.questions.length, 0)
+      setReadAnswers(Array(totalReadQs).fill(null))
+      setContentFullyLoaded(true)
       setPhase('listening')
-
-      // Merge reading/writing/speaking when they arrive (in parallel with TTS preload).
-      contentPromise
-        .then(async res => {
-          if (!res.ok) throw new Error(`Content failed (${res.status})`)
-          const contentData = await res.json() as { reading: IELTSContent['reading']; writing: IELTSContent['writing']; speaking: IELTSContent['speaking'] }
-          if (!contentData.reading || !contentData.writing || !contentData.speaking) throw new Error('Invalid content')
-
-          const part2Topic = contentData.speaking.part2Card.split('\n')[0]?.slice(0, 60) ?? ''
-          if (part2Topic) try { const s = JSON.parse(localStorage.getItem('core-ielts-used-topics') ?? '[]') as string[]; localStorage.setItem('core-ielts-used-topics', JSON.stringify([part2Topic, ...s].slice(0, 5))) } catch { /* ignore */ }
-
-          setContent(prev => prev ? {
-            ...prev,
-            reading: contentData.reading,
-            writing: contentData.writing,
-            speaking: contentData.speaking,
-          } : prev)
-          const totalReadQs = contentData.reading.passages.reduce((n, p) => n + p.questions.length, 0)
-          setReadAnswers(Array(totalReadQs).fill(null))
-        })
-        .catch(err => {
-          console.error('IELTS content fetch failed:', err)
-        })
-    } catch {
+    } catch (err) {
+      console.error('IELTS test load failed:', err)
       setError('Тест ачаалахад алдаа гарлаа. Дахин оролдоно уу.')
       setPhase('intro')
     }
@@ -1414,7 +1412,7 @@ export function IELTSTest() {
 
     const PassagePane = (
       <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 h-full overflow-y-auto">
-        <div className="text-xs font-semibold text-gold uppercase tracking-wide mb-2 sticky top-0 bg-navy-surface pb-2">
+        <div className="text-xs font-semibold text-gold uppercase tracking-wide mb-2 sticky top-0 z-20 bg-[#0F172A] border-b border-slate-700 pb-2 -mx-4 px-4">
           📖 Нийтлэл {pi + 1}/{passages.length}
         </div>
         <p className="text-sm leading-relaxed text-text-primary whitespace-pre-line">{pg?.passage}</p>
@@ -1642,7 +1640,7 @@ export function IELTSTest() {
               <button
                 onClick={handleStopSpeaking}
                 className="rounded-xl font-semibold text-sm"
-                style={{ minWidth: 160, padding: '12px 24px', background: 'rgba(239, 68, 68, 0.9)', border: '1px solid #EF4444', color: '#FFF5F5', boxShadow: '0 8px 24px rgba(239,68,68,0.4)' }}>
+                style={{ minWidth: 160, minHeight: 48, padding: '14px 32px', background: 'rgba(239, 68, 68, 0.9)', border: '1px solid #EF4444', color: '#FFF5F5', boxShadow: '0 8px 24px rgba(239,68,68,0.4)' }}>
                 ⏹ Дуусгах
               </button>
             </div>
