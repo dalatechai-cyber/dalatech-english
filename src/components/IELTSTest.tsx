@@ -263,19 +263,26 @@ export function IELTSTest() {
     ;(async () => {
       const BATCH_SIZE = 3
       const urls: (string | null)[] = new Array(total).fill(null)
+      const preloadStart = Date.now()
+      console.log('[IELTS] TTS preload START — total turns:', total)
 
       for (let i = 0; i < total; i += BATCH_SIZE) {
         if (cancelled) return
         const batch = turns.slice(i, i + BATCH_SIZE)
+        const batchLabel = `[IELTS] batch-${i}`
+        console.time(batchLabel)
         await Promise.all(
           batch.map(async (turn, j) => {
             const idx = i + j
             const voice: ElevenVoice = turn.speaker === 'A' ? 'alice' : 'george'
+            const t = Date.now()
             try {
               const url = await generateTTS(turn.text, voice)
               urls[idx] = url
-            } catch {
+              console.log('[IELTS] TTS turn', idx, 'took', Date.now() - t, 'ms')
+            } catch (err) {
               urls[idx] = null
+              console.log('[IELTS] TTS turn', idx, 'FAILED after', Date.now() - t, 'ms', err)
             }
             setListenLoadProgress({
               done: urls.filter(u => u !== null).length,
@@ -283,7 +290,9 @@ export function IELTSTest() {
             })
           })
         )
+        console.timeEnd(batchLabel)
       }
+      console.log('[IELTS] TTS preload DONE', Date.now() - preloadStart, 'ms')
 
       if (cancelled) return
       const successCount = urls.filter(u => u !== null).length
@@ -748,9 +757,12 @@ export function IELTSTest() {
     const usedTopics = (() => { try { return JSON.parse(localStorage.getItem('core-ielts-used-topics') ?? '[]') as string[] } catch { return [] } })()
 
     try {
+      const genStart = Date.now()
+      console.log('[IELTS] /api/ielts/generate START')
       const res = await fetch('/api/ielts/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seed: Date.now(), usedTopics }) })
       if (!res.ok) throw new Error('Failed')
       const data = await res.json() as IELTSContent
+      console.log('[IELTS] /api/ielts/generate DONE', Date.now() - genStart, 'ms')
       if (!data.listening?.conversation || !data.reading || !data.writing || !data.speaking) throw new Error('Invalid')
 
       const part2Topic = data.speaking.part2Card.split('\n')[0]?.slice(0, 60) ?? ''
