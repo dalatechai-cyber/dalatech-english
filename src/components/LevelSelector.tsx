@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useProgress } from '@/hooks/useProgress'
 import { LEVELS } from '@/lib/levels'
 import type { LevelCode } from '@/lib/types'
+import { TrophyIcon, BookIcon } from './Icon'
 
 export function LevelSelector() {
   const { getLevelProgress } = useProgress()
@@ -13,39 +14,65 @@ export function LevelSelector() {
         const lp = getLevelProgress(level.code as LevelCode)
         const completed = lp.completedLessons.length
         const pct = Math.round((completed / 10) * 100)
+        const label = level.label.split(' — ')[1] ?? level.label
 
         return (
           <Link
             key={level.code}
             href={`/level/${level.code}`}
-            className="group relative rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-gold"
+            className="group relative rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 focus-visible:-translate-y-1"
             style={{ animationDelay: `${idx * 0.05}s` }}
           >
             <div
+              className={`h-full relative ${
+                lp.examPassed ? 'shadow-gold' : 'shadow-editorial'
+              } group-hover:shadow-gold transition-shadow duration-300`}
               style={{
                 background: lp.examPassed
-                  ? 'linear-gradient(#1E293B, #1E293B) padding-box, linear-gradient(135deg, #F59E0B, #FCD34D) border-box'
-                  : undefined,
-                border: lp.examPassed ? '1px solid transparent' : '1px solid rgba(245,158,11,0.12)',
+                  ? 'linear-gradient(#141C30, #141C30) padding-box, linear-gradient(135deg, #F59E0B 0%, #E4C08A 50%, #D97706 100%) border-box'
+                  : '#141C30',
+                border: lp.examPassed
+                  ? '1px solid transparent'
+                  : '1px solid rgba(255,255,255,0.06)',
                 borderRadius: 16,
               }}
-              className={`h-full ${!lp.examPassed ? 'bg-navy-surface' : ''}`}
             >
-              <div className="p-4 flex flex-col h-full relative overflow-hidden">
-                {/* Subtle diagonal pattern */}
-                <div
-                  className="absolute inset-0 opacity-[0.03] pointer-events-none"
-                  style={{
-                    backgroundImage: `repeating-linear-gradient(45deg, #F59E0B 0, #F59E0B 1px, transparent 0, transparent 50%)`,
-                    backgroundSize: '12px 12px',
-                  }}
-                />
+              {/* Corner decoration */}
+              <div
+                className="absolute top-0 right-0 w-16 h-16 pointer-events-none"
+                style={{
+                  background:
+                    'radial-gradient(circle at top right, rgba(245,158,11,0.12) 0%, transparent 60%)',
+                }}
+              />
 
-                {/* Level code */}
+              <div className="p-5 flex flex-col h-full relative">
+                {/* Top row: status pill */}
+                <div className="flex items-center justify-between mb-4">
+                  <span
+                    className="text-[10px] font-semibold tracking-[0.2em] uppercase"
+                    style={{ color: lp.examPassed ? 'var(--champagne)' : 'var(--text-muted)' }}
+                  >
+                    CEFR
+                  </span>
+                  <span
+                    className="flex items-center justify-center w-7 h-7 rounded-full"
+                    style={{
+                      color: lp.examPassed ? 'var(--gold)' : 'var(--text-muted)',
+                      background: lp.examPassed
+                        ? 'rgba(245,158,11,0.1)'
+                        : 'rgba(255,255,255,0.04)',
+                    }}
+                  >
+                    {lp.examPassed ? <TrophyIcon size={14} /> : <BookIcon size={14} />}
+                  </span>
+                </div>
+
+                {/* Level code — serif, editorial */}
                 <div
-                  className="text-4xl font-extrabold leading-none mb-1 relative"
+                  className="font-serif-display text-5xl font-bold leading-none mb-1 nums-tabular"
                   style={{
-                    background: 'linear-gradient(135deg, #F59E0B, #FCD34D)',
+                    background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 50%, #E4C08A 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
@@ -56,27 +83,39 @@ export function LevelSelector() {
                 </div>
 
                 {/* Level name */}
-                <div className="text-xs font-semibold text-text-primary mb-3 leading-tight relative">
-                  {level.label.split(' — ')[1]}
+                <div
+                  className="text-[11px] font-medium mb-4 leading-tight uppercase tracking-wider"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  {label}
                 </div>
 
-                {/* Badge row */}
-                <div className="flex items-center justify-between mb-2 relative">
-                  <span className="text-xs" style={{ color: '#64748B' }}>
-                    {completed}/10
-                  </span>
-                  <span className="text-xl">{lp.examPassed ? '🏆' : '📖'}</span>
-                </div>
+                <div className="mt-auto">
+                  {/* Progress label */}
+                  <div className="flex items-center justify-between mb-2 text-[11px]">
+                    <span style={{ color: 'var(--text-muted)' }}>Дэвшил</span>
+                    <span
+                      className="nums-tabular font-medium"
+                      style={{ color: 'var(--champagne)' }}
+                    >
+                      {completed}/10
+                    </span>
+                  </div>
 
-                {/* Progress bar */}
-                <div className="w-full h-1.5 bg-navy-surface-2 rounded-full overflow-hidden relative">
+                  {/* Progress bar — hairline track, gold fill */}
                   <div
-                    className="h-full rounded-full transition-all duration-700"
-                    style={{
-                      width: `${pct}%`,
-                      background: 'linear-gradient(90deg, #F59E0B, #FCD34D)',
-                    }}
-                  />
+                    className="w-full h-1 rounded-full overflow-hidden"
+                    style={{ background: 'rgba(255,255,255,0.06)' }}
+                  >
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{
+                        width: `${pct}%`,
+                        background:
+                          'linear-gradient(90deg, #D97706 0%, #F59E0B 50%, #FCD34D 100%)',
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

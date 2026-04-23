@@ -8,6 +8,7 @@ import { recordStudySession } from '@/lib/streak'
 import { hasEverPassedLevel } from '@/lib/certificates'
 import { t } from '@/lib/i18n'
 import { saveTestResult } from '@/lib/testHistory'
+import { CheckCircleIcon, XCircleIcon, CertificateIcon, TrophyIcon, ArrowRightIcon } from './Icon'
 
 interface MCQuestion {
   question: string
@@ -265,33 +266,35 @@ export function QuizMode({ level }: QuizModeProps) {
       <div className="min-h-dvh bg-navy flex flex-col">
         <NavBar levelCode={level} lessonTitle={`${t('quizMC')} — ${mcIndex + 1}/15`} />
         <div className="flex-1 overflow-y-auto p-6 max-w-lg mx-auto w-full">
-          {/* Progress bar */}
-          <div className="flex gap-1 mb-2">
+          {/* Progress bar — hairline segments */}
+          <div className="flex gap-[3px] mb-3">
             {mcQuestions.map((_, i) => (
               <div
                 key={i}
-                className={`flex-1 h-1.5 rounded-full transition-colors ${
+                className={`flex-1 h-[3px] rounded-full transition-colors ${
                   i < mcIndex
-                    ? mcAnswers[i] === mcQuestions[i].correctIndex ? 'bg-emerald-500' : 'bg-rose-500'
-                    : i === mcIndex ? 'bg-gold' : 'bg-navy-surface-2'
+                    ? mcAnswers[i] === mcQuestions[i].correctIndex ? 'bg-emerald-500/80' : 'bg-rose-500/80'
+                    : i === mcIndex ? 'bg-gold' : 'bg-white/[0.08]'
                 }`}
               />
             ))}
           </div>
           {/* Section indicators */}
-          <div className="flex gap-2 text-xs text-text-secondary mb-5">
-            <span className="text-gold font-semibold">{t('quizMC')} 15</span>
-            <span>·</span>
-            <span>{t('quizReading')} 4</span>
-            <span>·</span>
-            <span>{t('quizWriting')} 6</span>
-            <span className="ml-auto">{t('quizScoreTotal')}: 25</span>
+          <div className="flex items-center gap-2 text-[11px] mb-6" style={{ color: 'var(--text-muted)' }}>
+            <span className="font-semibold tracking-[0.15em] uppercase" style={{ color: 'var(--champagne)' }}>{t('quizMC')} 15</span>
+            <span className="opacity-40">·</span>
+            <span className="uppercase tracking-[0.15em]">{t('quizReading')} 4</span>
+            <span className="opacity-40">·</span>
+            <span className="uppercase tracking-[0.15em]">{t('quizWriting')} 6</span>
+            <span className="ml-auto nums-tabular">{t('quizScoreTotal')} 25</span>
           </div>
 
-          <div className="text-xs text-text-secondary mb-3">{level} · {mcIndex + 1}/{mcQuestions.length}</div>
+          <div className="text-[11px] mb-4 font-semibold tracking-[0.2em] uppercase nums-tabular" style={{ color: 'var(--text-muted)' }}>
+            {level} · Асуулт {mcIndex + 1} / {mcQuestions.length}
+          </div>
           {q && (
             <>
-              <h2 className="text-lg font-semibold text-text-primary mb-6">{q.question}</h2>
+              <h2 className="text-lg font-semibold text-white mb-6 leading-snug" style={{ letterSpacing: '-0.01em' }}>{q.question}</h2>
               <div className="space-y-3 mb-6">
                 {q.options.map((opt, i) => {
                   let style = 'border-navy-surface-2 text-text-primary hover:border-gold/40 cursor-pointer'
@@ -315,17 +318,19 @@ export function QuizMode({ level }: QuizModeProps) {
               </div>
               {mcAnswered && (
                 <>
-                  <div className={`rounded-xl p-4 mb-6 text-sm ${mcSelected === q.correctIndex ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-rose-500/10 border border-rose-500/30'}`}>
-                    <div className={`font-semibold mb-1 ${mcSelected === q.correctIndex ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {mcSelected === q.correctIndex ? '✅ Зөв!' : '❌ Буруу.'}
+                  <div className={`rounded-xl p-4 mb-6 text-sm ${mcSelected === q.correctIndex ? 'bg-emerald-500/[0.06] border border-emerald-500/25' : 'bg-rose-500/[0.06] border border-rose-500/25'}`}>
+                    <div className={`font-semibold mb-1.5 flex items-center gap-2 ${mcSelected === q.correctIndex ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {mcSelected === q.correctIndex ? <CheckCircleIcon size={16} /> : <XCircleIcon size={16} />}
+                      {mcSelected === q.correctIndex ? 'Зөв' : 'Буруу'}
                     </div>
-                    <p className="text-text-secondary text-xs">{q.explanation}</p>
+                    <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{q.explanation}</p>
                   </div>
                   <button
                     onClick={handleMCNext}
-                    className="w-full bg-gold hover:bg-gold-dark text-navy font-bold py-3 min-h-[48px] rounded-xl transition-colors"
+                    className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-br from-gold to-gold-dark hover:shadow-gold-sm text-navy font-semibold py-3.5 min-h-[48px] rounded-xl transition-all"
                   >
-                    {mcIndex < mcQuestions.length - 1 ? `${t('next')} →` : `${t('quizReading')} →`}
+                    {mcIndex < mcQuestions.length - 1 ? t('next') : t('quizReading')}
+                    <ArrowRightIcon size={16} />
                   </button>
                 </>
               )}
@@ -344,15 +349,22 @@ export function QuizMode({ level }: QuizModeProps) {
         <NavBar levelCode={level} lessonTitle={`${t('quizReading')} — ${readingIndex + 1}/2`} />
         <div className="flex-1 overflow-y-auto p-6 max-w-lg mx-auto w-full">
           {/* Passage */}
-          <div className="bg-navy-surface border border-navy-surface-2 rounded-xl p-4 mb-6">
-            <div className="text-xs text-gold font-semibold mb-2 uppercase tracking-wide">{t('quizReading')}</div>
-            <p className="text-text-primary text-sm leading-relaxed">{quizData.reading.passage}</p>
+          <div className="bg-navy-surface border hairline rounded-xl p-5 mb-6 shadow-editorial">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="h-px w-6" style={{ background: 'rgba(245,158,11,0.5)' }} />
+              <span className="text-[10px] font-semibold tracking-[0.22em] uppercase" style={{ color: 'var(--champagne)' }}>
+                {t('quizReading')}
+              </span>
+            </div>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>{quizData.reading.passage}</p>
           </div>
 
-          <div className="text-xs text-text-secondary mb-3">Асуулт {readingIndex + 1}/2</div>
+          <div className="text-[11px] mb-4 font-semibold tracking-[0.2em] uppercase nums-tabular" style={{ color: 'var(--text-muted)' }}>
+            Асуулт {readingIndex + 1} / 2
+          </div>
           {q && (
             <>
-              <h2 className="text-base font-semibold text-text-primary mb-5">{q.question}</h2>
+              <h2 className="text-base font-semibold text-white mb-5 leading-snug" style={{ letterSpacing: '-0.01em' }}>{q.question}</h2>
               <div className="space-y-3 mb-6">
                 {q.options.map((opt, i) => {
                   let style = 'border-navy-surface-2 text-text-primary hover:border-gold/40 cursor-pointer'
@@ -376,17 +388,19 @@ export function QuizMode({ level }: QuizModeProps) {
               </div>
               {readingAnswered && (
                 <>
-                  <div className={`rounded-xl p-4 mb-6 text-sm ${readingSelected === q.correctIndex ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-rose-500/10 border border-rose-500/30'}`}>
-                    <div className={`font-semibold mb-1 ${readingSelected === q.correctIndex ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {readingSelected === q.correctIndex ? '✅ Зөв!' : '❌ Буруу.'}
+                  <div className={`rounded-xl p-4 mb-6 text-sm ${readingSelected === q.correctIndex ? 'bg-emerald-500/[0.06] border border-emerald-500/25' : 'bg-rose-500/[0.06] border border-rose-500/25'}`}>
+                    <div className={`font-semibold mb-1.5 flex items-center gap-2 ${readingSelected === q.correctIndex ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {readingSelected === q.correctIndex ? <CheckCircleIcon size={16} /> : <XCircleIcon size={16} />}
+                      {readingSelected === q.correctIndex ? 'Зөв' : 'Буруу'}
                     </div>
-                    <p className="text-text-secondary text-xs">{q.explanation}</p>
+                    <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{q.explanation}</p>
                   </div>
                   <button
                     onClick={handleReadingNext}
-                    className="w-full bg-gold hover:bg-gold-dark text-navy font-bold py-3 min-h-[48px] rounded-xl transition-colors"
+                    className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-br from-gold to-gold-dark hover:shadow-gold-sm text-navy font-semibold py-3.5 min-h-[48px] rounded-xl transition-all"
                   >
-                    {readingIndex < readingQuestions.length - 1 ? `${t('next')} →` : `${t('quizWriting')} →`}
+                    {readingIndex < readingQuestions.length - 1 ? t('next') : t('quizWriting')}
+                    <ArrowRightIcon size={16} />
                   </button>
                 </>
               )}
@@ -403,10 +417,21 @@ export function QuizMode({ level }: QuizModeProps) {
       <div className="min-h-dvh bg-navy flex flex-col">
         <NavBar levelCode={level} lessonTitle={t('quizWriting')} />
         <div className="flex-1 overflow-y-auto p-6 max-w-lg mx-auto w-full">
-          <div className="bg-navy-surface border border-gold/30 rounded-xl p-4 mb-5">
-            <div className="text-xs text-gold font-semibold mb-2 uppercase tracking-wide">{t('quizWriting')}</div>
-            <p className="text-text-primary text-sm leading-relaxed">{quizData.writing.prompt}</p>
-            <div className="mt-2 text-xs text-text-secondary">Граммар: <span className="text-gold/80">{quizData.writing.grammar_focus}</span></div>
+          <div className="rounded-xl p-5 mb-5 shadow-editorial" style={{
+            background: 'linear-gradient(#141C30, #141C30) padding-box, linear-gradient(135deg, rgba(245,158,11,0.4), rgba(228,192,138,0.2)) border-box',
+            border: '1px solid transparent',
+          }}>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="h-px w-6" style={{ background: 'rgba(245,158,11,0.5)' }} />
+              <span className="text-[10px] font-semibold tracking-[0.22em] uppercase" style={{ color: 'var(--champagne)' }}>
+                {t('quizWriting')}
+              </span>
+            </div>
+            <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--text-primary)' }}>{quizData.writing.prompt}</p>
+            <div className="pt-3 border-t hairline text-[11px] flex items-center gap-2">
+              <span className="uppercase tracking-[0.15em]" style={{ color: 'var(--text-muted)' }}>Грамматик</span>
+              <span style={{ color: 'var(--champagne)' }}>{quizData.writing.grammar_focus}</span>
+            </div>
           </div>
 
           <textarea
@@ -426,9 +451,10 @@ export function QuizMode({ level }: QuizModeProps) {
           <button
             onClick={handleSubmitWriting}
             disabled={writingAnswer.trim().length < 5}
-            className="w-full bg-gold hover:bg-gold-dark disabled:opacity-40 disabled:cursor-not-allowed text-navy font-bold py-3 min-h-[48px] rounded-xl transition-colors"
+            className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-br from-gold to-gold-dark hover:shadow-gold-sm disabled:opacity-40 disabled:cursor-not-allowed text-navy font-semibold py-3.5 min-h-[48px] rounded-xl transition-all"
           >
-            {t('quizSubmitWriting')} →
+            {t('quizSubmitWriting')}
+            <ArrowRightIcon size={16} />
           </button>
         </div>
       </div>
@@ -441,54 +467,81 @@ export function QuizMode({ level }: QuizModeProps) {
       <div className="min-h-dvh bg-navy flex flex-col">
         <NavBar levelCode={level} lessonTitle="Тест — үр дүн" />
         <div className="flex-1 overflow-y-auto p-6 max-w-lg mx-auto w-full">
-          {/* Score summary */}
-          <div className="text-center mb-6">
-            <div className="text-6xl font-extrabold text-gold mb-2">{totalScore}/25</div>
-            <div className={`text-xl font-bold mb-2 ${passed ? 'text-emerald-400' : 'text-rose-400'}`}>
+          {/* Score summary — editorial */}
+          <div className="text-center mb-8 pt-2">
+            <div className="text-[10px] font-semibold tracking-[0.3em] uppercase mb-4" style={{ color: 'var(--champagne)' }}>
+              Үр дүн
+            </div>
+            <div className="font-serif-display font-bold nums-tabular leading-none mb-3" style={{ fontSize: 'clamp(72px, 18vw, 112px)' }}>
+              <span style={{
+                background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 50%, #E4C08A 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}>
+                {totalScore}
+              </span>
+              <span className="text-white/30 font-normal italic">/25</span>
+            </div>
+            <div className={`text-base font-semibold mb-2 flex items-center justify-center gap-2 ${passed ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {passed ? <CheckCircleIcon size={18} /> : <XCircleIcon size={18} />}
               {passed ? t('quizPassed') : t('quizFailed')}
             </div>
-            <p className="text-text-secondary text-sm">
+            <p className="text-sm max-w-xs mx-auto" style={{ color: 'var(--text-secondary)' }}>
               {passed ? t('quizPassMsg') : t('quizFailMsg')}
             </p>
           </div>
 
-          {/* Score bar */}
-          <div className="w-full h-3 bg-navy-surface-2 rounded-full overflow-hidden mb-6">
+          {/* Score bar — premium hairline */}
+          <div className="w-full h-1.5 rounded-full overflow-hidden mb-8" style={{ background: 'rgba(255,255,255,0.06)' }}>
             <div
-              className={`h-full rounded-full transition-all duration-700 ${passed ? 'bg-emerald-500' : 'bg-rose-500'}`}
-              style={{ width: `${(totalScore / 25) * 100}%` }}
+              className="h-full rounded-full transition-all duration-700"
+              style={{
+                width: `${(totalScore / 25) * 100}%`,
+                background: passed
+                  ? 'linear-gradient(90deg, #059669, #10B981)'
+                  : 'linear-gradient(90deg, #E11D48, #F43F5E)',
+              }}
             />
           </div>
 
           {/* Score breakdown */}
-          <div className="bg-navy-surface border border-navy-surface-2 rounded-xl p-4 mb-5">
-            <div className="text-sm font-semibold text-text-primary mb-3">Оноог задлал</div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-text-secondary">{t('quizScoreMC')} (×1)</span>
-                <span className="text-text-primary font-medium">{mcScore}/15</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-text-secondary">{t('quizScoreReading')} (×2)</span>
-                <span className="text-text-primary font-medium">{readingScore}/4</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-text-secondary">{t('quizScoreWriting')}</span>
-                <span className="text-text-primary font-medium">{writingScore}/6</span>
-              </div>
-              <div className="h-px bg-navy-surface-2 my-1" />
-              <div className="flex justify-between text-sm font-bold">
-                <span className="text-text-primary">{t('quizScoreTotal')}</span>
-                <span className={passed ? 'text-emerald-400' : 'text-rose-400'}>{totalScore}/25</span>
+          <div className="rounded-xl p-5 mb-5 border hairline shadow-editorial" style={{ background: '#141C30' }}>
+            <div className="text-[10px] font-semibold tracking-[0.22em] uppercase mb-4 flex items-center gap-2" style={{ color: 'var(--champagne)' }}>
+              <span className="h-px w-6" style={{ background: 'rgba(245,158,11,0.5)' }} />
+              Задлал
+            </div>
+            <div className="space-y-3">
+              {[
+                { label: `${t('quizScoreMC')} × 1`, val: mcScore, max: 15 },
+                { label: `${t('quizScoreReading')} × 2`, val: readingScore, max: 4 },
+                { label: t('quizScoreWriting'), val: writingScore, max: 6 },
+              ].map(r => (
+                <div key={r.label} className="flex items-center justify-between text-sm">
+                  <span style={{ color: 'var(--text-secondary)' }}>{r.label}</span>
+                  <span className="nums-tabular font-medium text-white">
+                    {r.val}<span className="text-white/30">/{r.max}</span>
+                  </span>
+                </div>
+              ))}
+              <div className="h-px my-3" style={{ background: 'var(--hairline)' }} />
+              <div className="flex items-center justify-between text-sm font-semibold">
+                <span className="text-white uppercase tracking-[0.15em] text-[11px]">{t('quizScoreTotal')}</span>
+                <span className={`nums-tabular ${passed ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {totalScore}<span className="opacity-40">/25</span>
+                </span>
               </div>
             </div>
           </div>
 
           {/* Writing feedback */}
           {writingFeedback && (
-            <div className="bg-navy-surface border border-navy-surface-2 rounded-xl p-4 mb-5">
-              <div className="text-sm font-semibold text-text-primary mb-2">{t('quizWritingFeedback')}</div>
-              <p className="text-text-secondary text-xs leading-relaxed">{writingFeedback}</p>
+            <div className="rounded-xl p-5 mb-5 border hairline" style={{ background: '#141C30' }}>
+              <div className="text-[10px] font-semibold tracking-[0.22em] uppercase mb-2.5 flex items-center gap-2" style={{ color: 'var(--champagne)' }}>
+                <span className="h-px w-6" style={{ background: 'rgba(245,158,11,0.5)' }} />
+                {t('quizWritingFeedback')}
+              </div>
+              <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{writingFeedback}</p>
             </div>
           )}
 
@@ -497,20 +550,25 @@ export function QuizMode({ level }: QuizModeProps) {
             {passed && !alreadyHasCert && (
               <button
                 onClick={() => setShowCertificate(true)}
-                className="w-full bg-gold hover:bg-gold-dark text-navy font-bold py-3 min-h-[48px] rounded-xl transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-br from-gold to-gold-dark hover:shadow-gold-sm text-navy font-semibold py-3.5 min-h-[48px] rounded-xl transition-all"
               >
-                🎓 Гэрчилгээ авах
+                <CertificateIcon size={18} />
+                Гэрчилгээ авах
               </button>
             )}
             {passed && alreadyHasCert && (
-              <div className="w-full bg-emerald-500/10 border border-emerald-500/30 rounded-xl py-4 px-4 text-center">
-                <div className="text-emerald-400 font-semibold text-sm mb-1">🏆 Амжилттай давлаа!</div>
-                <div className="text-text-secondary text-xs">Та өмнө нь энэ түвшний гэрчилгээ авсан байна.</div>
+              <div className="w-full rounded-xl py-4 px-5 text-center border border-emerald-500/25 bg-emerald-500/[0.06]">
+                <div className="text-emerald-400 font-semibold text-sm mb-1 flex items-center justify-center gap-2">
+                  <TrophyIcon size={16} />
+                  Амжилттай давлаа
+                </div>
+                <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Та өмнө нь энэ түвшний гэрчилгээ авсан байна.</div>
               </div>
             )}
             <button
               onClick={loadQuiz}
-              className="w-full bg-navy-surface hover:bg-navy-surface-2 border border-navy-surface-2 text-text-primary font-semibold py-3 min-h-[48px] rounded-xl transition-colors"
+              className="w-full border hairline text-white font-medium py-3.5 min-h-[48px] rounded-xl transition-colors hover:bg-white/[0.03]"
+              style={{ background: 'transparent' }}
             >
               {t('quizRetry')}
             </button>

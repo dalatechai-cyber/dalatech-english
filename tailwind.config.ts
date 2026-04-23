@@ -9,14 +9,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        navy: '#0F172A',
-        'navy-surface': '#1E293B',
-        'navy-surface-2': '#334155',
+        navy: '#0B1222',
+        'navy-deep': '#070C18',
+        'navy-surface': '#141C30',
+        'navy-surface-2': '#1F2940',
         gold: '#F59E0B',
         'gold-light': '#FCD34D',
         'gold-dark': '#D97706',
+        champagne: '#E4C08A',
         'text-primary': 'var(--text-primary)',
         'text-secondary': 'var(--text-secondary)',
+      },
+      fontFamily: {
+        serif: ['Playfair Display', 'EB Garamond', 'Georgia', 'serif'],
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in-out',
