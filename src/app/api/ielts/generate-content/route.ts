@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
-import { CLAUDE_MODEL } from '@/lib/constants'
+import { CLAUDE_HAIKU_MODEL } from '@/lib/constants'
 import { checkRateLimit } from '@/lib/rateLimit'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -53,14 +53,14 @@ Return ONLY valid JSON matching this exact structure:
 }
 
 READING section rules:
-- EXACTLY 3 passages. Each passage 250-300 words on a DIFFERENT academic topic. Rotate across: science, environment, history, social science, technology, culture, medicine, psychology, economics, linguistics. Pick 3 different areas per seed. Never reuse specific subjects, case studies, or examples from previous sessions.
-- Each passage has EXACTLY 10 questions, in this exact order and count:
-  * items 1-4: "type":"mc" — 4 plausible options, "correct" is 0-based
-  * items 5-7: "type":"tfng" — statement in "question", options EXACTLY ["True","False","Not Given"], "correct" 0-based (0=True, 1=False, 2=Not Given)
-  * items 8-9: "type":"matching" — match a heading or statement to a paragraph/person. Options are 4 paragraph-labels or roles. "correct" is 0-based.
-  * item 10: "type":"short" — one short-answer item; student types up to 3 words. "acceptedAnswers" is a list of 1-4 acceptable short phrases (lowercase, singular variants where relevant). Do NOT include "options" on short items.
+- EXACTLY 3 passages. Each passage MAX 200 words on a DIFFERENT academic topic. Rotate across: science, environment, history, social science, technology, culture, medicine, psychology, economics, linguistics. Pick 3 different areas per seed. Never reuse specific subjects, case studies, or examples from previous sessions.
+- Each passage has EXACTLY 8 questions, in this exact order and count:
+  * items 1-3: "type":"mc" — 4 plausible options, "correct" is 0-based
+  * items 4-5: "type":"tfng" — statement in "question", options EXACTLY ["True","False","Not Given"], "correct" 0-based (0=True, 1=False, 2=Not Given)
+  * items 6-7: "type":"matching" — match a heading or statement to a paragraph/person. Options are 4 paragraph-labels or roles. "correct" is 0-based.
+  * item 8: "type":"short" — one short-answer item; student types up to 3 words. "acceptedAnswers" is a list of 1-4 acceptable short phrases (lowercase, singular variants where relevant). Do NOT include "options" on short items.
 - Do NOT include "options" on short items. Do NOT include "acceptedAnswers" on mc/tfng/matching items.
-- 30 reading questions total across the 3 passages.
+- 24 reading questions total across the 3 passages.
 
 WRITING section rules:
 - task1Prompt: describe a chart/table/graph. Include data using <data-table> tags exactly like this example:
@@ -90,7 +90,7 @@ SPEAKING section rules (seed ${seed} — make every session unique):
 - part3Questions: EXACTLY 4 abstract discussion questions derived from and extending the Part 2 topic. Make them thought-provoking, intellectual, and debate-style — different from Part 1.`
 
     const response = await client.messages.create({
-      model: CLAUDE_MODEL,
+      model: CLAUDE_HAIKU_MODEL,
       max_tokens: 6000,
       system: systemPrompt,
       messages: [{ role: 'user', content: 'Generate the IELTS reading, writing, and speaking sections now.' }],

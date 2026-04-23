@@ -236,6 +236,39 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
     setMicDenied(false)
     setStatusLabel('AI шалгагчтай холбогдож байна...')
 
+    // HTTPS is required for getUserMedia on non-localhost; fail fast with a clear message.
+    if (typeof window !== 'undefined' && window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+      setConnectionError('Микрофон ашиглахын тулд HTTPS шаардлагатай')
+      setConnState('error')
+      return
+    }
+
+    // WebRTC capability check — some embedded browsers lack RTCPeerConnection.
+    if (typeof window === 'undefined' || !window.RTCPeerConnection) {
+      setConnectionError('Таны хөтөч энэ функцийг дэмждэггүй. Chrome эсвэл Safari хөтчийг ашиглана уу.')
+      setConnState('error')
+      return
+    }
+
+    // Request mic permission explicitly up-front so iOS/Android surface the dialog
+    // inside the current user gesture, then release the probe stream.
+    try {
+      const probe = await navigator.mediaDevices.getUserMedia({ audio: true })
+      probe.getTracks().forEach(t => t.stop())
+    } catch (err) {
+      const name = (err as { name?: string } | undefined)?.name
+      if (name === 'NotAllowedError') {
+        setConnectionError('Микрофоны зөвшөөрөл өгнө үү. Утасны тохиргооноос хөтчид микрофон ашиглах зөвшөөрөл олгоно уу.')
+      } else if (name === 'NotFoundError') {
+        setConnectionError('Микрофон олдсонгүй. Төхөөрөмжийн микрофон ажиллаж байгаа эсэхийг шалгана уу.')
+      } else {
+        setConnectionError('Микрофон ашиглах боломжгүй байна. Дахин оролдоно уу.')
+      }
+      setMicDenied(true)
+      setConnState('error')
+      return
+    }
+
     try {
       const sessRes = await fetch('/api/ielts/realtime', {
         method: 'POST',
@@ -255,12 +288,27 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
 
       let stream: MediaStream
       try {
+        // Mobile-optimized constraints: mono, 24kHz matches OpenAI Realtime's
+        // preferred input; built-in suppression keeps typing noise out of speech.
         stream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            sampleRate: 24000,
+            channelCount: 1,
+          },
         })
-      } catch {
+      } catch (err) {
+        const name = (err as { name?: string } | undefined)?.name
         setMicDenied(true)
-        throw new Error('Microphone permission denied')
+        if (name === 'NotAllowedError') {
+          throw new Error('Микрофоны зөвшөөрөл өгнө үү. Утасны тохиргооноос хөтчид микрофон ашиглах зөвшөөрөл олгоно уу.')
+        }
+        if (name === 'NotFoundError') {
+          throw new Error('Микрофон олдсонгүй.')
+        }
+        throw new Error('Микрофон ажиллахгүй байна. Дахин оролдоно уу.')
       }
       localStreamRef.current = stream
 
@@ -461,16 +509,16 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
         {connState === 'error' && (
           <div className="mt-10 flex flex-col items-center gap-4 w-full max-w-sm">
             <p className="text-sm text-center" style={{ color: '#F87171' }}>
-              {micDenied
+              {connectionError ?? (micDenied
                 ? 'Микрофон хэрэглэхийг зөвшөөрнө үү. Хөтчийн тохиргооноос микрофонд зөвшөөрөл өгөөд дахин оролдоно уу.'
-                : `Холболт амжилтгүй: ${connectionError ?? 'тодорхойгүй алдаа'}`}
+                : 'Холболт амжилтгүй')}
             </p>
             <div className="flex gap-3 flex-wrap justify-center">
               <button
                 onClick={() => { setConnState('idle'); setConnectionError(null); setMicDenied(false); connect() }}
                 className="px-5 py-3 rounded-xl font-semibold text-sm transition-all"
                 style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
-                🔄 Дахин холбогдох
+                🔄 Дахин оролдох
               </button>
               <button
                 onClick={onFallback}

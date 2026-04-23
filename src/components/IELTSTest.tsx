@@ -105,6 +105,44 @@ function Spinner({ label }: { label: string }) {
 
 type Phase = 'intro' | 'loading' | 'listening' | 'reading' | 'writing' | 'speaking' | 'grading' | 'results'
 
+const IELTS_SESSION_KEY = 'ielts-session'
+const IELTS_SESSION_MAX_AGE_MS = 3 * 60 * 60 * 1000
+
+type SavedPhase = 'listening' | 'reading' | 'writing' | 'speaking' | 'results'
+interface SavedSession {
+  phase: SavedPhase
+  content: IELTSContent
+  listeningAnswers: IELTSAnswer[]
+  readingAnswers: IELTSAnswer[]
+  writingTask1: string
+  writingTask2: string
+  currentPassage: 0 | 1 | 2
+  timestamp: number
+}
+
+function readSavedSession(): SavedSession | null {
+  try {
+    const raw = localStorage.getItem(IELTS_SESSION_KEY)
+    if (!raw) return null
+    const session = JSON.parse(raw) as SavedSession
+    if (typeof session.timestamp !== 'number') return null
+    const age = Date.now() - session.timestamp
+    if (age >= IELTS_SESSION_MAX_AGE_MS) {
+      localStorage.removeItem(IELTS_SESSION_KEY)
+      return null
+    }
+    return session
+  } catch { return null }
+}
+function writeSavedSession(session: Omit<SavedSession, 'timestamp'>): void {
+  try {
+    localStorage.setItem(IELTS_SESSION_KEY, JSON.stringify({ ...session, timestamp: Date.now() }))
+  } catch { /* quota or unavailable — ignore */ }
+}
+function clearSavedSession(): void {
+  try { localStorage.removeItem(IELTS_SESSION_KEY) } catch { /* ignore */ }
+}
+
 function SectionProgress({ idx }: { idx: number }) {
   return (
     <div className="flex gap-1 mb-4">
@@ -184,6 +222,8 @@ export function IELTSTest() {
   const [gradeResult, setGradeResult] = useState<GradeResult | null>(null)
   const [isPartialResult, setIsPartialResult] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [showRestorePrompt, setShowRestorePrompt] = useState(false)
+  const [savedSession, setSavedSession] = useState<SavedSession | null>(null)
 
   // ── Listening ──
   const [listenAnswers, setListenAnswers] = useState<IELTSAnswer[]>(Array(10).fill(null))
@@ -247,6 +287,12 @@ export function IELTSTest() {
     setTtsSupported(isSpeechSupported())
     setSttSupported(isSpeechRecognitionSupported())
     setMounted(true)
+    // Check for restorable in-flight test from a prior tab/refresh.
+    const session = readSavedSession()
+    if (session) {
+      setSavedSession(session)
+      setShowRestorePrompt(true)
+    }
   }, [])
 
   // ── Cleanup on unmount / phase change ──
@@ -393,6 +439,49 @@ export function IELTSTest() {
     })()
     return () => { cancelled = true }
   }, [phase])
+
+  // ── Persist session after content generates, on answer changes, on phase transitions ──
+  // Writing text has its own debounced saver below to avoid thrashing localStorage.
+  useEffect(() => {
+    if (!content) return
+    if (phase === 'intro' || phase === 'loading' || phase === 'grading') return
+    // Speaking phase is not safely restorable mid-session; still persist so refresh
+    // during speaking can fall back to writing per restore handler.
+    const persistPhase: SavedPhase =
+      phase === 'results' ? 'results' :
+      phase === 'speaking' ? 'speaking' :
+      phase === 'writing' ? 'writing' :
+      phase === 'reading' ? 'reading' : 'listening'
+    const currentPassage = (Math.min(2, Math.max(0, readPassageIdx)) as 0 | 1 | 2)
+    writeSavedSession({
+      phase: persistPhase,
+      content,
+      listeningAnswers: listenAnswers,
+      readingAnswers: readAnswers,
+      writingTask1,
+      writingTask2,
+      currentPassage,
+    })
+  }, [phase, content, listenAnswers, readAnswers, readPassageIdx])
+
+  // Debounced writing save (2s after last keystroke).
+  useEffect(() => {
+    if (!content) return
+    if (phase !== 'writing') return
+    const id = setTimeout(() => {
+      const currentPassage = (Math.min(2, Math.max(0, readPassageIdx)) as 0 | 1 | 2)
+      writeSavedSession({
+        phase: 'writing',
+        content,
+        listeningAnswers: listenAnswers,
+        readingAnswers: readAnswers,
+        writingTask1,
+        writingTask2,
+        currentPassage,
+      })
+    }, 2000)
+    return () => clearTimeout(id)
+  }, [writingTask1, writingTask2, phase, content, listenAnswers, readAnswers, readPassageIdx])
 
   // ── Writing countdown timers ──
   useEffect(() => {
@@ -642,6 +731,7 @@ export function IELTSTest() {
       setGradeResult(result)
       saveIELTSResult({ date: new Date().toISOString().slice(0, 10), overall: result.overall, listening: result.listening, reading: result.reading, writing: result.writing, speaking: result.speaking, feedback: result.writingFeedback })
       saveTestResult({ type: 'ielts', ieltsBand: result.overall })
+      clearSavedSession()
       setPhase('results')
     } catch {
       setError('Үнэлгээ хийхэд алдаа гарлаа.')
@@ -843,8 +933,43 @@ export function IELTSTest() {
     }
   }
 
+  // ── Resume a saved session from localStorage ──
+  const resumeSavedSession = () => {
+    if (!savedSession) return
+    const s = savedSession
+    setShowRestorePrompt(false)
+    setContent(s.content)
+    setListenAnswers(s.listeningAnswers)
+    setReadAnswers(s.readingAnswers)
+    setWritingTask1(s.writingTask1)
+    setWritingTask2(s.writingTask2)
+    setReadPassageIdx(s.currentPassage)
+    setError(null)
+    // If student refreshed during speaking, speaking must restart — send them back to writing.
+    if (s.phase === 'speaking') {
+      setSpeakNotice('Ярианы шалгалт дахин эхлэх шаардлагатай')
+      setPhase('writing')
+    } else if (s.phase === 'results') {
+      // If the saved session is at results with no grade data we can't reconstruct scoring,
+      // so send the student back to writing where they left off their answers.
+      setPhase('writing')
+    } else {
+      setPhase(s.phase)
+    }
+    setSavedSession(null)
+  }
+
+  const discardSavedSession = () => {
+    clearSavedSession()
+    setSavedSession(null)
+    setShowRestorePrompt(false)
+  }
+
   // ── Start test ──
   const startTest = async () => {
+    clearSavedSession()
+    setShowRestorePrompt(false)
+    setSavedSession(null)
     setPhase('loading')
     setError(null)
     clearTTSCache()
@@ -1046,6 +1171,31 @@ export function IELTSTest() {
             Шинэ шалгалт эхлэх →
           </button>
         </div>
+
+        {showRestorePrompt && savedSession && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(5,13,26,0.85)' }}>
+            <div className="max-w-sm w-full rounded-2xl p-6 border" style={{ background: '#0F172A', borderColor: '#F59E0B55' }}>
+              <h2 className="text-lg font-bold text-text-primary mb-2">Тест үргэлжлүүлэх үү?</h2>
+              <p className="text-sm mb-5" style={{ color: '#94A3B8' }}>
+                Таны өмнөх тест хадгалагдсан байна. Үргэлжлүүлэх үү?
+              </p>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={resumeSavedSession}
+                  className="w-full font-bold py-3 min-h-[48px] rounded-xl"
+                  style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+                  Үргэлжлүүлэх
+                </button>
+                <button
+                  onClick={discardSavedSession}
+                  className="w-full font-semibold py-3 min-h-[48px] rounded-xl border"
+                  style={{ background: 'transparent', borderColor: '#334155', color: '#CBD5E1' }}>
+                  Шинэ тест эхлэх
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -1205,6 +1355,29 @@ export function IELTSTest() {
   // ─── Reading ───
   if (phase === 'reading' && content) {
     const passages = content.reading.passages
+    // Reading content may still be loading (listening fetch completes first while
+    // generate-content request is in flight). Show skeleton until passages arrive.
+    if (passages.length === 0) {
+      return (
+        <div className="min-h-dvh bg-navy flex flex-col">
+          <NavBar lessonTitle="Reading" />
+          <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
+            <SectionProgress idx={sectionIdx} />
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex gap-1">
+                {[0, 1, 2].map(i => <span key={i} className="w-2 h-2 rounded-full animate-bounce" style={{ background: '#F59E0B', animationDelay: `${i * 0.15}s` }} />)}
+              </div>
+              <p className="text-xs font-semibold" style={{ color: '#F59E0B' }}>Нийтлэл ачааллаж байна...</p>
+            </div>
+            <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 space-y-3">
+              {[100, 95, 88, 92, 80, 96, 85, 90, 75].map((w, i) => (
+                <div key={i} className="h-3 rounded animate-pulse" style={{ width: `${w}%`, background: '#1E293B' }} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )
+    }
     const totalReadQs = passages.reduce((n, p) => n + p.questions.length, 0)
     const pi = Math.min(readPassageIdx, passages.length - 1)
     const pg = passages[pi]
@@ -1277,13 +1450,13 @@ export function IELTSTest() {
     return (
       <div className="h-dvh bg-navy flex flex-col overflow-hidden">
         <NavBar lessonTitle="Reading" />
-        <div className="px-4 pt-3 max-w-6xl mx-auto w-full flex-shrink-0">
+        <div className="px-4 pt-3 pb-2 max-w-6xl mx-auto w-full flex-shrink-0 sticky top-0 z-10 bg-navy md:static">
           <SectionProgress idx={sectionIdx} />
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold" style={{ color: '#F59E0B' }}>НИЙТЛЭЛ {pi + 1}/{passages.length}</p>
             <p className="text-xs font-semibold" style={{ color: '#64748B' }}>{totalAnswered}/{totalReadQs} хариулсан · Буцах боломжгүй</p>
           </div>
-          <div className="flex gap-1 mb-3">
+          <div className="flex gap-1">
             {passages.map((_, i) => (
               <div key={i} className="flex-1 h-1 rounded-full" style={{ background: i < pi ? '#34D39988' : i === pi ? '#F59E0B' : '#334155' }} />
             ))}
@@ -1292,7 +1465,7 @@ export function IELTSTest() {
 
         {/* Mobile tabs */}
         <div className="md:hidden flex-1 flex flex-col px-4 pb-4 min-h-0">
-          <div className="flex border-b border-navy-surface-2 mb-3 flex-shrink-0">
+          <div className="flex border-b border-navy-surface-2 mb-3 flex-shrink-0 sticky top-0 z-10 bg-navy">
             <button onClick={() => setReadMobileTab('passage')}
               className="flex-1 py-2.5 min-h-[44px] text-sm font-semibold transition-colors"
               style={{
@@ -1438,18 +1611,28 @@ export function IELTSTest() {
 
     return (
       <div className="min-h-dvh bg-navy flex flex-col" style={{ background: '#050D1A' }}>
-        {/* Stop button top-right — finalizes with partial answers if any */}
+        {/* Stop button — mobile: fixed bottom-center (clears hamburger); desktop: top-right */}
         {speakPhase !== 'ready' && (
-          <div className="fixed top-4 right-4 z-50">
-            <button
-              onClick={handleStopSpeaking}
-              className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors"
-              style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #EF4444', color: '#FCA5A5' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.4)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)' }}>
-              ⏹ Дуусгах
-            </button>
-          </div>
+          <>
+            <div className="hidden md:block fixed top-4 right-4 z-50">
+              <button
+                onClick={handleStopSpeaking}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors"
+                style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #EF4444', color: '#FCA5A5' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.4)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)' }}>
+                ⏹ Дуусгах
+              </button>
+            </div>
+            <div className="md:hidden fixed z-50" style={{ bottom: 24, left: '50%', transform: 'translateX(-50%)' }}>
+              <button
+                onClick={handleStopSpeaking}
+                className="rounded-xl font-semibold text-sm"
+                style={{ minWidth: 160, padding: '12px 24px', background: 'rgba(239, 68, 68, 0.9)', border: '1px solid #EF4444', color: '#FFF5F5', boxShadow: '0 8px 24px rgba(239,68,68,0.4)' }}>
+                ⏹ Дуусгах
+              </button>
+            </div>
+          </>
         )}
 
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
