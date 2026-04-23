@@ -192,6 +192,7 @@ export function IELTSTest() {
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const currentExaminerHandleRef = useRef<AudioHandle | null>(null)
   const speakAnswersRef = useRef<string[]>([])
+  const questionsAskedRef = useRef<number>(0)
 
   // Browser-capability flags: default to true for SSR to avoid hydration mismatch,
   // then re-check client-side in useEffect.
@@ -260,48 +261,34 @@ export function IELTSTest() {
     setListenLoadProgress({ done: 0, total })
 
     ;(async () => {
-      const urls: string[] = new Array(total).fill('')
-      let failedCount = 0
-      let completed = 0
-
-      const loadOne = async (turnIdx: number): Promise<boolean> => {
-        const turn = turns[turnIdx]
-        const voice: ElevenVoice = turn.speaker === 'A' ? 'alice' : 'george'
-        for (let attempt = 1; attempt <= 2; attempt++) {
-          if (cancelled) return false
-          const ctrl = new AbortController()
-          const timeoutId = setTimeout(() => ctrl.abort(), 10000)
-          try {
-            const url = await generateTTS(turn.text, voice, ctrl.signal)
-            if (cancelled) return false
-            urls[turnIdx] = url
-            return true
-          } catch {
-            if (attempt < 2) await new Promise(r => setTimeout(r, 800))
-          } finally {
-            clearTimeout(timeoutId)
-          }
-        }
-        return false
-      }
-
       const BATCH_SIZE = 3
+      const urls: (string | null)[] = new Array(total).fill(null)
+
       for (let i = 0; i < total; i += BATCH_SIZE) {
         if (cancelled) return
-        const indices: number[] = []
-        for (let j = 0; j < BATCH_SIZE && i + j < total; j++) indices.push(i + j)
-        const results = await Promise.all(indices.map(idx => loadOne(idx)))
-        if (cancelled) return
-        results.forEach(ok => {
-          if (!ok) failedCount++
-          completed++
-        })
-        setListenLoadProgress({ done: completed, total })
+        const batch = turns.slice(i, i + BATCH_SIZE)
+        await Promise.all(
+          batch.map(async (turn, j) => {
+            const idx = i + j
+            const voice: ElevenVoice = turn.speaker === 'A' ? 'alice' : 'george'
+            try {
+              const url = await generateTTS(turn.text, voice)
+              urls[idx] = url
+            } catch {
+              urls[idx] = null
+            }
+            setListenLoadProgress({
+              done: urls.filter(u => u !== null).length,
+              total,
+            })
+          })
+        )
       }
 
       if (cancelled) return
-      const successCount = total - failedCount
-      listenAudiosRef.current = urls
+      const successCount = urls.filter(u => u !== null).length
+      const failedCount = total - successCount
+      listenAudiosRef.current = urls.map(u => u ?? '')
       if (successCount === 0) {
         setListenAudioError(true)
         setListenNotice('ElevenLabs холбогдсонгүй, өөр дуу ашиглаж байна')
@@ -585,7 +572,7 @@ export function IELTSTest() {
     setSpeakPrepCountdown(null)
     setSpeakContinue(false)
 
-    if (speakAnswersRef.current.length > 0) {
+    if (questionsAskedRef.current > 0) {
       setIsPartialResult(true)
       gradeAndShowResults()
     } else {
@@ -600,6 +587,7 @@ export function IELTSTest() {
     speakAbortRef.current = false
     setSpeakNotice(null)
     speakAnswersRef.current = []
+    questionsAskedRef.current = 0
 
     const pushAnswer = (ans: string) => { speakAnswersRef.current = [...speakAnswersRef.current, ans] }
 
@@ -614,6 +602,7 @@ export function IELTSTest() {
       silenceSec: number,
     ): Promise<string> => {
       if (speakAbortRef.current) return ''
+      questionsAskedRef.current += 1
       await playExaminer(question)
       if (speakAbortRef.current) return ''
       await pause(200)
@@ -671,6 +660,7 @@ export function IELTSTest() {
 
       // 3. Part 2 — intro, prep countdown, begin, long turn
       if (speakAbortRef.current) return
+      questionsAskedRef.current += 1
       await playExaminer(PART2_INTRO)
       if (speakAbortRef.current) return
 
