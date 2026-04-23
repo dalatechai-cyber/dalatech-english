@@ -1247,6 +1247,15 @@ export function IELTSTest() {
       { label: 'Grammatical Range', value: gradeResult.speakingCriteria.grammaticalRange },
       { label: 'Pronunciation', value: gradeResult.speakingCriteria.pronunciation },
     ] : []
+
+    const listenQs = content?.listening.questions ?? []
+    const listenCorrect = listenAnswers.filter((a, i) => a !== null && a === listenQs[i]?.correct).length
+    const flatReadQs = content?.reading.passages.flatMap(p => p.questions) ?? []
+    const readCorrect = readAnswers.filter((a, i) => a !== null && a === flatReadQs[i]?.correct).length
+    const writingPts = Math.round((gradeResult.writing * 6) / 9)
+    const testPts = Math.round((gradeResult.speaking * 15) / 9)
+    const totalPts = testPts + readCorrect + writingPts
+    const passedPts = totalPts >= 23
     return (
       <div className="min-h-dvh bg-navy flex flex-col">
         <NavBar lessonTitle="IELTS — Үр дүн" />
@@ -1267,6 +1276,21 @@ export function IELTSTest() {
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 mb-4">
+            <div className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>Түүхий оноо (мэдээллийн зорилгоор)</div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs" style={{ color: '#94A3B8' }}>🎧 Listening</span>
+              <span className="text-sm font-semibold text-text-primary">{listenCorrect}/6</span>
+            </div>
+            <div className="h-px bg-navy-surface-2 my-2" />
+            <p className="text-sm leading-relaxed text-text-primary">
+              Тест <span className="font-semibold">{testPts}</span>/15 · Уншлага <span className="font-semibold">{readCorrect}</span>/10 · Бичих <span className="font-semibold">{writingPts}</span>/6 · Нийт: <span className="font-bold" style={{ color: passedPts ? '#34D399' : '#F59E0B' }}>{totalPts}</span>/31
+            </p>
+            <p className="text-xs mt-1" style={{ color: '#64748B' }}>
+              Тэнцэх оноо: 23/31
+            </p>
           </div>
           {criteriaRows.length > 0 && (
             <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 mb-4">
