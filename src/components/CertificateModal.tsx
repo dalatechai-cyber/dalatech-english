@@ -459,11 +459,7 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
                 }}
               >
                 Энэхүү гэрчилгээг <b style={{ fontStyle: 'normal', color: NAVY_DEEP }}>{level}</b>{' '}
-                түвшний шалгалтыг{' '}
-                <b style={{ fontStyle: 'normal', color: GOLD_DARK }}>
-                  {score}/{total}
-                </b>{' '}
-                амжилттай давсны баталгаа болгон олгов.
+                түвшний шалгалтыг амжилттай давсны баталгаа болгон олгов.
               </div>
 
               <div
