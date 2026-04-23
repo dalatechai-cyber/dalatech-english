@@ -12,82 +12,208 @@ interface CertificateModalProps {
   onClose: () => void
 }
 
-const NAVY = '#1E293B'
-const GOLD = '#F59E0B'
-const DARK_GOLD = '#D97706'
-const GOLD_LIGHT = '#FCD34D'
+// Refined, prestigious palette (antique gold + deep navy on warm ivory)
+const NAVY = '#0F1E3D'
+const NAVY_DEEP = '#081230'
+const GOLD = '#C9A55C'
+const GOLD_DARK = '#8B6F2E'
+const GOLD_LIGHT = '#E8D29A'
+const GOLD_PALE = '#F5E7C2'
+const IVORY = '#FDFCF5'
 
+// A4 landscape at 72 dpi — exact A4 aspect (1.414:1)
+const CERT_W = 842
+const CERT_H = 595
+
+// Subtle diamond damask in gold — layered repeating gradients read like a
+// faint guilloche pattern under text while staying print-ready.
 const PATTERN_BG: React.CSSProperties = {
-  backgroundColor: '#ffffff',
-  backgroundImage:
-    'radial-gradient(#F59E0B22 1px, transparent 1px), radial-gradient(#F59E0B22 1px, transparent 1px)',
-  backgroundSize: '20px 20px',
-  backgroundPosition: '0 0, 10px 10px',
+  backgroundColor: IVORY,
+  backgroundImage: [
+    `repeating-linear-gradient(45deg,  transparent 0 26px, rgba(201,165,92,0.055) 26px 27px)`,
+    `repeating-linear-gradient(-45deg, transparent 0 26px, rgba(201,165,92,0.055) 26px 27px)`,
+    `radial-gradient(ellipse at 50% 0%, rgba(201,165,92,0.10), transparent 55%)`,
+    `radial-gradient(ellipse at 50% 100%, rgba(201,165,92,0.08), transparent 55%)`,
+  ].join(', '),
 }
 
-type Corner = 'tl' | 'tr' | 'bl' | 'br'
-
-function cornerStyle(corner: Corner): React.CSSProperties {
-  const stripeDir = corner === 'tl' || corner === 'br' ? '135deg' : '45deg'
+function CornerFiligree({ corner }: { corner: 'tl' | 'tr' | 'bl' | 'br' }) {
+  const size = 150
+  const flipX = corner === 'tr' || corner === 'br'
+  const flipY = corner === 'bl' || corner === 'br'
+  const transform = `scale(${flipX ? -1 : 1}, ${flipY ? -1 : 1})`
   const pos: React.CSSProperties =
     corner === 'tl'
-      ? { top: 0, left: 0 }
+      ? { top: 18, left: 18 }
       : corner === 'tr'
-      ? { top: 0, right: 0 }
+      ? { top: 18, right: 18 }
       : corner === 'bl'
-      ? { bottom: 0, left: 0 }
-      : { bottom: 0, right: 0 }
-  return {
-    position: 'absolute',
-    width: 140,
-    height: 140,
-    background: `linear-gradient(${stripeDir}, transparent 45%, ${DARK_GOLD} 45%, ${GOLD_LIGHT} 50%, ${DARK_GOLD} 55%, transparent 55%), ${NAVY}`,
-    zIndex: 2,
-    ...pos,
-  }
-}
+      ? { bottom: 18, left: 18 }
+      : { bottom: 18, right: 18 }
 
-function GoldSeal() {
   return (
     <svg
-      width={90}
-      height={90}
-      viewBox="0 0 90 90"
-      style={{
-        position: 'absolute',
-        top: 28,
-        right: 28,
-        zIndex: 3,
-        filter: 'drop-shadow(0 2px 6px rgba(217,119,6,0.35))',
-      }}
+      width={size}
+      height={size}
+      viewBox="0 0 150 150"
+      style={{ position: 'absolute', zIndex: 3, ...pos }}
+    >
+      <g transform={transform} transformOrigin="75 75">
+        <path
+          d="M 6 6 L 90 6 Q 78 18 64 20 Q 46 22 34 34 Q 22 46 20 64 Q 18 78 6 90 Z"
+          fill={NAVY}
+        />
+        <path
+          d="M 12 12 L 78 12 Q 66 22 54 25 Q 40 28 30 38 Q 20 48 17 62 Q 14 74 12 80 Z"
+          fill="none"
+          stroke={GOLD}
+          strokeWidth={0.8}
+          opacity={0.55}
+        />
+        <path
+          d="M 22 22 Q 40 26 54 40 Q 60 46 58 56 Q 54 50 46 48 Q 38 46 34 50 Q 30 54 32 60 Q 28 54 28 46 Q 28 36 22 22 Z"
+          fill={GOLD}
+        />
+        <circle cx={24} cy={24} r={3} fill={GOLD_LIGHT} />
+        <circle cx={22} cy={22} r={1.2} fill={NAVY} />
+        <circle cx={70} cy={14} r={1.8} fill={GOLD} />
+        <circle cx={14} cy={70} r={1.8} fill={GOLD} />
+        <circle cx={50} cy={50} r={1.4} fill={GOLD_LIGHT} />
+      </g>
+    </svg>
+  )
+}
+
+function OrnamentDivider({ width = 320 }: { width?: number }) {
+  return (
+    <svg
+      width={width}
+      height={20}
+      viewBox="0 0 320 20"
+      style={{ display: 'block' }}
     >
       <defs>
-        <radialGradient id="ceSealGrad" cx="0.35" cy="0.35" r="0.8">
-          <stop offset="0%" stopColor="#FEF3C7" />
-          <stop offset="40%" stopColor="#FCD34D" />
-          <stop offset="80%" stopColor="#F59E0B" />
-          <stop offset="100%" stopColor="#D97706" />
-        </radialGradient>
+        <linearGradient id="ceRule" x1="0" x2="1">
+          <stop offset="0%" stopColor={GOLD} stopOpacity="0" />
+          <stop offset="50%" stopColor={GOLD_DARK} stopOpacity="1" />
+          <stop offset="100%" stopColor={GOLD} stopOpacity="0" />
+        </linearGradient>
       </defs>
-      <polygon
-        points="45,1 51,15 66,9 61,24 76,26 64,37 78,45 64,53 76,64 61,66 66,81 51,75 45,89 39,75 24,81 29,66 14,64 26,53 12,45 26,37 14,26 29,24 24,9 39,15"
-        fill={DARK_GOLD}
-        opacity={0.9}
+      <line x1="10" y1="10" x2="140" y2="10" stroke="url(#ceRule)" strokeWidth={1} />
+      <line x1="180" y1="10" x2="310" y2="10" stroke="url(#ceRule)" strokeWidth={1} />
+      <circle cx={148} cy={10} r={1.5} fill={GOLD_DARK} />
+      <circle cx={172} cy={10} r={1.5} fill={GOLD_DARK} />
+      <g transform="translate(160,10)">
+        <path d="M 0 -7 L 5 0 L 0 7 L -5 0 Z" fill={GOLD} stroke={GOLD_DARK} strokeWidth={0.6} />
+        <path d="M 0 -3 L 2 0 L 0 3 L -2 0 Z" fill={GOLD_PALE} />
+      </g>
+    </svg>
+  )
+}
+
+function Crest() {
+  return (
+    <svg width={64} height={64} viewBox="0 0 64 64" style={{ display: 'block' }}>
+      <defs>
+        <linearGradient id="ceCrest" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor={GOLD_LIGHT} />
+          <stop offset="100%" stopColor={GOLD_DARK} />
+        </linearGradient>
+      </defs>
+      <g stroke="url(#ceCrest)" strokeWidth={1.2} fill="none" strokeLinecap="round">
+        <path d="M 14 20 Q 8 32 14 46" />
+        <path d="M 50 20 Q 56 32 50 46" />
+        {[0, 1, 2, 3, 4].map(i => (
+          <path
+            key={`L${i}`}
+            d={`M ${13 - i * 0.4} ${24 + i * 5} q -4 1 -6 5 q 4 0 6 -5`}
+            fill={GOLD}
+            stroke="none"
+          />
+        ))}
+        {[0, 1, 2, 3, 4].map(i => (
+          <path
+            key={`R${i}`}
+            d={`M ${51 + i * 0.4} ${24 + i * 5} q 4 1 6 5 q -4 0 -6 -5`}
+            fill={GOLD}
+            stroke="none"
+          />
+        ))}
+      </g>
+      <path
+        d="M 32 14 L 44 18 L 44 34 Q 44 46 32 52 Q 20 46 20 34 L 20 18 Z"
+        fill={NAVY_DEEP}
+        stroke={GOLD}
+        strokeWidth={1}
       />
-      <circle cx={45} cy={45} r={34} fill="url(#ceSealGrad)" stroke={DARK_GOLD} strokeWidth={2} />
-      <circle cx={45} cy={45} r={28} fill="none" stroke="#78350F" strokeWidth={0.8} opacity={0.45} />
       <text
-        x={45}
-        y={54}
+        x={32}
+        y={36}
         textAnchor="middle"
-        fontSize={24}
+        fontSize={14}
         fontWeight={700}
-        fill={NAVY}
-        fontFamily='"Playfair Display", Georgia, "Times New Roman", serif'
+        fill={GOLD_LIGHT}
+        fontFamily='"Playfair Display", Georgia, serif'
         letterSpacing={1}
       >
         CE
       </text>
+      <circle cx={32} cy={10} r={2} fill={GOLD} />
+    </svg>
+  )
+}
+
+function WaxSeal() {
+  return (
+    <svg width={120} height={150} viewBox="0 0 120 150" style={{ display: 'block' }}>
+      <defs>
+        <radialGradient id="ceWax" cx="0.35" cy="0.3" r="0.85">
+          <stop offset="0%" stopColor="#FFF4D6" />
+          <stop offset="25%" stopColor={GOLD_LIGHT} />
+          <stop offset="70%" stopColor={GOLD} />
+          <stop offset="100%" stopColor={GOLD_DARK} />
+        </radialGradient>
+        <linearGradient id="ceRibbonL" x1="0" x2="1">
+          <stop offset="0%" stopColor={NAVY_DEEP} />
+          <stop offset="100%" stopColor={NAVY} />
+        </linearGradient>
+        <linearGradient id="ceRibbonR" x1="1" x2="0">
+          <stop offset="0%" stopColor={NAVY_DEEP} />
+          <stop offset="100%" stopColor={NAVY} />
+        </linearGradient>
+      </defs>
+
+      <path d="M 42 56 L 22 140 L 42 128 L 52 140 L 62 86 Z" fill="url(#ceRibbonL)" />
+      <path d="M 78 56 L 98 140 L 78 128 L 68 140 L 58 86 Z" fill="url(#ceRibbonR)" />
+      <path d="M 22 140 L 32 130 L 42 140 Z" fill={IVORY} />
+      <path d="M 98 140 L 88 130 L 78 140 Z" fill={IVORY} />
+
+      <polygon
+        points="60,12 64,30 80,22 70,38 88,42 70,46 80,62 64,54 60,72 56,54 40,62 50,46 32,42 50,38 40,22 56,30"
+        fill={GOLD_DARK}
+        opacity={0.85}
+      />
+      <circle cx={60} cy={42} r={30} fill="url(#ceWax)" stroke={GOLD_DARK} strokeWidth={1.4} />
+      <circle cx={60} cy={42} r={25} fill="none" stroke={GOLD_DARK} strokeWidth={0.7} opacity={0.6} />
+      <circle cx={60} cy={42} r={21} fill="none" stroke={GOLD_DARK} strokeWidth={0.4} opacity={0.4} />
+      <text
+        x={60}
+        y={48}
+        textAnchor="middle"
+        fontSize={18}
+        fontWeight={700}
+        fill={NAVY_DEEP}
+        fontFamily='"Playfair Display", Georgia, serif'
+        letterSpacing={1.5}
+      >
+        CE
+      </text>
+      {Array.from({ length: 12 }).map((_, i) => {
+        const a = (i / 12) * Math.PI * 2
+        const x = 60 + Math.cos(a) * 28
+        const y = 42 + Math.sin(a) * 28
+        return <circle key={i} cx={x} cy={y} r={0.8} fill={NAVY_DEEP} opacity={0.5} />
+      })}
     </svg>
   )
 }
@@ -98,7 +224,7 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
 
   const meta = getLevelMeta(level)
   const shortName = meta?.label.split(' — ')[1] ?? ''
-  const levelDisplay = shortName ? `${level} ${shortName}` : level
+  const levelDisplay = shortName ? `${level} — ${shortName}` : level
 
   useEffect(() => {
     saveCertificate({ level, score, total, type: 'quiz' })
@@ -112,9 +238,9 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
       const parent = el.parentElement
       if (!parent) return
       const w = parent.clientWidth
-      const scale = Math.min(1, w / 842)
+      const scale = Math.min(1, w / CERT_W)
       el.style.transform = `scale(${scale})`
-      parent.style.height = `${595 * scale}px`
+      parent.style.height = `${CERT_H * scale}px`
     }
     update()
     window.addEventListener('resize', update)
@@ -128,14 +254,17 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
     const parent = element.parentElement
     const prevHeight = parent?.style.height
     try {
+      if (typeof document !== 'undefined' && 'fonts' in document) {
+        try { await (document as Document & { fonts: { ready: Promise<unknown> } }).fonts.ready } catch {}
+      }
       element.style.transform = 'scale(1)'
-      if (parent) parent.style.height = '595px'
+      if (parent) parent.style.height = `${CERT_H}px`
       const { default: html2canvas } = await import('html2canvas')
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 3,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: IVORY,
         logging: false,
       })
       const link = document.createElement('a')
@@ -164,122 +293,146 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
             id="certificate"
             ref={certRef}
             style={{
-              width: '842px',
-              height: '595px',
+              width: `${CERT_W}px`,
+              height: `${CERT_H}px`,
               transformOrigin: 'top left',
               ...PATTERN_BG,
-              border: `4px solid ${DARK_GOLD}`,
               boxSizing: 'border-box',
               fontFamily: '"EB Garamond", Georgia, "Times New Roman", serif',
               color: NAVY,
               position: 'relative',
+              boxShadow:
+                '0 1px 0 rgba(255,255,255,0.8) inset, 0 30px 60px -20px rgba(15,30,61,0.35)',
             }}
           >
             <div
+              aria-hidden
               style={{
                 position: 'absolute',
-                top: 8,
-                left: 8,
-                right: 8,
-                bottom: 8,
+                inset: 14,
+                border: `3px solid ${GOLD_DARK}`,
+                boxSizing: 'border-box',
+                zIndex: 1,
+                pointerEvents: 'none',
+                boxShadow: `inset 0 0 0 1px ${GOLD_PALE}, 0 0 0 1px ${GOLD_PALE}`,
+              }}
+            />
+            <div
+              aria-hidden
+              style={{
+                position: 'absolute',
+                inset: 26,
                 border: `1px solid ${GOLD}`,
                 boxSizing: 'border-box',
                 zIndex: 1,
                 pointerEvents: 'none',
               }}
             />
+            <div
+              aria-hidden
+              style={{
+                position: 'absolute',
+                inset: 34,
+                border: `1px solid ${GOLD_LIGHT}`,
+                boxSizing: 'border-box',
+                zIndex: 1,
+                pointerEvents: 'none',
+                opacity: 0.7,
+              }}
+            />
 
-            <div style={cornerStyle('tl')} />
-            <div style={cornerStyle('tr')} />
-            <div style={cornerStyle('bl')} />
-            <div style={cornerStyle('br')} />
-
-            <GoldSeal />
+            <CornerFiligree corner="tl" />
+            <CornerFiligree corner="tr" />
+            <CornerFiligree corner="bl" />
+            <CornerFiligree corner="br" />
 
             <div
               style={{
                 position: 'absolute',
                 inset: 0,
-                padding: '56px 80px 48px',
+                padding: '58px 96px 52px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 textAlign: 'center',
-                zIndex: 1,
+                zIndex: 2,
               }}
             >
-              <div
-                style={{
-                  color: NAVY,
-                  fontSize: 34,
-                  fontWeight: 700,
-                  letterSpacing: 6,
-                  fontFamily: '"Playfair Display", Georgia, serif',
-                  lineHeight: 1.1,
-                }}
-              >
-                CORE ENGLISH
+              <div style={{ marginBottom: 6 }}>
+                <Crest />
               </div>
 
               <div
                 style={{
-                  color: DARK_GOLD,
-                  fontSize: 11,
-                  letterSpacing: 4,
+                  color: NAVY_DEEP,
+                  fontSize: 26,
+                  fontWeight: 700,
+                  letterSpacing: 10,
+                  fontFamily: '"Playfair Display", Georgia, serif',
+                  lineHeight: 1,
+                  marginTop: 4,
+                }}
+              >
+                CORE&nbsp;&nbsp;ENGLISH
+              </div>
+
+              <div
+                style={{
+                  color: GOLD_DARK,
+                  fontSize: 9.5,
+                  letterSpacing: 5.5,
                   textTransform: 'uppercase',
-                  marginTop: 8,
+                  marginTop: 6,
                   fontFamily: '"EB Garamond", Georgia, serif',
+                  fontStyle: 'italic',
                   fontWeight: 400,
                 }}
               >
-                AI Суралцахуйн Платформ
+                Academy of English · Est. MMXXVI
+              </div>
+
+              <div style={{ marginTop: 14 }}>
+                <OrnamentDivider width={360} />
               </div>
 
               <div
                 style={{
-                  width: '50%',
-                  height: 2,
-                  background: `linear-gradient(to right, transparent, ${GOLD}, transparent)`,
-                  marginTop: 22,
-                  marginBottom: 14,
-                }}
-              />
-
-              <div
-                style={{
-                  color: DARK_GOLD,
-                  fontSize: 52,
-                  fontStyle: 'italic',
-                  fontWeight: 700,
-                  lineHeight: 1,
+                  color: NAVY_DEEP,
+                  fontSize: 14,
+                  letterSpacing: 8,
+                  textTransform: 'uppercase',
                   fontFamily: '"Playfair Display", Georgia, serif',
-                  marginBottom: 12,
+                  fontWeight: 400,
+                  marginTop: 14,
                 }}
               >
-                {t('certificate')}
+                Certificate of Achievement
               </div>
 
               <div
                 style={{
-                  color: NAVY,
-                  fontSize: 13,
+                  color: GOLD_DARK,
+                  fontSize: 11,
                   fontStyle: 'italic',
                   fontFamily: '"EB Garamond", Georgia, serif',
-                  opacity: 0.8,
-                  marginBottom: 10,
+                  opacity: 0.85,
+                  marginTop: 10,
+                  letterSpacing: 1,
                 }}
               >
-                Proudly presented to
+                — this is proudly presented to —
               </div>
 
               <div
                 style={{
-                  color: DARK_GOLD,
-                  fontSize: 38,
+                  color: NAVY_DEEP,
+                  fontSize: 46,
                   fontStyle: 'italic',
                   fontWeight: 700,
-                  lineHeight: 1.1,
+                  lineHeight: 1.05,
                   fontFamily: '"Playfair Display", Georgia, serif',
+                  marginTop: 10,
+                  textShadow: `0 1px 0 ${GOLD_PALE}`,
                 }}
               >
                 {levelDisplay}
@@ -287,50 +440,111 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
 
               <div
                 style={{
-                  width: '30%',
+                  width: 260,
                   height: 1,
-                  background: GOLD,
+                  background: `linear-gradient(to right, transparent, ${GOLD_DARK}, transparent)`,
                   marginTop: 14,
-                  marginBottom: 14,
+                  marginBottom: 12,
                 }}
               />
 
               <div
                 style={{
                   color: NAVY,
-                  fontSize: 16,
-                  lineHeight: 1.55,
+                  fontSize: 14,
+                  lineHeight: 1.6,
                   maxWidth: 560,
                   fontFamily: '"EB Garamond", Georgia, serif',
+                  fontStyle: 'italic',
                 }}
               >
-                Энэхүү гэрчилгээг <b>{level}</b> түвшний шалгалтыг амжилттай
-                давсны баталгаа болгон олгов.
+                Энэхүү гэрчилгээг <b style={{ fontStyle: 'normal', color: NAVY_DEEP }}>{level}</b>{' '}
+                түвшний шалгалтыг{' '}
+                <b style={{ fontStyle: 'normal', color: GOLD_DARK }}>
+                  {score}/{total}
+                </b>{' '}
+                амжилттай давсны баталгаа болгон олгов.
               </div>
 
               <div
                 style={{
-                  color: NAVY,
-                  fontSize: 13,
                   marginTop: 'auto',
-                  fontFamily: '"EB Garamond", Georgia, serif',
-                  opacity: 0.85,
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  justifyContent: 'space-between',
+                  paddingTop: 18,
                 }}
               >
-                {formatMongolianDate(today)}
-              </div>
+                <div style={{ textAlign: 'center', minWidth: 170 }}>
+                  <div
+                    style={{
+                      fontFamily: '"Playfair Display", Georgia, serif',
+                      fontStyle: 'italic',
+                      fontSize: 18,
+                      color: NAVY_DEEP,
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    {formatMongolianDate(today)}
+                  </div>
+                  <div
+                    style={{
+                      width: 150,
+                      height: 1,
+                      background: GOLD_DARK,
+                      margin: '6px auto 4px',
+                    }}
+                  />
+                  <div
+                    style={{
+                      fontSize: 9,
+                      letterSpacing: 3,
+                      textTransform: 'uppercase',
+                      color: GOLD_DARK,
+                      fontFamily: '"EB Garamond", Georgia, serif',
+                    }}
+                  >
+                    Date of Issue
+                  </div>
+                </div>
 
-              <div
-                style={{
-                  color: DARK_GOLD,
-                  fontSize: 10,
-                  marginTop: 8,
-                  letterSpacing: 2,
-                  fontFamily: '"EB Garamond", Georgia, serif',
-                  opacity: 0.85,
-                }}
-              >
-                english.dalatech.online
+                <div style={{ transform: 'translateY(14px)' }}>
+                  <WaxSeal />
+                </div>
+
+                <div style={{ textAlign: 'center', minWidth: 170 }}>
+                  <div
+                    style={{
+                      fontFamily: '"Playfair Display", Georgia, serif',
+                      fontStyle: 'italic',
+                      fontSize: 18,
+                      color: NAVY_DEEP,
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    Core English
+                  </div>
+                  <div
+                    style={{
+                      width: 150,
+                      height: 1,
+                      background: GOLD_DARK,
+                      margin: '6px auto 4px',
+                    }}
+                  />
+                  <div
+                    style={{
+                      fontSize: 9,
+                      letterSpacing: 3,
+                      textTransform: 'uppercase',
+                      color: GOLD_DARK,
+                      fontFamily: '"EB Garamond", Georgia, serif',
+                    }}
+                  >
+                    english.dalatech.online
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -340,7 +554,7 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
           <button
             onClick={handleDownload}
             className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
-            style={{ background: GOLD, color: NAVY }}
+            style={{ background: GOLD, color: NAVY_DEEP }}
           >
             📥 {t('download')}
           </button>
