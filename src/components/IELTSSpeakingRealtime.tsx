@@ -418,12 +418,18 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
               localStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = false })
               break
             case 'response.audio.done':
-              // The audio element's 'ended' event does NOT fire on a live
-              // WebRTC MediaStream (no end-of-stream until the track stops),
-              // so we drive mic re-open from here. Server sent its last chunk;
-              // wait ~500ms for the client jitter buffer to finish playing,
-              // then boop, then 300ms so the boop doesn't bleed into the
-              // student's first word, then flip the orb blue and unmute.
+              // Server has finished SENDING audio; the client jitter buffer
+              // is still playing it. Do NOT reopen the mic here — use
+              // output_audio_buffer.stopped, which fires at actual
+              // end-of-playback from the client's perspective.
+              break
+            case 'output_audio_buffer.stopped':
+              // WebRTC-only event: server has observed (via RTCP) that the
+              // client's output audio buffer finished playing. This is the
+              // true end-of-playback signal; no jitter-buffer grace needed.
+              // 200ms natural pause, boop, 300ms so the boop doesn't bleed
+              // into the student's first word, then flip the orb blue and
+              // unmute the mic.
               if (micReenableTimeoutRef.current) clearTimeout(micReenableTimeoutRef.current)
               micReenableTimeoutRef.current = setTimeout(() => {
                 playBoopSound()
@@ -432,7 +438,7 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
                   localStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = true })
                   micReenableTimeoutRef.current = null
                 }, 300)
-              }, 500)
+              }, 200)
               break
             case 'response.audio_transcript.delta':
               if (typeof msg.delta === 'string') {
