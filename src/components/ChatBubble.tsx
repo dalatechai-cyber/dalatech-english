@@ -48,13 +48,17 @@ export function ChatBubble({ message, isStreaming = false }: ChatBubbleProps) {
         ) : isAI ? (
           isStreaming ? (
             <div
+              data-msg-id={message.id}
               data-streaming="true"
               className="streaming-text text-sm leading-relaxed whitespace-pre-wrap"
             >
               {cleanContent || message.content}
             </div>
           ) : (
-            <div className="prose prose-invert prose-sm max-w-none text-sm leading-relaxed">
+            <div
+              data-msg-id={message.id}
+              className="prose prose-invert prose-sm max-w-none text-sm leading-relaxed"
+            >
               <ReactMarkdown>{cleanContent || message.content}</ReactMarkdown>
             </div>
           )

@@ -68,13 +68,13 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
       timestamp: Date.now(),
     }
     const newMessages = [...messages, userMsg]
-    setMessages(newMessages)
+    const assistantId = `a-${Date.now()}`
     setInput('')
     setIsLoading(true)
 
-    // Add empty assistant message with id='streaming' sentinel
-    setMessages(prev => [...prev, { id: 'streaming', role: 'assistant', content: '', timestamp: Date.now() }])
-    setStreamingId('streaming')
+    // Single React state update at start: user message + empty assistant placeholder
+    setMessages([...newMessages, { id: assistantId, role: 'assistant', content: '', timestamp: Date.now() }])
+    setStreamingId(assistantId)
 
     let fullText = ''
 
@@ -91,24 +91,21 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
 
-      // Read stream — bypass React, update DOM directly
+      // Read stream — direct DOM update on every chunk, zero timers, zero React updates
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
 
-        const chunk = decoder.decode(value, { stream: true })
-        fullText += chunk
+        fullText += decoder.decode(value, { stream: true })
 
-        // Update DOM directly - bypass React entirely
-        const el = document.querySelector('[data-streaming="true"]')
+        const el = document.querySelector(`[data-msg-id="${assistantId}"]`)
         if (el) el.textContent = fullText
       }
 
-      // When done - update React state once with final content and real id
-      const finalId = `a-${Date.now()}`
+      // Single React state update at end: finalize content + exit streaming mode
       setStreamingId(null)
       setMessages(prev =>
-        prev.map(m => (m.id === 'streaming' ? { ...m, id: finalId, content: fullText } : m))
+        prev.map(m => (m.id === assistantId ? { ...m, content: fullText } : m))
       )
 
       // Save corrections to mistake diary
@@ -133,8 +130,8 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
       if ((err as Error).name !== 'AbortError') {
         setMessages(prev =>
           prev.map(m =>
-            m.id === 'streaming'
-              ? { ...m, id: `a-${Date.now()}`, content: 'Алдаа гарлаа. Дахин оролдоно уу.' }
+            m.id === assistantId
+              ? { ...m, content: 'Алдаа гарлаа. Дахин оролдоно уу.' }
               : m
           )
         )
