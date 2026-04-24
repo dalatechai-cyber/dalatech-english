@@ -97,45 +97,50 @@ export function IELTSReading({
     </div>
   )
 
+  const advanceButton = !readSubmitted ? (
+    <button onClick={advance} disabled={!pageAnswered}
+      className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed"
+      style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+      {isLastPassage ? 'Хариултаа илгээх' : 'Дараагийн нийтлэл →'}
+    </button>
+  ) : (
+    <button onClick={onAdvance}
+      disabled={!allReadAnswered}
+      className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5 disabled:opacity-40"
+      style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+      Writing →
+    </button>
+  )
+
   const QuestionsPane = (
-    <div
-      className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 h-full overflow-y-auto flex flex-col"
-      style={{ WebkitOverflowScrolling: 'touch' }}
-    >
-      <div className="space-y-4 flex-1">
-        {pg?.questions.map((q, qi) => {
-          const globalIdx = startIdx + qi
-          const typeLabel = q.type === 'tfng' ? '· True/False/NG'
-            : q.type === 'matching' ? '· Зохицуулах'
-            : q.type === 'short' ? '· Богино хариулт'
-            : q.type === 'fill' ? '· Нөхөх'
-            : ''
-          return (
-            <div key={globalIdx}>
-              <p className="text-sm font-semibold text-text-primary mb-3">
-                <span style={{ color: '#F59E0B' }}>{globalIdx + 1}.</span> {q.question}
-                {typeLabel && <span className="ml-2 text-xs font-medium" style={{ color: '#94A3B8' }}>{typeLabel}</span>}
-              </p>
-              {renderQuestionBody(q, globalIdx, readAnswers, setReadAnswers, readSubmitted)}
-            </div>
-          )
-        })}
+    <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl h-full flex flex-col overflow-hidden">
+      <div
+        className="flex-1 overflow-y-auto p-4"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
+        <div className="space-y-4">
+          {pg?.questions.map((q, qi) => {
+            const globalIdx = startIdx + qi
+            const typeLabel = q.type === 'tfng' ? '· True/False/NG'
+              : q.type === 'matching' ? '· Зохицуулах'
+              : q.type === 'short' ? '· Богино хариулт'
+              : q.type === 'fill' ? '· Нөхөх'
+              : ''
+            return (
+              <div key={globalIdx}>
+                <p className="text-sm font-semibold text-text-primary mb-3">
+                  <span style={{ color: '#F59E0B' }}>{globalIdx + 1}.</span> {q.question}
+                  {typeLabel && <span className="ml-2 text-xs font-medium" style={{ color: '#94A3B8' }}>{typeLabel}</span>}
+                </p>
+                {renderQuestionBody(q, globalIdx, readAnswers, setReadAnswers, readSubmitted)}
+              </div>
+            )
+          })}
+        </div>
       </div>
-      <div className="sticky bottom-0 pt-3 bg-navy-surface mt-4">
-        {!readSubmitted ? (
-          <button onClick={advance} disabled={!pageAnswered}
-            className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
-            {isLastPassage ? 'Хариултаа илгээх' : 'Дараагийн нийтлэл →'}
-          </button>
-        ) : (
-          <button onClick={onAdvance}
-            disabled={!allReadAnswered}
-            className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5 disabled:opacity-40"
-            style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
-            Writing →
-          </button>
-        )}
+      {/* Desktop footer — stays pinned below the scroll area so the last question never hides behind it. Mobile uses a fixed bottom bar rendered outside this pane. */}
+      <div className="hidden md:block border-t border-navy-surface-2 p-4 bg-navy-surface">
+        {advanceButton}
       </div>
     </div>
   )
@@ -157,7 +162,8 @@ export function IELTSReading({
       </div>
 
       {/* Mobile tabs */}
-      <div className="md:hidden flex-1 flex flex-col px-4 pb-4 min-h-0">
+      <div className="md:hidden flex-1 flex flex-col px-4 pb-4 min-h-0" style={{ paddingBottom: readMobileTab === 'questions' ? 92 : 16 }}>
+
         <div
           className="flex border-b border-navy-surface-2 mb-3 flex-shrink-0"
           style={{
@@ -194,6 +200,16 @@ export function IELTSReading({
         <div className="w-1/2 h-full">{PassagePane}</div>
         <div className="w-1/2 h-full">{QuestionsPane}</div>
       </div>
+
+      {/* Mobile fixed advance bar — sits above tab bar, only on questions tab so it never covers the passage text. */}
+      {readMobileTab === 'questions' && (
+        <div
+          className="md:hidden fixed left-0 right-0 border-t border-navy-surface-2 px-4 py-3"
+          style={{ bottom: 0, background: '#0F172A', zIndex: 40, paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
+        >
+          {advanceButton}
+        </div>
+      )}
     </div>
   )
 }

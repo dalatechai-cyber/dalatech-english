@@ -86,9 +86,6 @@ function SpeakOrb({ state }: { state: OrbState }) {
 export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback }: Props) {
   const [connState, setConnState] = useState<ConnectionState>('idle')
   const [orbState, setOrbState] = useState<OrbState>('idle')
-  const [part, setPart] = useState<TestPart>(1)
-  const [examinerText, setExaminerText] = useState('')
-  const [studentLive, setStudentLive] = useState('')
   const [showCard, setShowCard] = useState<string | null>(null)
   const [prepCountdown, setPrepCountdown] = useState<number | null>(null)
   const [part2Countdown, setPart2Countdown] = useState<number | null>(null)
@@ -103,10 +100,6 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
   const partRef = useRef<TestPart>(1)
   const currentExaminerRespRef = useRef<string>('')
   const transcriptRef = useRef<RealtimeCompletionPayload['fullTranscript']>([])
-  // Direct-DOM refs: streaming transcripts bypass React re-renders on mobile.
-  const examinerTextRef = useRef<HTMLParagraphElement | null>(null)
-  const studentTranscriptRef = useRef<HTMLParagraphElement | null>(null)
-  const studentLiveRawRef = useRef<string>('')
   const studentAnswersByPart = useRef<{ part1: string[]; part2: string[]; part3: string[] }>({
     part1: [], part2: [], part3: [],
   })
@@ -231,11 +224,9 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
     const cleaned = stripMarkers(text)
     if (text.includes('[PART_2_START]')) {
       partRef.current = 2
-      setPart(2)
     }
     if (text.includes('[PART_3_START]')) {
       partRef.current = 3
-      setPart(3)
       setShowCard(null)
       setPart2Countdown(null)
       if (part2TimerRef.current) { clearInterval(part2TimerRef.current); part2TimerRef.current = null }
@@ -413,12 +404,6 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
             case 'response.audio_transcript.delta':
               if (typeof msg.delta === 'string') {
                 currentExaminerRespRef.current += msg.delta
-                const stripped = stripMarkers(currentExaminerRespRef.current)
-                // Direct DOM update — bypass React re-render for mobile smoothness.
-                if (examinerTextRef.current) {
-                  examinerTextRef.current.textContent = stripped
-                }
-                setExaminerText(stripped)
                 setOrbState('speaking')
               }
               break
@@ -429,46 +414,21 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
               }
               break
             case 'input_audio_buffer.speech_started':
-              studentLiveRawRef.current = ''
-              if (studentTranscriptRef.current) {
-                studentTranscriptRef.current.textContent = ''
-              }
-              setStudentLive('')
               setOrbState('listening')
-              setStatusLabel('Сонсож байна...')
               break
             case 'input_audio_buffer.speech_stopped':
               setOrbState('thinking')
-              setStatusLabel('Боловсруулж байна...')
-              break
-            case 'conversation.item.input_audio_transcription.delta':
-              if (typeof msg.delta === 'string') {
-                studentLiveRawRef.current += msg.delta
-                const liveText = studentLiveRawRef.current
-                // Direct DOM update — appears immediately on mobile.
-                if (studentTranscriptRef.current) {
-                  studentTranscriptRef.current.textContent = liveText
-                }
-                setStudentLive(liveText)
-              }
               break
             case 'conversation.item.input_audio_transcription.completed':
               if (typeof msg.transcript === 'string') {
                 const t = msg.transcript.trim()
                 if (t && t !== 'CONTINUE_AFTER_PREP' && isEnglishText(t)) {
                   processStudentUtterance(t)
-                  setStudentLive(t)
-                  if (studentTranscriptRef.current) {
-                    studentTranscriptRef.current.textContent = t
-                  }
                 }
-                studentLiveRawRef.current = ''
               }
               break
             case 'response.done':
               setOrbState('listening')
-              setStatusLabel('Ярина уу...')
-              setExaminerText('')
               break
             case 'error':
               console.error('[Realtime] error event:', msg.error)
@@ -549,11 +509,6 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
     }
   }, [orbState])
 
-  const statusColor =
-    orbState === 'speaking' ? '#F59E0B' :
-    orbState === 'listening' ? '#38BDF8' :
-    orbState === 'thinking' ? '#8B5CF6' : '#64748B'
-
   return (
     <div className="min-h-dvh flex flex-col" style={{ background: '#050D1A' }}>
       {connState !== 'idle' && (
@@ -590,16 +545,6 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
       <NavBar lessonTitle="Speaking" />
 
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
-        {connState === 'connected' && (
-          <div className="mb-6 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
-            <span style={{ color: part === 1 ? '#F59E0B' : '#475569' }}>Part 1</span>
-            <span style={{ color: '#334155' }}>·</span>
-            <span style={{ color: part === 2 ? '#F59E0B' : '#475569' }}>Part 2</span>
-            <span style={{ color: '#334155' }}>·</span>
-            <span style={{ color: part === 3 ? '#F59E0B' : '#475569' }}>Part 3</span>
-          </div>
-        )}
-
         <SpeakOrb state={orbState} />
 
         {connState === 'idle' && (
@@ -653,10 +598,6 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
 
         {connState === 'connected' && (
           <div className="mt-8 flex flex-col items-center gap-4 w-full max-w-md">
-            <div className="flex items-center gap-1 text-sm font-medium" style={{ color: statusColor }}>
-              {statusLabel}
-            </div>
-
             {prepCountdown !== null && (
               <div className="text-center">
                 <div className="text-5xl font-extrabold mb-2" style={{ color: '#FCD34D', letterSpacing: '-0.03em' }}>
@@ -677,18 +618,6 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
                   )}
                 </div>
                 <p className="text-sm leading-relaxed text-text-primary whitespace-pre-line">{showCard}</p>
-              </div>
-            )}
-
-            {orbState === 'speaking' && examinerText && (
-              <div className="text-center px-4 py-3 rounded-2xl w-full" style={{ background: '#0F172A55', border: '1px solid #334155' }}>
-                <p ref={examinerTextRef} className="text-sm leading-relaxed text-text-primary">{examinerText}</p>
-              </div>
-            )}
-
-            {orbState !== 'speaking' && studentLive && (
-              <div className="text-center px-4 py-3 rounded-2xl w-full" style={{ background: '#38BDF808', border: '1px solid #38BDF822' }}>
-                <p ref={studentTranscriptRef} className="text-lg leading-relaxed text-white">{studentLive}</p>
               </div>
             )}
           </div>

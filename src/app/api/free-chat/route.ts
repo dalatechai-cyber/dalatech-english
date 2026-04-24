@@ -70,7 +70,13 @@ export async function POST(req: NextRequest) {
             event.type === 'content_block_delta' &&
             event.delta.type === 'text_delta'
           ) {
-            controller.enqueue(encoder.encode(event.delta.text))
+            const text = event.delta.text
+            // Character-level pacing (~80 chars/sec) makes the reply feel like
+            // natural fast typing rather than arriving in chunky bursts.
+            for (const char of text) {
+              controller.enqueue(encoder.encode(char))
+              await new Promise(resolve => setTimeout(resolve, 12))
+            }
           }
         }
       } catch (e) {
