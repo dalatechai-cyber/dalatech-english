@@ -1,8 +1,13 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Playfair_Display } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-playfair',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'Core English — Монгол хэлтнүүдэд зориулсан AI Англи хэлний сургалт',
@@ -18,8 +23,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="mn">
-      <body className={`${inter.className} min-h-dvh bg-navy text-text-primary`}>
+    <html lang="mn" className={playfair.variable}>
+      <body className="min-h-dvh bg-navy text-text-primary">
         <div className="page-enter">
           {children}
         </div>

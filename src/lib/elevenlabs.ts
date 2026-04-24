@@ -4,6 +4,19 @@ import { MAX_TTS_CACHE, TTS_RETRY_DELAY_MS } from './constants'
 
 export type ElevenVoice = 'alice' | 'george'
 
+export class ElevenLabsError extends Error {
+  constructor(public status: number, message: string) {
+    super(message)
+    this.name = 'ElevenLabsError'
+  }
+}
+
+export function isQuotaOrRateLimit(err: unknown): boolean {
+  if (err instanceof ElevenLabsError) return err.status === 429 || err.status === 502
+  const msg = err instanceof Error ? err.message : String(err)
+  return /\b(429|502)\b/.test(msg)
+}
+
 const audioCache = new Map<string, string>()
 const MAX_CACHE = MAX_TTS_CACHE
 
@@ -37,7 +50,7 @@ export async function generateTTS(text: string, voice: ElevenVoice, signal?: Abo
     })
     if (!res.ok) {
       const errorText = await res.text().catch(() => '')
-      throw new Error(`ElevenLabs error ${res.status}: ${errorText}`)
+      throw new ElevenLabsError(res.status, `ElevenLabs error ${res.status}: ${errorText}`)
     }
     const blob = await res.blob()
     const url = URL.createObjectURL(blob)
