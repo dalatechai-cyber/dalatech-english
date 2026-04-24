@@ -375,22 +375,6 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
         const el = document.createElement('audio')
         el.autoplay = true
         el.style.display = 'none'
-        // Fires when the speaker actually stops, not when the last chunk
-        // arrives — more reliable than response.audio.done for knowing
-        // Sarah has truly finished speaking. 200ms grace, then boop,
-        // then 300ms so the boop doesn't bleed into the student's first
-        // word, then flip the orb blue and unmute the mic.
-        el.addEventListener('ended', () => {
-          if (micReenableTimeoutRef.current) clearTimeout(micReenableTimeoutRef.current)
-          micReenableTimeoutRef.current = setTimeout(() => {
-            playBoopSound()
-            micReenableTimeoutRef.current = setTimeout(() => {
-              setOrbState('listening')
-              localStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = true })
-              micReenableTimeoutRef.current = null
-            }, 300)
-          }, 200)
-        })
         document.body.appendChild(el)
         audioElRef.current = el
       }
@@ -434,10 +418,21 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
               localStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = false })
               break
             case 'response.audio.done':
-              // Intentionally do NOT unmute here — this event fires when the
-              // last chunk arrives, not when the speaker finishes. Mic reopens
-              // on the audio element's 'ended' event instead (see el creation
-              // above), which is the real end-of-playback signal.
+              // The audio element's 'ended' event does NOT fire on a live
+              // WebRTC MediaStream (no end-of-stream until the track stops),
+              // so we drive mic re-open from here. Server sent its last chunk;
+              // wait ~500ms for the client jitter buffer to finish playing,
+              // then boop, then 300ms so the boop doesn't bleed into the
+              // student's first word, then flip the orb blue and unmute.
+              if (micReenableTimeoutRef.current) clearTimeout(micReenableTimeoutRef.current)
+              micReenableTimeoutRef.current = setTimeout(() => {
+                playBoopSound()
+                micReenableTimeoutRef.current = setTimeout(() => {
+                  setOrbState('listening')
+                  localStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = true })
+                  micReenableTimeoutRef.current = null
+                }, 300)
+              }, 500)
               break
             case 'response.audio_transcript.delta':
               if (typeof msg.delta === 'string') {
