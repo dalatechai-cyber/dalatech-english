@@ -7,11 +7,9 @@ import { saveTestResult } from '@/lib/testHistory'
 import {
   speakTurn,
   stopSpeech,
-  isSpeechSupported,
   isSpeechRecognitionSupported,
   getSpeechRecognition,
   selectListeningVoiceA,
-  selectListeningVoiceB,
 } from '@/lib/tts'
 import {
   generateTTS,
@@ -19,10 +17,14 @@ import {
   transcribeAudio,
   fetchReaction,
   clearTTSCache,
-  isQuotaOrRateLimit,
   type AudioHandle,
-  type ElevenVoice,
 } from '@/lib/elevenlabs'
+import {
+  generateOpenAITTS,
+  clearOpenAITTSCache,
+  isOpenAITTSQuotaOrRateLimit,
+  type OpenAISpeaker,
+} from '@/lib/openaiTTS'
 import { IELTSSpeakingRealtime, type RealtimeCompletionPayload } from './IELTSSpeakingRealtime'
 import { BookIcon, PencilIcon, HeadphonesIcon, MicIcon } from './Icon'
 import { IELTSListening } from './ielts/IELTSListening'
@@ -272,10 +274,8 @@ export function IELTSTest() {
 
   // Browser-capability flags: default to true for SSR to avoid hydration mismatch,
   // then re-check client-side in useEffect.
-  const [ttsSupported, setTtsSupported] = useState(true)
   const [sttSupported, setSttSupported] = useState(true)
   useEffect(() => {
-    setTtsSupported(isSpeechSupported())
     setSttSupported(isSpeechRecognitionSupported())
     setMounted(true)
     // Check for restorable in-flight test from a prior tab/refresh.
@@ -295,6 +295,7 @@ export function IELTSTest() {
     try { mediaRecorderRef.current?.stop() } catch { /* ignore */ }
     mediaStreamRef.current?.getTracks().forEach(t => t.stop())
     clearTTSCache()
+    clearOpenAITTSCache()
   }, [])
 
   useEffect(() => {
@@ -353,21 +354,21 @@ export function IELTSTest() {
       const BATCH_SIZE = 2
       const urls: (string | null)[] = new Array(total).fill(null)
 
-      // Retry once on 502/upstream errors before falling back to Web Speech.
-      const loadWithRetry = async (text: string, voice: ElevenVoice): Promise<string> => {
+      // Retry once on 502/upstream errors before giving up on this turn.
+      const loadWithRetry = async (text: string, speaker: OpenAISpeaker): Promise<string> => {
         try {
-          return await generateTTS(text, voice, signal)
+          return await generateOpenAITTS(text, speaker, signal)
         } catch (err) {
           if (signal.aborted) throw err
-          if (isQuotaOrRateLimit(err)) sawQuotaOrRateLimit = true
+          if (isOpenAITTSQuotaOrRateLimit(err)) sawQuotaOrRateLimit = true
           const msg = err instanceof Error ? err.message : String(err)
           if (/502|503|504/.test(msg)) {
             await new Promise(r => setTimeout(r, 1000))
             if (signal.aborted) throw err
             try {
-              return await generateTTS(text, voice, signal)
+              return await generateOpenAITTS(text, speaker, signal)
             } catch (retryErr) {
-              if (isQuotaOrRateLimit(retryErr)) sawQuotaOrRateLimit = true
+              if (isOpenAITTSQuotaOrRateLimit(retryErr)) sawQuotaOrRateLimit = true
               throw retryErr
             }
           }
@@ -382,9 +383,8 @@ export function IELTSTest() {
           batch.map(async (turn, j) => {
             if (signal.aborted) return
             const idx = i + j
-            const voice: ElevenVoice = turn.speaker === 'A' ? 'alice' : 'george'
             try {
-              const url = await loadWithRetry(turn.text, voice)
+              const url = await loadWithRetry(turn.text, turn.speaker)
               urls[idx] = url
             } catch {
               urls[idx] = null
@@ -402,13 +402,13 @@ export function IELTSTest() {
       const failedCount = total - successCount
       listenAudiosRef.current = urls.map(u => u ?? '')
       // IELTSListening already prepends "⚠" to listenNotice, so don't duplicate it here.
-      const quotaNotice = 'Дуу чанар стандартаас бага байна. ElevenLabs кредит дууссан.'
+      const quotaNotice = 'Дуу ачааллахад алдаа гарлаа. Хэсэг хугацааны дараа дахин оролдоно уу.'
       if (successCount === 0) {
         setListenAudioError(true)
-        setListenNotice(sawQuotaOrRateLimit ? quotaNotice : 'ElevenLabs холбогдсонгүй, өөр дуу ашиглаж байна')
+        setListenNotice(sawQuotaOrRateLimit ? quotaNotice : 'Дуу ачааллахад алдаа гарлаа')
       } else {
         if (failedCount > 0) {
-          setListenNotice(sawQuotaOrRateLimit ? quotaNotice : `${failedCount} хэсэгт өөр дуу ашиглана`)
+          setListenNotice(sawQuotaOrRateLimit ? quotaNotice : `${failedCount} хэсэг ачаалагдсангүй`)
         }
         setListenAudioReady(true)
       }
@@ -527,40 +527,26 @@ export function IELTSTest() {
     return () => clearTimeout(id)
   }, [speakPart2Countdown])
 
-  // ── Play conversation twice (ElevenLabs with Web-Speech fallback) ──
+  // ── Play conversation twice (OpenAI TTS — skip turns that failed to preload) ──
   const playConversationTwice = async () => {
     if (!content || isPlaying) return
     setIsPlaying(true)
     playingRef.current = true
-
-    const useEleven = listenAudioReady && listenAudiosRef.current.length === content.listening.conversation.length
-    const voiceA = selectListeningVoiceA()
-    const voiceB = selectListeningVoiceB()
-    const voices = typeof window !== 'undefined' ? window.speechSynthesis.getVoices() : []
-    const onlyOne = voices.filter(v => v.lang.startsWith('en')).length <= 1
 
     for (let play = 1; play <= 2; play++) {
       if (!playingRef.current) break
       setListenPlayCount(play)
       for (let i = 0; i < content.listening.conversation.length; i++) {
         if (!playingRef.current) break
-        const turn = content.listening.conversation[i]
         if (i > 0) { await new Promise<void>(r => setTimeout(r, 350)); if (!playingRef.current) break }
         setListenCurrentTurn(i)
 
-        const cachedUrl = useEleven ? listenAudiosRef.current[i] : ''
-        if (cachedUrl) {
-          const handle = playAudioURL(cachedUrl)
-          listenCurrentHandleRef.current = handle
-          await handle.promise
-          listenCurrentHandleRef.current = null
-        } else {
-          await speakTurn(turn.text, {
-            voice: turn.speaker === 'A' ? voiceA : voiceB,
-            pitch: turn.speaker === 'A' ? 1.05 : (onlyOne ? 0.75 : 0.85),
-            rate: turn.speaker === 'A' ? 0.88 : 0.88,
-          })
-        }
+        const cachedUrl = listenAudiosRef.current[i] ?? ''
+        if (!cachedUrl) continue
+        const handle = playAudioURL(cachedUrl)
+        listenCurrentHandleRef.current = handle
+        await handle.promise
+        listenCurrentHandleRef.current = null
       }
       if (play === 1 && playingRef.current) {
         await new Promise<void>(r => setTimeout(r, 1500))
@@ -1054,6 +1040,7 @@ export function IELTSTest() {
     setPhase('loading')
     setError(null)
     clearTTSCache()
+    clearOpenAITTSCache()
     listenAudiosRef.current = []
     setListenAnswers(Array(10).fill(null))
     setListenPlayCount(0)
@@ -1327,7 +1314,6 @@ export function IELTSTest() {
         isPlaying={isPlaying}
         showTranscript={showTranscript}
         setShowTranscript={setShowTranscript}
-        ttsSupported={ttsSupported}
         playConversationTwice={playConversationTwice}
         listenCurrentHandleRef={listenCurrentHandleRef}
         onAdvance={() => setPhase('reading')}
