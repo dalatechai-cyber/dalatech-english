@@ -76,7 +76,7 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
         <div className="ml-auto flex items-center gap-4 sm:gap-6">
           {streak > 0 && (
             <span
-              className="text-sm font-medium flex items-center gap-1.5 flex-shrink-0 nums-tabular"
+              className="text-sm font-medium flex items-center gap-1.5 flex-shrink-0 nums-tabular min-w-11 min-h-11"
               style={{ color: 'var(--gold)' }}
             >
               <FlameIcon size={20} />

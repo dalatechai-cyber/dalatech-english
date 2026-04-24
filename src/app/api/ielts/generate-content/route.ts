@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import { CLAUDE_HAIKU_MODEL } from '@/lib/constants'
 import { checkRateLimit } from '@/lib/rateLimit'
+import { wordCount } from '@/lib/textUtils'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -115,9 +116,9 @@ SPEAKING section rules (seed ${seed} — make every session unique):
     }))
 
     parsed.reading.passages.forEach((p: { passage?: string }, i: number) => {
-      const wordCount = (p.passage ?? '').split(/\s+/).filter(Boolean).length
-      if (wordCount > 250) {
-        console.warn('Passage', i, 'too long:', wordCount, 'words')
+      const count = wordCount(p.passage ?? '')
+      if (count > 250) {
+        console.warn('Passage', i, 'too long:', count, 'words')
       }
     })
 

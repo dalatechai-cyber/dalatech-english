@@ -1,4 +1,5 @@
 import type { LevelCode } from './types'
+import { MAX_CERTIFICATES } from './constants'
 
 export interface CertificateEntry {
   id: string
@@ -6,6 +7,7 @@ export interface CertificateEntry {
   score: number
   total: number
   date: string
+  issuedAt: number
   type: 'quiz'
 }
 
@@ -20,22 +22,28 @@ export function loadCertificates(): CertificateEntry[] {
   }
 }
 
-export function saveCertificate(entry: Omit<CertificateEntry, 'id' | 'date'>): CertificateEntry {
-  const today = new Date().toISOString().slice(0, 10)
+export function saveCertificate(entry: Omit<CertificateEntry, 'id' | 'date' | 'issuedAt'>): CertificateEntry {
+  const now = Date.now()
+  const today = new Date(now).toISOString().slice(0, 10)
   const cert: CertificateEntry = {
     ...entry,
-    id: `cert-${Date.now()}`,
+    id: `cert-${now}`,
     date: today,
+    issuedAt: now,
   }
   if (typeof window !== 'undefined') {
     // Re-read just before write to narrow multi-tab race window
     const latest = loadCertificates()
+    const recentDuplicate = latest.find(
+      c => c.level === entry.level && typeof c.issuedAt === 'number' && now - c.issuedAt < 5000,
+    )
+    if (recentDuplicate) return recentDuplicate
     const existing = latest.find(
-      c => c.level === entry.level && c.date === today && c.type === entry.type
+      c => c.level === entry.level && c.date === today && c.type === entry.type,
     )
     if (existing) return existing
     try {
-      localStorage.setItem(KEY, JSON.stringify([cert, ...latest]))
+      localStorage.setItem(KEY, JSON.stringify([cert, ...latest].slice(0, MAX_CERTIFICATES)))
     } catch (e) {
       console.warn('Storage full:', e)
     }
