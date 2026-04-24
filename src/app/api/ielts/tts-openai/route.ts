@@ -21,9 +21,20 @@ const FALLBACK_MODEL = 'tts-1-hd'
 const TTS_SPEED = 0.9
 const TTS_RESPONSE_FORMAT = 'wav'
 const TTS_CONTENT_TYPE = 'audio/wav'
+// Voice choice within gpt-4o-mini-tts. Previous pair was nova/onyx —
+// Speaker A (nova) was producing audible crackling at speed 0.9, and both
+// voices sounded flat despite full instructions directives. Switched to:
+//   A: coral  — warm, expressive female; darker timbre than nova's bright
+//               upper-frequency character (less click-prone) and reported
+//               to respond more strongly to prosody instructions.
+//   B: ash    — deep, authoritative male; more prosodically responsive
+//               than onyx while preserving academic gravitas.
+// Model stays gpt-4o-mini-tts — it is the only standard TTS model that
+// honours the `instructions` parameter; tts-1/tts-1-hd ignore it and
+// guarantee flat output.
 const VOICE_BY_SPEAKER: Record<'A' | 'B', string> = {
-  A: 'nova',
-  B: 'onyx',
+  A: 'coral',
+  B: 'ash',
 }
 // Per-speaker instructions — gpt-4o-mini-tts honours these as prosody
 // directives, not just persona hints. Keep them short, specific, and
@@ -50,6 +61,14 @@ const INSTRUCTIONS_BY_SPEAKER: Record<'A' | 'B', string> = {
 const MAX_TEXT_LENGTH = 1500
 
 export const runtime = 'edge'
+
+// One-shot diagnostic flags: log the literal outgoing request body once
+// per cold start for each speaker, so ops can verify from Vercel logs
+// that `instructions` is actually reaching OpenAI and is well-formed.
+// Remove these flags and the corresponding console.log in a follow-up
+// commit once verification is complete.
+let outgoingLoggedA = false
+let outgoingLoggedB = false
 
 type Body = { text?: unknown; speaker?: unknown }
 
@@ -118,14 +137,30 @@ export async function POST(req: NextRequest) {
 
     // ── Primary: gpt-4o-mini-tts with instructions ──
     let modelUsed = PRIMARY_MODEL
-    let r = await callOpenAI(apiKey, {
+    const primaryPayload = {
       model: PRIMARY_MODEL,
       voice: VOICE_BY_SPEAKER[speaker],
       input: text,
       speed: TTS_SPEED,
       response_format: TTS_RESPONSE_FORMAT,
       instructions: INSTRUCTIONS_BY_SPEAKER[speaker],
-    })
+    }
+
+    // One-shot outgoing-body log for verification. See comment on
+    // outgoingLoggedA/B at the top of the file. Truncate `input` to keep
+    // the log line bounded; keep `instructions` whole so we can confirm
+    // it's well-formed. Remove in a follow-up commit after verification.
+    const shouldLog =
+      (speaker === 'A' && !outgoingLoggedA) ||
+      (speaker === 'B' && !outgoingLoggedB)
+    if (shouldLog) {
+      const redacted = { ...primaryPayload, input: text.slice(0, 60) + (text.length > 60 ? '…' : '') }
+      console.log(`[OpenAI TTS] outgoing speaker=${speaker} body=${JSON.stringify(redacted)}`)
+      if (speaker === 'A') outgoingLoggedA = true
+      else outgoingLoggedB = true
+    }
+
+    let r = await callOpenAI(apiKey, primaryPayload)
 
     // ── Fallback: tts-1-hd (no instructions) if primary model not enabled ──
     if (!r.ok) {
