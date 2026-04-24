@@ -1,0 +1,273 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-04-24T00:00:00Z",
+  "title": "Design System: Core English",
+  "extensions": {
+    "colorMeta": {
+      "midnight-ink": {
+        "role": "neutral",
+        "displayName": "Midnight Ink",
+        "canonical": "oklch(18% 0.025 260)",
+        "tonalRamp": ["oklch(8% 0.015 260)", "oklch(12% 0.02 260)", "oklch(18% 0.025 260)", "oklch(24% 0.028 260)", "oklch(32% 0.03 260)", "oklch(48% 0.025 260)", "oklch(68% 0.018 260)", "oklch(92% 0.008 260)"]
+      },
+      "deep-ink": {
+        "role": "neutral",
+        "displayName": "Deep Ink",
+        "canonical": "oklch(12% 0.02 260)"
+      },
+      "ink-surface": {
+        "role": "neutral",
+        "displayName": "Ink Surface",
+        "canonical": "oklch(24% 0.028 260)",
+        "tonalRamp": ["oklch(10% 0.018 260)", "oklch(15% 0.022 260)", "oklch(20% 0.026 260)", "oklch(24% 0.028 260)", "oklch(30% 0.03 260)", "oklch(42% 0.028 260)", "oklch(60% 0.02 260)", "oklch(88% 0.01 260)"]
+      },
+      "ink-surface-raised": {
+        "role": "neutral",
+        "displayName": "Ink Surface Raised",
+        "canonical": "oklch(30% 0.03 260)"
+      },
+      "candlelight-gold": {
+        "role": "primary",
+        "displayName": "Candlelight Gold",
+        "canonical": "oklch(75% 0.17 65)",
+        "tonalRamp": ["oklch(25% 0.08 65)", "oklch(38% 0.12 65)", "oklch(52% 0.15 65)", "oklch(65% 0.17 65)", "oklch(75% 0.17 65)", "oklch(83% 0.14 65)", "oklch(90% 0.09 65)", "oklch(96% 0.04 65)"]
+      },
+      "candlelight-gold-bright": {
+        "role": "primary",
+        "displayName": "Candlelight Gold Bright",
+        "canonical": "oklch(87% 0.14 85)"
+      },
+      "candlelight-gold-deep": {
+        "role": "primary",
+        "displayName": "Candlelight Gold Deep",
+        "canonical": "oklch(65% 0.16 55)"
+      },
+      "vellum-champagne": {
+        "role": "secondary",
+        "displayName": "Vellum Champagne",
+        "canonical": "oklch(82% 0.075 75)",
+        "tonalRamp": ["oklch(30% 0.04 75)", "oklch(45% 0.055 75)", "oklch(58% 0.065 75)", "oklch(70% 0.075 75)", "oklch(82% 0.075 75)", "oklch(88% 0.06 75)", "oklch(93% 0.04 75)", "oklch(97% 0.02 75)"]
+      },
+      "text-primary": {
+        "role": "neutral",
+        "displayName": "Text Primary",
+        "canonical": "oklch(98% 0.005 260)"
+      },
+      "text-secondary": {
+        "role": "neutral",
+        "displayName": "Text Secondary",
+        "canonical": "oklch(86% 0.015 255)"
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Text Muted",
+        "canonical": "oklch(54% 0.025 255)"
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline Divider",
+        "canonical": "rgba(255,255,255,0.06)"
+      },
+      "hairline-gold": {
+        "role": "primary",
+        "displayName": "Hairline Gold",
+        "canonical": "rgba(245,158,11,0.18)"
+      },
+      "ai-bubble-surface": {
+        "role": "neutral",
+        "displayName": "AI Bubble Surface",
+        "canonical": "oklch(28% 0.03 255)"
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Hero wordmarks only, one per screen. Playfair italic at 52-96px." },
+      "headline": { "displayName": "Headline", "purpose": "Section titles with italic em accent in Candlelight Gold." },
+      "title": { "displayName": "Title", "purpose": "Card titles and feature-tile headings. Inter 600 18px." },
+      "body": { "displayName": "Body", "purpose": "All paragraph copy. Inter 400 16px with ss01 cv11 calt for Mongolian Cyrillic." },
+      "label": { "displayName": "Label / Kicker", "purpose": "Uppercase section eyebrows and nav links. 11px, 0.22em tracking." }
+    },
+    "shadows": [
+      { "name": "editorial", "value": "0 1px 0 0 rgba(255,255,255,0.03) inset, 0 2px 4px rgba(0,0,0,0.3), 0 16px 40px -12px rgba(0,0,0,0.5)", "purpose": "Default neutral card depth. No gold. Locked cards and menus." },
+      { "name": "gold-sm", "value": "0 1px 0 0 rgba(255,255,255,0.08) inset, 0 2px 6px rgba(0,0,0,0.3), 0 0 24px rgba(245,158,11,0.25)", "purpose": "Primary CTA and small achievement. Close warm glow." },
+      { "name": "gold", "value": "0 1px 0 0 rgba(255,255,255,0.04) inset, 0 1px 2px rgba(0,0,0,0.4), 0 12px 28px -8px rgba(0,0,0,0.5), 0 8px 24px -12px rgba(245,158,11,0.35)", "purpose": "Large achievement state: unlocked level cards, hover-elevated cards." }
+    ],
+    "motion": [
+      { "name": "page-fade-in-up", "value": "cubic-bezier(0.16, 1, 0.3, 1) 0.4s", "purpose": "Page enter: 20px translateY + opacity. Ease-out quint." },
+      { "name": "orb-pulse", "value": "ease-in-out 6s infinite", "purpose": "Ambient hero glow. Scale 1 to 1.08, opacity 0.4 to 0.6." },
+      { "name": "button-lift", "value": "200ms ease-out", "purpose": "Primary CTA hover translate-y -2px." },
+      { "name": "streaming-cursor-blink", "value": "1s steps(2, jump-none) infinite", "purpose": "Streaming cursor glyph on AI responses." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary CTA",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Gold-gradient primary action with navy text. Hover lifts 2px.",
+      "html": "<button class=\"ds-btn-primary\">Сургалт эхлэх<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14M13 5l7 7-7 7\"/></svg></button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#F59E0B 0%,#D97706 100%);color:#0B1222;font-family:Inter,system-ui,sans-serif;font-size:15px;font-weight:600;letter-spacing:-0.01em;padding:16px 28px;border:none;border-radius:12px;cursor:pointer;box-shadow:0 1px 0 0 rgba(255,255,255,0.08) inset,0 2px 6px rgba(0,0,0,0.3),0 0 24px rgba(245,158,11,0.25);transition:transform 200ms cubic-bezier(0.16,1,0.3,1),background 200ms;}.ds-btn-primary:hover{transform:translateY(-2px);}.ds-btn-primary:hover svg{transform:translateX(2px);}.ds-btn-primary svg{transition:transform 200ms cubic-bezier(0.16,1,0.3,1);}.ds-btn-primary:focus-visible{outline:2px solid #F59E0B;outline-offset:2px;}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary link-style action. No fill, no border, champagne label on hover.",
+      "html": "<button class=\"ds-btn-ghost\"><svg viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><circle cx=\"12\" cy=\"12\" r=\"5\"/><circle cx=\"12\" cy=\"12\" r=\"1.5\" fill=\"currentColor\"/></svg>IELTS дадлага</button>",
+      "css": ".ds-btn-ghost{display:inline-flex;align-items:center;gap:8px;background:transparent;color:#CBD5E1;font-family:Inter,system-ui,sans-serif;font-size:14px;font-weight:500;padding:16px 24px;border:none;border-radius:12px;cursor:pointer;transition:color 200ms;}.ds-btn-ghost:hover{color:#F59E0B;}.ds-btn-ghost:focus-visible{outline:2px solid #F59E0B;outline-offset:2px;border-radius:4px;}"
+    },
+    {
+      "name": "Stat Chip",
+      "kind": "chip",
+      "refersTo": "chip-stat",
+      "description": "Meta-stat pill under hero. Gold-tinted background, champagne text, hairline-gold border.",
+      "html": "<span class=\"ds-chip-stat\"><svg viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5a2.5 2.5 0 0 0 0 5H20\"/><path d=\"M4 4.5v18\"/></svg>5 Түвшин</span>",
+      "css": ".ds-chip-stat{display:inline-flex;align-items:center;gap:8px;background:rgba(245,158,11,0.04);color:#E4C08A;font-family:Inter,system-ui,sans-serif;font-size:12px;font-weight:500;padding:6px 14px;border:1px solid rgba(245,158,11,0.18);border-radius:9999px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}"
+    },
+    {
+      "name": "Nav Link",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Uppercase champagne kicker link. Tracked 0.18em. Hovers to Candlelight Gold.",
+      "html": "<a href=\"#\" class=\"ds-nav-link\">IELTS</a>",
+      "css": ".ds-nav-link{color:#E4C08A;font-family:Inter,system-ui,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;text-decoration:none;transition:color 200ms;}.ds-nav-link:hover{color:#F59E0B;}.ds-nav-link:focus-visible{outline:2px solid #F59E0B;outline-offset:2px;border-radius:4px;}"
+    },
+    {
+      "name": "Surface Card",
+      "kind": "card",
+      "refersTo": "card-surface",
+      "description": "Default Ink Surface card with hairline border and editorial shadow. The neutral container.",
+      "html": "<div class=\"ds-card-surface\"><div class=\"ds-kicker\">Философи</div><h3 class=\"ds-card-title\">AI Багш</h3><p class=\"ds-card-body\">Хувийн AI багш таны алдааг тэр даруй засна. Монгол хэлээр тайлбар авна.</p></div>",
+      "css": ".ds-card-surface{background:#141C30;color:#F8FAFC;padding:28px;border:1px solid rgba(255,255,255,0.06);border-radius:16px;box-shadow:0 1px 0 0 rgba(255,255,255,0.03) inset,0 2px 4px rgba(0,0,0,0.3),0 16px 40px -12px rgba(0,0,0,0.5);transition:background 300ms cubic-bezier(0.16,1,0.3,1);}.ds-card-surface:hover{background:#1F2940;}.ds-kicker{font-family:Inter,system-ui,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.22em;text-transform:uppercase;color:#E4C08A;margin-bottom:8px;}.ds-card-title{font-family:Inter,system-ui,sans-serif;font-size:18px;font-weight:600;letter-spacing:-0.015em;color:#F8FAFC;margin:0 0 10px 0;}.ds-card-body{font-family:Inter,system-ui,sans-serif;font-size:14px;line-height:1.6;color:#94A3B8;margin:0;}"
+    },
+    {
+      "name": "Achievement Card (Gold Border)",
+      "kind": "card",
+      "refersTo": "card-elevated",
+      "description": "Level card in exam-passed state. Gold-gradient border via padding-box/border-box, gold ambient halo shadow.",
+      "html": "<div class=\"ds-card-gold\"><div class=\"ds-card-gold-glow\"></div><div class=\"ds-kicker\" style=\"color:#E4C08A;margin-bottom:24px;\">CEFR</div><div class=\"ds-level-code\">B1</div><div class=\"ds-level-name\">Intermediate</div><div class=\"ds-progress-row\"><span style=\"color:#64748B\">Дэвшил</span><span style=\"color:#E4C08A;font-variant-numeric:tabular-nums;font-weight:500\">10/10</span></div><div class=\"ds-progress-track\"><div class=\"ds-progress-fill\" style=\"width:100%\"></div></div></div>",
+      "css": ".ds-card-gold{position:relative;background:linear-gradient(#141C30,#141C30) padding-box,linear-gradient(135deg,#F59E0B 0%,#E4C08A 50%,#D97706 100%) border-box;border:1px solid transparent;border-radius:16px;padding:20px;box-shadow:0 1px 0 0 rgba(255,255,255,0.04) inset,0 1px 2px rgba(0,0,0,0.4),0 12px 28px -8px rgba(0,0,0,0.5),0 8px 24px -12px rgba(245,158,11,0.35);overflow:hidden;}.ds-card-gold-glow{position:absolute;top:0;right:0;width:64px;height:64px;pointer-events:none;background:radial-gradient(circle at top right,rgba(245,158,11,0.12) 0%,transparent 60%);}.ds-level-code{font-family:'Playfair Display',Georgia,serif;font-size:48px;font-weight:700;line-height:1;letter-spacing:-0.02em;color:#F59E0B;font-variant-numeric:tabular-nums;margin-bottom:4px;}.ds-level-name{font-family:Inter,system-ui,sans-serif;font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:#CBD5E1;margin-bottom:20px;}.ds-progress-row{display:flex;align-items:center;justify-content:space-between;font-family:Inter,system-ui,sans-serif;font-size:11px;margin-bottom:8px;}.ds-progress-track{width:100%;height:4px;background:rgba(255,255,255,0.06);border-radius:9999px;overflow:hidden;}.ds-progress-fill{height:100%;background:linear-gradient(90deg,#D97706 0%,#F59E0B 50%,#FCD34D 100%);border-radius:9999px;transition:width 700ms cubic-bezier(0.16,1,0.3,1);}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Ink-surface input with hairline border, 16px font (iOS zoom prevention), gold focus ring.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Англиар хариулна уу\" />",
+      "css": ".ds-input{display:block;width:100%;background:#141C30;color:#F8FAFC;font-family:Inter,system-ui,sans-serif;font-size:16px;font-weight:400;line-height:1.5;padding:12px 16px;border:1px solid rgba(255,255,255,0.06);border-radius:12px;outline:none;transition:border-color 200ms;}.ds-input::placeholder{color:#64748B;}.ds-input:focus-visible{outline:2px solid #F59E0B;outline-offset:2px;}"
+    },
+    {
+      "name": "AI Chat Bubble",
+      "kind": "custom",
+      "description": "AI tutor message bubble. Current code violates the side-stripe ban (3px borderLeft); this canonical version uses a 1px hairline-gold border with the gold avatar carrying role identity.",
+      "html": "<div class=\"ds-chat-row\"><div class=\"ds-chat-avatar\">AI</div><div class=\"ds-chat-bubble-ai\">Тавтай морилно уу. Өнөөдөр <strong>Present Simple</strong>-г судална. Бэлэн үү?</div></div>",
+      "css": ".ds-chat-row{display:flex;align-items:flex-start;gap:8px;}.ds-chat-avatar{flex-shrink:0;width:36px;height:36px;border-radius:9999px;background:linear-gradient(135deg,#F59E0B,#D97706);color:#0B1222;font-family:Inter,system-ui,sans-serif;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:4px;}.ds-chat-bubble-ai{max-width:75%;background:#1E293B;color:#F8FAFC;font-family:Inter,system-ui,sans-serif;font-size:14px;line-height:1.6;padding:12px 16px;border:1px solid rgba(245,158,11,0.18);border-radius:16px;border-top-left-radius:4px;}.ds-chat-bubble-ai strong{color:#F59E0B;font-weight:600;}"
+    },
+    {
+      "name": "User Chat Bubble",
+      "kind": "custom",
+      "description": "User message. Gold-gradient background, navy text, asymmetric top-right corner.",
+      "html": "<div style=\"display:flex;justify-content:flex-end\"><div class=\"ds-chat-bubble-user\">I study English every day.</div></div>",
+      "css": ".ds-chat-bubble-user{max-width:75%;background:linear-gradient(135deg,#F59E0B,#D97706);color:#0F172A;font-family:Inter,system-ui,sans-serif;font-size:14px;font-weight:500;line-height:1.6;padding:12px 16px;border-radius:16px;border-top-right-radius:4px;}"
+    },
+    {
+      "name": "Hero Eyebrow Kicker",
+      "kind": "custom",
+      "description": "Signature editorial kicker: hairline-label-hairline pattern. The hairlines make it magazine-style, not UI-style.",
+      "html": "<div class=\"ds-eyebrow\"><span class=\"ds-eyebrow-rule ds-eyebrow-rule-left\"></span><span class=\"ds-eyebrow-label\">AI · Dalatech Academy</span><span class=\"ds-eyebrow-rule ds-eyebrow-rule-right\"></span></div>",
+      "css": ".ds-eyebrow{display:inline-flex;align-items:center;gap:10px;}.ds-eyebrow-rule{display:inline-block;height:1px;width:32px;}.ds-eyebrow-rule-left{background:linear-gradient(90deg,transparent,rgba(245,158,11,0.6));}.ds-eyebrow-rule-right{background:linear-gradient(90deg,rgba(245,158,11,0.6),transparent);}.ds-eyebrow-label{font-family:Inter,system-ui,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.22em;text-transform:uppercase;color:#E4C08A;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Nocturnal Academy",
+    "overview": "Core English is a private late-night reading room. Midnight Ink walls, a single Candlelight Gold lamp, Playfair italics on Vellum Champagne inlays. The learner is a student at a serious desk studying under warm light in a room where nobody is shouting at them. The UI is the room. The lesson is the book. The AI tutor is the quiet scholar across the table.\n\nThe system is committed to restraint. Gold is rare and ceremonial, never decorative. Serif italics appear only as editorial accent. Inter carries everything functional, tuned for Mongolian Cyrillic alongside Latin. Depth is layered: flat surfaces, dark structural shadows, and a single gold ambient glow reserved for achievement.\n\nThis system explicitly rejects: Duolingo cartoon gamification, Kaplan/ETS institutional beige, purple-to-pink AI-startup gradients, neon-on-black crypto maximalism, and the hero-metric SaaS dashboard template.",
+    "keyCharacteristics": [
+      "Editorial over utilitarian: serif italics, 0.22em-tracked uppercase kickers, hairline dividers, folio numbering (01/02/03)",
+      "Restrained color: Midnight Ink ~85% of surface; Candlelight Gold <=10%, reserved for CTAs, achievement, and focus rings",
+      "Bilingual-native typography: co-equal Mongolian Cyrillic and English Latin, with mechanical size-adjust, weight, line-height, and tracking parity rules; body currently uses Inter (Latin subset only, Cyrillic falls to system fallback — see Known Violation 3), Playfair for English editorial accents",
+      "Structural depth plus ceremonial glow: layered shadows define hierarchy, gold halo marks accomplishment",
+      "Calm motion: ease-out exponentials only, no bounce, no elastic, reduced-motion honored"
+    ],
+    "rules": [
+      { "name": "The One Flame Rule", "body": "Candlelight Gold is <=10% of any screen. Gold marks the one important affordance, the one achievement state, or the one identity element. Everything else is Vellum Champagne or ink. Enforcement is a review-time heuristic, not a pixel measurement: per-screen checklist enumerates gold elements, assigns each a role (primary affordance, achievement, focus ring, identity, AI presence), rejects decoration, and caps total gold roles at 3-4.", "section": "colors", "enforcement": "heuristic" },
+      { "name": "The No Pure Black / No Pure White Rule", "body": "#000 and #fff are prohibited. All neutrals tint toward the cool ink hue. #F8FAFC is the lightest value; #070C18 is the darkest.", "section": "colors" },
+      { "name": "The Lamp-Light Rule", "body": "Candlelight Gold is warm (hue ~65), not bright-yellow or sun-orange. It reads as flame, not marigold. Stay in the 60-70 hue band.", "section": "colors" },
+      { "name": "The One Italic Rule", "body": "Playfair italic is for display accents. Never italicize body, buttons, or labels. For body emphasis use weight 600 or Vellum Champagne.", "section": "typography" },
+      { "name": "The 0.22em Tracking Rule", "body": "All-caps kicker labels always use letter-spacing 0.22em (0.18em for inline nav). Uppercase without aggressive tracking reads as shouting, not editorial.", "section": "typography" },
+      { "name": "The Tabular Numerals Rule", "body": "Every counter (score, streak, progress, quiz result) uses font-variant-numeric: tabular-nums via the .nums-tabular utility.", "section": "typography" },
+      { "name": "The Gold-Glow = Achievement Rule", "body": "Any shadow containing a gold channel is a state statement, never a decoration. Promote to shadow-gold-sm or shadow-gold only when the element has earned it.", "section": "elevation" },
+      { "name": "The Layered-Inset-Highlight Rule", "body": "Every premium shadow starts with a 1px inset white highlight (0.03-0.08 alpha). This is the top-edge catch-light that makes the surface read as physical.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use Candlelight Gold as a ceremony. Primary CTAs, achievement borders, focus rings, the streak flame, the wordmark. <=10% of any screen. If you want more gold, you want Vellum Champagne instead.",
+      "Do use hairline dividers (rgba(255,255,255,0.06)) instead of boxed cards wherever possible. The Философи feature grid is the template: shared hairline background, 1px gap, tiles lay atop.",
+      "Do use Playfair italic for editorial accents only. Section titles, pulled phrases, folio numbers (01/02/03), hero wordmarks. Never for body, never for buttons.",
+      "Do tab-number every counter. Score, streak, progress, question index, quiz result. nums-tabular utility, always.",
+      "Do honor prefers-reduced-motion. Pulse, orbPulse, pageFadeInUp, streak popup entrance: all must short-circuit to static.",
+      "Do layer shadows with inset white highlights (0.03-0.08 alpha on the top edge). That is what makes the surface read as physical.",
+      "Do pair uppercase kickers with hairline segments. The hero eyebrow is [hairline][label][hairline]: the hairlines are what make it editorial.",
+      "Do keep body font-size >=16px. Enforced globally for inputs. Mongolian Cyrillic at 14px is hard to read for older learners."
+    ],
+    "donts": [
+      "Don't use side-stripe borders greater than 1px. The current ChatBubble.tsx AI variant uses borderLeft: 3px solid #F59E0B, which is a violation. Refactor to a full 1px hairline-gold border with the gold avatar carrying the AI identity.",
+      "Don't use gradient-clipped text (background-clip: text with a gradient). Currently present on the hero Core wordmark and the level-code digit, both violations. Replace with a single solid Candlelight Gold.",
+      "Don't use #000 or #fff. Every neutral tints toward Midnight Ink (hue ~260). #F8FAFC is the lightest allowed; #070C18 is the darkest.",
+      "Don't glassmorph by default. The nav's backdrop-filter: blur(8px) is purposeful. Don't replicate it on cards, modals, or chips.",
+      "Don't repeat identical card grids. Icon + heading + body triplets that march across the screen are the SaaS tell.",
+      "Don't write exclamation-point CTAs or urgency copy. No Get Started!, no Limited time!, no Join 10,000+ learners. The CTA reads Сургалт эхлэх.",
+      "Don't animate layout properties. Never transition width, height, margin, padding. Use transform and opacity.",
+      "Don't use bounce or elastic easing. The system uses ease-out exponentials. No cubic-bezier(0.68, -0.55, 0.265, 1.55) overshoot.",
+      "Don't apply Candlelight Gold to body text. It is reserved. For emphasis use Text Primary at weight 600 or Vellum Champagne.",
+      "Don't introduce a third font. The pairing is one display serif (Playfair) plus one body sans. The body sans is currently Inter but slated to migrate to a system-sans stack (see Known Violation 3); either way, do not add a fourth face.",
+      "Don't cartoonify gamification. No mascots, no combo multipliers, no punishment hearts, no celebration confetti. The streak popup fades; it does not bounce."
+    ],
+    "knownViolations": [
+      {
+        "id": "chatbubble-side-stripe",
+        "title": "ChatBubble AI side-stripe",
+        "location": "src/components/ChatBubble.tsx:37",
+        "violates": "shared design laws: side-stripe borders >1px are an absolute ban",
+        "current": "borderLeft: '3px solid #F59E0B' on the AI message bubble",
+        "remediation": "Remove borderLeft. Apply a full 1px hairline-gold border on all four sides. Let the existing 36px gold-gradient avatar carry the AI identity."
+      },
+      {
+        "id": "gradient-clipped-text",
+        "title": "Gradient-clipped text on hero wordmark and level-code digit",
+        "location": "src/components/LandingPage.tsx:67-72; src/components/LevelSelector.tsx (level-code digit)",
+        "violates": "shared design laws: gradient text is an absolute ban (decorative, never meaningful, poor contrast/a11y)",
+        "current": "background-clip: text with a gradient fill on the 'Core' wordmark and the LevelSelector level-code digit",
+        "remediation": "Replace both with a single solid Candlelight Gold fill. Emphasis is already carried by Playfair italic at display scale."
+      },
+      {
+        "id": "inter-canonical-body",
+        "title": "Inter as canonical body font",
+        "location": "src/app/layout.tsx:2,5 (loads Inter via next/font/google with subsets: ['latin'] and applies inter.className to <body>)",
+        "violates": "PRODUCT.md anti-reference ('Inter-everywhere Notion/Linear productivity aesthetic'); Bilingual Typography Rules sect 1, 7 (no Cyrillic subset loaded, so 'ss01 cv11 calt' feature claim is a silent no-op on Mongolian Cyrillic which falls through to system fallback)",
+        "current": "Inter 'latin' subset is loaded and applied globally. Cyrillic renders via system-ui fallback (Segoe UI / San Francisco / Roboto) with uncalibrated x-height, weight, and line-height parity against Latin.",
+        "remediation": "Preferred: drop next/font/google for the body font. Use a native-OS system-sans stack as canonical body (-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif). Full Cyrillic coverage on every target OS, no FOUT, no productivity-SaaS association. Calibrate size-adjust / ascent-override / descent-override per Bilingual Typography Rules sect 3. Update typography.body, typography.title, typography.label frontmatter. Remove the ss01 cv11 calt feature declaration (Inter-specific, not portable). Alternative: if a branded body font is retained, it must load with subsets: ['latin', 'cyrillic'] and not be Inter (candidates: Source Sans 3, Work Sans, IBM Plex Sans)."
+      },
+      {
+        "id": "playfair-css-import",
+        "title": "Playfair Display loaded via CSS @import",
+        "location": "src/app/globals.css:1",
+        "violates": "Next.js font optimization bypass (render-blocking, no self-hosting, no preload hints, no font-display automation); privacy (leaks visitor IP to fonts.googleapis.com on every pageview)",
+        "current": "@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=EB+Garamond:ital,wght@0,400;1,400&display=swap');",
+        "remediation": "Migrate to next/font/google in src/app/layout.tsx: import { Playfair_Display } from 'next/font/google'; const playfair = Playfair_Display({ subsets: ['latin', 'cyrillic'], weight: ['400', '700'], style: ['normal', 'italic'], variable: '--font-playfair', display: 'swap' }). Apply playfair.variable to the <html> className. Reference var(--font-playfair) from the .font-serif-display utility in globals.css. Delete the @import line. Verify no FOUT on throttled-network reload of the landing hero."
+      }
+    ],
+    "bilingualTypographyRules": [
+      { "id": "cyrillic-coverage", "rule": "The active body font must ship Cyrillic glyphs in the same file as Latin. Verify via DevTools Rendered Fonts: every Cyrillic and every Latin char must report the same rendered font." },
+      { "id": "system-sans-fallback", "rule": "Fallback chain must resolve to a Cyrillic-capable sans across macOS/iOS/Windows/Android. Canonical: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif. Never end with a bare sans-serif." },
+      { "id": "size-adjust-parity", "rule": "Override fallback x-height via @font-face { size-adjust, ascent-override, descent-override, line-gap-override }. Calibrate by overlaying Latin 'x' against Cyrillic 'н' at 32px until x-heights align within 1px." },
+      { "id": "weight-parity", "rule": "Cyrillic weight 400 often reads heavier than Latin weight 400 in system fonts. Scope weight via :lang(mn) { font-weight: 380 } if needed. Emphasis weight is 600 across both scripts." },
+      { "id": "mixed-script-line-height", "rule": "Blocks containing Mongolian Cyrillic use line-height 1.65 (up from 1.6) to clear й, ү, ө, ё diacritics on wrapped lines. Enforce via :lang(mn) { line-height: 1.65 } on body copy." },
+      { "id": "tracking-parity", "rule": "0.22em uppercase tracking is Latin-calibrated. Mongolian Cyrillic uppercase uses 0.18em: :lang(mn) .label-kicker { letter-spacing: 0.18em }." },
+      { "id": "opentype-scope", "rule": "ss01 cv11 calt are Inter-specific stylistic sets. Applying them where the rendered font is a system fallback is a silent no-op. Either load the Cyrillic subset of the branded font or remove the feature claim." },
+      { "id": "size-floor", "rule": "Both scripts >=14px body; inputs >=16px (iOS auto-zoom block, enforced in globals.css). Do not compromise for aesthetic density; older learners are a primary audience." }
+    ]
+  }
+}
