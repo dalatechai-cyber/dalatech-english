@@ -557,8 +557,8 @@ export function IELTSTest() {
         } else {
           await speakTurn(turn.text, {
             voice: turn.speaker === 'A' ? voiceA : voiceB,
-            pitch: turn.speaker === 'A' ? 1.05 : (onlyOne ? 0.75 : 0.9),
-            rate: turn.speaker === 'A' ? 0.88 : 0.85,
+            pitch: turn.speaker === 'A' ? 1.05 : (onlyOne ? 0.75 : 0.85),
+            rate: turn.speaker === 'A' ? 0.88 : 0.88,
           })
         }
       }

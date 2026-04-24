@@ -34,16 +34,53 @@ export function selectListeningVoiceA(): SpeechSynthesisVoice | null {
   )
 }
 
-// Listening Speaker B — Male, British or American
+type OS = 'ios' | 'android' | 'windows' | 'mac' | 'other'
+
+function detectOS(): OS {
+  if (typeof navigator === 'undefined') return 'other'
+  const ua = navigator.userAgent
+  if (/iPhone|iPad|iPod/.test(ua)) return 'ios'
+  if (/Android/.test(ua)) return 'android'
+  if (/Windows/.test(ua)) return 'windows'
+  if (/Macintosh|Mac OS X/.test(ua)) return 'mac'
+  return 'other'
+}
+
+// Per-platform preference list for a natural male English voice. Order
+// matters — first match wins. Exact or prefix matches avoid the robotic
+// generic fallbacks like "English Male".
+const MALE_VOICE_PREFERENCES: Record<OS, string[]> = {
+  ios:     ['Daniel', 'Alex'],
+  android: ['Google UK English Male'],
+  windows: ['Microsoft George', 'Microsoft David'],
+  mac:     ['Daniel', 'Tom'],
+  other:   [],
+}
+
+// Listening Speaker B — Male, British or American. Tries the current OS's
+// best native male voice first, then a cross-platform high-quality list,
+// then generic fallbacks.
 export function selectListeningVoiceB(): SpeechSynthesisVoice | null {
   if (typeof window === 'undefined' || !window.speechSynthesis) return null
   const voices = window.speechSynthesis.getVoices()
+  const os = detectOS()
+  const preferred = [
+    ...MALE_VOICE_PREFERENCES[os],
+    'Daniel',
+    'Google UK English Male',
+    'Microsoft George',
+    'Microsoft David',
+    'Alex',
+    'Tom',
+  ]
+  for (const name of preferred) {
+    const hit =
+      voices.find(v => v.name === name) ??
+      voices.find(v => v.name.startsWith(name))
+    if (hit) return hit
+  }
   return (
-    voices.find(v => v.name === 'Google UK English Male') ??
-    voices.find(v => v.name.includes('George')) ??
-    voices.find(v => v.name === 'Daniel') ??
     voices.find(v => v.lang.startsWith('en-GB') && !v.name.toLowerCase().includes('female')) ??
-    voices.find(v => v.name === 'Google US English') ??
     voices.find(v => v.lang.startsWith('en-US') && !v.name.toLowerCase().includes('female')) ??
     voices.find(v => v.lang.startsWith('en')) ??
     null
