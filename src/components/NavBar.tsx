@@ -79,7 +79,7 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
               className="text-sm font-medium flex items-center gap-1.5 flex-shrink-0 nums-tabular"
               style={{ color: 'var(--gold)' }}
             >
-              <FlameIcon size={16} />
+              <FlameIcon size={20} />
               {streak}
               <span
                 className="hidden sm:inline text-[11px] uppercase tracking-wider"

@@ -331,9 +331,10 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
             echoCancellation: true,
             noiseSuppression: true,
             autoGainControl: true,
+            suppressLocalAudioPlayback: true,
             sampleRate: 24000,
             channelCount: 1,
-          },
+          } as MediaTrackConstraints,
         })
       } catch (err) {
         const name = (err as { name?: string } | undefined)?.name
@@ -392,6 +393,18 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
             error?: { message?: string }
           }
           switch (msg.type) {
+            case 'response.audio.delta':
+              // Direct event-driven mute — fires before orbState useEffect
+              // so speaker audio cannot bleed into the mic during the delay.
+              localStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = false })
+              break
+            case 'response.audio.done':
+              // 800ms grace period lets the tail of AI audio fully play out of
+              // the speaker before we re-enable the mic.
+              setTimeout(() => {
+                localStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = true })
+              }, 800)
+              break
             case 'response.audio_transcript.delta':
               if (typeof msg.delta === 'string') {
                 currentExaminerRespRef.current += msg.delta
