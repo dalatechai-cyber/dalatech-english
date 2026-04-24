@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { NavBar } from './NavBar'
-import type { IELTSContent, IELTSAnswers, IELTSAnswer, IELTSQuestion } from '@/lib/ielts'
+import type { IELTSContent, IELTSAnswers, IELTSAnswer } from '@/lib/ielts'
 import { saveIELTSResult } from '@/lib/ielts'
 import { saveTestResult } from '@/lib/testHistory'
 import {
@@ -24,7 +24,9 @@ import {
 } from '@/lib/elevenlabs'
 import { IELTSSpeakingRealtime, type RealtimeCompletionPayload } from './IELTSSpeakingRealtime'
 import { BookIcon, PencilIcon, HeadphonesIcon, MicIcon } from './Icon'
-import { wordCount } from '@/lib/textUtils'
+import { IELTSListening } from './ielts/IELTSListening'
+import { IELTSReading } from './ielts/IELTSReading'
+import { IELTSWriting } from './ielts/IELTSWriting'
 
 // Flip to false to revert to the legacy ElevenLabs + Claude speaking pipeline kept below.
 const USE_REALTIME = true
@@ -53,12 +55,6 @@ const SHORT_REACTIONS = [
 
 function pickShortReaction(): string {
   return SHORT_REACTIONS[Math.floor(Math.random() * SHORT_REACTIONS.length)]
-}
-
-function isAnswered(a: IELTSAnswer): boolean {
-  if (typeof a === 'number') return true
-  if (typeof a === 'string') return a.trim().length > 0
-  return false
 }
 
 function mmss(sec: number): string {
@@ -137,57 +133,6 @@ function clearSavedSession(): void {
   try { localStorage.removeItem(IELTS_SESSION_KEY) } catch { /* ignore */ }
 }
 
-function SectionProgress({ idx }: { idx: number }) {
-  const labels = ['Listening', 'Reading', 'Writing', 'Speaking']
-  return (
-    <div className="mb-5">
-      <div className="flex items-center justify-between mb-2 text-[10px] uppercase tracking-[0.2em]">
-        <span style={{ color: 'var(--champagne)' }}>
-          Section {String(Math.min(idx + 1, 4)).padStart(2, '0')} · {labels[Math.min(idx, 3)]}
-        </span>
-        <span
-          className="nums-tabular font-medium"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          {Math.min(idx + 1, 4)}/4
-        </span>
-      </div>
-      <div className="flex gap-1">
-        {labels.map((_, i) => (
-          <div
-            key={i}
-            className="flex-1 h-1 rounded-full overflow-hidden"
-            style={{ background: 'rgba(255,255,255,0.06)' }}
-          >
-            <div
-              className="h-full transition-all duration-500"
-              style={{
-                width: i <= idx ? '100%' : '0%',
-                background:
-                  i < idx
-                    ? 'linear-gradient(90deg, #D97706 0%, #F59E0B 50%, #FCD34D 100%)'
-                    : i === idx
-                    ? 'linear-gradient(90deg, #F59E0B, #E4C08A)'
-                    : 'transparent',
-              }}
-            />
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function ListeningWaveform() {
-  return (
-    <div className="flex items-end justify-center gap-1 h-10">
-      {[0, 1, 2, 3, 4].map(i => (
-        <div key={i} style={{ width: 4, background: '#F59E0B', borderRadius: 2, height: `${12 + i * 6}px`, transformOrigin: 'bottom', animation: `waveBar ${0.6 + i * 0.1}s ease-in-out infinite alternate`, animationDelay: `${i * 0.12}s` }} />
-      ))}
-    </div>
-  )
-}
-
 type OrbState = 'idle' | 'speaking' | 'listening' | 'thinking'
 
 function SpeakOrb({ state }: { state: OrbState }) {
@@ -212,31 +157,6 @@ function SpeakOrb({ state }: { state: OrbState }) {
           boxShadow: `0 0 30px ${c}55, 0 0 60px ${c}33, 0 0 100px ${c}11`,
         }} />
     </div>
-  )
-}
-
-function Task1Prompt({ prompt }: { prompt: string }) {
-  const m = prompt.match(/<data-table>([\s\S]*?)<\/data-table>/)
-  if (!m) return <p className="text-sm text-text-primary leading-relaxed whitespace-pre-line">{prompt}</p>
-  const before = prompt.slice(0, prompt.indexOf('<data-table>')).trim()
-  const after = prompt.slice(prompt.indexOf('</data-table>') + 13).trim()
-  const rows = m[1].trim().split('\n').map(r => r.split('|'))
-  const headers = rows[0]; const dataRows = rows.slice(1)
-  return (
-    <>
-      {before && <p className="text-sm text-text-primary leading-relaxed mb-3">{before}</p>}
-      <div className="overflow-x-auto rounded-xl mb-3">
-        <table className="w-full text-xs border-collapse min-w-[280px]">
-          <thead><tr>{headers.map((h, i) => <th key={i} className="px-3 py-2 text-left font-semibold text-navy whitespace-nowrap" style={{ background: '#F59E0B' }}>{h.trim()}</th>)}</tr></thead>
-          <tbody>{dataRows.map((row, ri) => (
-            <tr key={ri} style={{ background: ri % 2 === 0 ? '#1E293B' : '#162032' }}>
-              {row.map((cell, ci) => <td key={ci} className="px-3 py-2 text-text-primary whitespace-nowrap" style={{ borderTop: '1px solid #334155' }}>{cell.trim()}</td>)}
-            </tr>
-          ))}</tbody>
-        </table>
-      </div>
-      {after && <p className="text-sm text-text-primary leading-relaxed">{after}</p>}
-    </>
   )
 }
 
@@ -1113,80 +1033,6 @@ export function IELTSTest() {
   // Renders the answer UI for a question based on its type.
   // Choice types (mc / tfng / matching) → option buttons.
   // Text types (fill / short) → text input; graded on submit via acceptedAnswers.
-  const renderQuestionBody = (
-    q: IELTSQuestion,
-    globalIdx: number,
-    answers: IELTSAnswer[],
-    setAnswers: (a: IELTSAnswer[]) => void,
-    submitted: boolean,
-  ) => {
-    const type = q.type ?? 'mc'
-    const ans = answers[globalIdx]
-    const update = (v: IELTSAnswer) => {
-      if (submitted) return
-      const a = [...answers]
-      a[globalIdx] = v
-      setAnswers(a)
-    }
-
-    if (type === 'fill' || type === 'short') {
-      const text = typeof ans === 'string' ? ans : ''
-      const normalize = (s: string) =>
-        s.toLowerCase().trim().replace(/[.,!?;:"'`]/g, '').replace(/\s+/g, ' ')
-      const nt = normalize(text)
-      const isCorrect = submitted && nt.length > 0 && !!q.acceptedAnswers?.some(acc => {
-        const na = normalize(acc)
-        return na === nt || nt.includes(na) || na.includes(nt)
-      })
-      const borderColor = !submitted ? '#334155' : isCorrect ? '#34D399' : '#F87171'
-      const textColor = !submitted ? '#F8FAFC' : isCorrect ? '#34D399' : '#F87171'
-      return (
-        <div>
-          <input
-            type="text"
-            value={text}
-            onChange={e => update(e.target.value)}
-            disabled={submitted}
-            placeholder="Хариулт (макс 3 үг)"
-            maxLength={50}
-            className="w-full min-h-[44px] rounded-xl px-4 py-2.5 text-sm outline-none"
-            style={{ background: '#1E293B', border: `1px solid ${borderColor}`, color: textColor }}
-          />
-          {submitted && !isCorrect && q.acceptedAnswers && q.acceptedAnswers.length > 0 && (
-            <p className="text-xs mt-2" style={{ color: '#94A3B8' }}>
-              Зөв: <span style={{ color: '#34D399' }}>{q.acceptedAnswers[0]}</span>
-            </p>
-          )}
-        </div>
-      )
-    }
-
-    const opts = q.options ?? []
-    return (
-      <div className="space-y-2">
-        {opts.map((opt, oi) => {
-          const selected = ans === oi
-          const correct = submitted && oi === q.correct
-          const wrong = submitted && selected && oi !== q.correct
-          const neutral = submitted && !selected && oi !== q.correct
-          return (
-            <button key={oi}
-              onClick={() => update(oi)}
-              disabled={submitted}
-              className="w-full text-left px-4 py-2.5 min-h-[44px] flex items-center rounded-xl border text-sm transition-all"
-              style={{
-                background: correct ? 'rgba(52,211,153,0.1)' : wrong ? 'rgba(248,113,113,0.1)' : selected ? 'rgba(245,158,11,0.08)' : 'transparent',
-                borderColor: correct ? '#34D399' : wrong ? '#F87171' : selected ? '#F59E0B' : '#334155',
-                color: neutral ? '#64748B' : correct ? '#34D399' : wrong ? '#F87171' : '#F8FAFC',
-              }}>
-              <span className="font-medium mr-2">{String.fromCharCode(65 + oi)}.</span>{opt}
-            </button>
-          )
-        })}
-      </div>
-    )
-  }
-
   const sectionIdx = (['listening', 'reading', 'writing', 'speaking'] as Phase[]).indexOf(phase)
 
   // ══════════════════════════════════════════
@@ -1357,319 +1203,49 @@ export function IELTSTest() {
   // ══════════════════════════════════════════
   // ─── Listening — ElevenLabs with fallback ───
   if (phase === 'listening' && content) {
-    const conv = content.listening.conversation
-    const allAnswered = listenAnswers.length === content.listening.questions.length && listenAnswers.every(isAnswered)
-
-    const playStatusText =
-      listenPlayCount === 1 ? '1-р удаа тоглуулж байна...' :
-      listenPlayCount === 2 ? '2-р удаа тоглуулж байна...' :
-      listenPlayCount === 3 ? 'Дууссан ✓' : ''
-
-    const canPlay = listenAudioReady || listenAudioError
-    const useFallback = listenAudioError && ttsSupported
-
     return (
-      <div className="min-h-dvh bg-navy flex flex-col">
-        <NavBar lessonTitle="Listening" />
-        <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
-          <SectionProgress idx={sectionIdx} />
-
-          {/* Audio player card */}
-          <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 mb-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="text-xs font-semibold text-gold uppercase tracking-wide">🎧 Яриа сонсох</div>
-              {isPlaying && listenCurrentTurn >= 0 && (
-                <div className="flex items-center gap-2">
-                  {(['A', 'B'] as const).map(sp => {
-                    const active = conv[listenCurrentTurn]?.speaker === sp
-                    return (
-                      <span key={sp} className="text-xs font-bold rounded-full flex items-center justify-center transition-all"
-                        style={{
-                          width: 22, height: 22,
-                          background: active ? 'linear-gradient(135deg, #F59E0B, #D97706)' : '#1E293B',
-                          color: active ? '#0F172A' : '#475569',
-                          boxShadow: active ? '0 0 12px #F59E0B66' : 'none',
-                          transform: active ? 'scale(1.1)' : 'scale(1)',
-                        }}>{sp}</span>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-
-            {listenNotice && (
-              <p className="text-xs mb-3 px-3 py-2 rounded-lg" style={{ background: '#1E293B', color: '#F59E0B', border: '1px solid #F59E0B33' }}>
-                ⚠ {listenNotice}
-              </p>
-            )}
-
-            {!canPlay && listenAudioLoading ? (
-              <div className="flex flex-col items-center gap-3 py-6">
-                <div className="flex gap-1.5">
-                  {[0, 1, 2].map(i => <span key={i} className="w-2.5 h-2.5 rounded-full animate-bounce" style={{ background: '#F59E0B', animationDelay: `${i * 0.15}s` }} />)}
-                </div>
-                <p className="text-xs" style={{ color: '#F59E0B' }}>
-                  Яриа бэлтгэж байна...
-                  {listenLoadProgress.total > 0 && ` (${listenLoadProgress.done}/${listenLoadProgress.total})`}
-                </p>
-                {listenLoadProgress.total > 0 && (
-                  <div className="w-40 h-1.5 rounded-full overflow-hidden" style={{ background: '#334155' }}>
-                    <div className="h-full transition-all" style={{ width: `${(listenLoadProgress.done / listenLoadProgress.total) * 100}%`, background: '#F59E0B' }} />
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="mb-1">
-                {isPlaying ? (
-                  <div className="flex flex-col items-center py-2 gap-2">
-                    <ListeningWaveform />
-                    <p className="text-xs" style={{ color: '#F59E0B' }}>{playStatusText}</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2 py-2">
-                    {listenPlayCount === 3 && <p className="text-xs font-semibold" style={{ color: '#34D399' }}>✓ Яриа дууссан</p>}
-                    {(listenAudioReady || (useFallback && ttsSupported)) && (
-                      <button onClick={playConversationTwice}
-                        className="px-6 py-2 rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5"
-                        style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
-                        ▶ Тоглуулах
-                      </button>
-                    )}
-                    <p className="text-xs" style={{ color: '#64748B' }}>
-                      {listenAudioError ? 'Аудио ачаалагдсангүй — дахин оролдоно уу' : 'Яриа 2 удаа автоматаар тоглуулна'}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-          </div>
-
-          {/* All questions at once */}
-          <p className="text-xs mb-3 font-semibold" style={{ color: '#64748B' }}>Бүх {content.listening.questions.length} асуултад хариулна уу</p>
-          <div className="space-y-4 mb-6">
-            {content.listening.questions.map((q, qi) => (
-              <div key={qi} className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4">
-                <p className="text-sm font-semibold text-text-primary mb-3">
-                  <span style={{ color: '#F59E0B' }}>{qi + 1}.</span> {q.question}
-                  {(q.type === 'fill') && (
-                    <span className="ml-2 text-xs font-medium" style={{ color: '#94A3B8' }}>· Нөхөх</span>
-                  )}
-                  {(q.type === 'tfng') && (
-                    <span className="ml-2 text-xs font-medium" style={{ color: '#94A3B8' }}>· True/False/NG</span>
-                  )}
-                </p>
-                {renderQuestionBody(q, qi, listenAnswers, setListenAnswers, listenSubmitted)}
-              </div>
-            ))}
-          </div>
-
-          {!listenSubmitted ? (
-            <button onClick={() => setListenSubmitted(true)} disabled={!allAnswered}
-              className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed mb-2"
-              style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
-              Хариултаа илгээх
-            </button>
-          ) : (
-            <div className="space-y-3">
-              <button onClick={() => setShowTranscript(v => !v)}
-                className="w-full py-2 rounded-xl text-xs font-semibold border transition-colors"
-                style={{ background: '#0F172A', borderColor: '#334155', color: '#94A3B8' }}>
-                {showTranscript ? '🙈 Яриа нуух' : '👁 Яриа харах'}
-              </button>
-              {showTranscript && (
-                <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 space-y-2 max-h-52 overflow-y-auto">
-                  {conv.map((turn, i) => (
-                    <div key={i} className="flex gap-2 text-xs">
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center"
-                        style={{ background: turn.speaker === 'A' ? 'linear-gradient(135deg, #F59E0B, #D97706)' : '#334155', color: turn.speaker === 'A' ? '#0F172A' : '#F8FAFC', fontSize: 9 }}>
-                        {turn.speaker}
-                      </span>
-                      <p className="flex-1 text-text-secondary leading-relaxed">{turn.text}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <button onClick={() => { stopSpeech(); listenCurrentHandleRef.current?.stop(); setPhase('reading') }}
-                className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5"
-                style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
-                Reading →
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+      <IELTSListening
+        content={content}
+        sectionIdx={sectionIdx}
+        listenAnswers={listenAnswers}
+        setListenAnswers={setListenAnswers}
+        listenSubmitted={listenSubmitted}
+        setListenSubmitted={setListenSubmitted}
+        listenPlayCount={listenPlayCount}
+        listenAudioReady={listenAudioReady}
+        listenAudioError={listenAudioError}
+        listenAudioLoading={listenAudioLoading}
+        listenLoadProgress={listenLoadProgress}
+        listenNotice={listenNotice}
+        listenCurrentTurn={listenCurrentTurn}
+        isPlaying={isPlaying}
+        showTranscript={showTranscript}
+        setShowTranscript={setShowTranscript}
+        ttsSupported={ttsSupported}
+        playConversationTwice={playConversationTwice}
+        listenCurrentHandleRef={listenCurrentHandleRef}
+        onAdvance={() => setPhase('reading')}
+      />
     )
   }
 
   // ══════════════════════════════════════════
   // ─── Reading ───
   if (phase === 'reading' && content) {
-    const passages = content.reading.passages
-    // Reading content may still be loading (listening fetch completes first while
-    // generate-content request is in flight). Show skeleton until passages arrive.
-    if (passages.length === 0) {
-      return (
-        <div className="min-h-dvh bg-navy flex flex-col">
-          <NavBar lessonTitle="Reading" />
-          <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
-            <SectionProgress idx={sectionIdx} />
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex gap-1">
-                {[0, 1, 2].map(i => <span key={i} className="w-2 h-2 rounded-full animate-bounce" style={{ background: '#F59E0B', animationDelay: `${i * 0.15}s` }} />)}
-              </div>
-              <p className="text-xs font-semibold" style={{ color: '#F59E0B' }}>Нийтлэл ачааллаж байна...</p>
-            </div>
-            <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 space-y-3">
-              {[100, 95, 88, 92, 80, 96, 85, 90, 75].map((w, i) => (
-                <div key={i} className="h-3 rounded animate-pulse" style={{ width: `${w}%`, background: '#1E293B' }} />
-              ))}
-            </div>
-          </div>
-        </div>
-      )
-    }
-    const totalReadQs = passages.reduce((n, p) => n + p.questions.length, 0)
-    const pi = Math.min(readPassageIdx, passages.length - 1)
-    const pg = passages[pi]
-    // Offset of current passage's first question in the flat readAnswers array.
-    const startIdx = passages.slice(0, pi).reduce((n, p) => n + p.questions.length, 0)
-    const pageAnswered = pg ? pg.questions.every((_, qi) => isAnswered(readAnswers[startIdx + qi])) : false
-    const answeredOnPage = pg ? pg.questions.filter((_, qi) => isAnswered(readAnswers[startIdx + qi])).length : 0
-    const isLastPassage = pi === passages.length - 1
-    const allReadAnswered = readAnswers.length === totalReadQs && readAnswers.every(isAnswered)
-    const totalAnswered = readAnswers.filter(isAnswered).length
-
-    const advance = () => {
-      if (isLastPassage) {
-        setReadSubmitted(true)
-      } else {
-        setReadPassageIdx(pi + 1)
-        setReadMobileTab('passage')
-      }
-    }
-
-    const PassagePane = (
-      <div
-        className="bg-navy-surface border border-navy-surface-2 rounded-2xl h-full overflow-y-auto"
-        style={{ WebkitOverflowScrolling: 'touch' }}
-      >
-        <div
-          className="text-xs font-semibold text-gold uppercase tracking-wide"
-          style={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 30,
-            backgroundColor: '#0F172A',
-            padding: '12px 16px',
-            marginBottom: '12px',
-            borderBottom: '1px solid #334155',
-          }}
-        >
-          📖 Нийтлэл {pi + 1}/{passages.length}
-        </div>
-        <p className="text-sm leading-relaxed text-text-primary whitespace-pre-line px-4 pb-4">{pg?.passage}</p>
-      </div>
-    )
-
-    const QuestionsPane = (
-      <div
-        className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 h-full overflow-y-auto flex flex-col"
-        style={{ WebkitOverflowScrolling: 'touch' }}
-      >
-        <div className="space-y-4 flex-1">
-          {pg?.questions.map((q, qi) => {
-            const globalIdx = startIdx + qi
-            const typeLabel = q.type === 'tfng' ? '· True/False/NG'
-              : q.type === 'matching' ? '· Зохицуулах'
-              : q.type === 'short' ? '· Богино хариулт'
-              : q.type === 'fill' ? '· Нөхөх'
-              : ''
-            return (
-              <div key={globalIdx}>
-                <p className="text-sm font-semibold text-text-primary mb-3">
-                  <span style={{ color: '#F59E0B' }}>{globalIdx + 1}.</span> {q.question}
-                  {typeLabel && <span className="ml-2 text-xs font-medium" style={{ color: '#94A3B8' }}>{typeLabel}</span>}
-                </p>
-                {renderQuestionBody(q, globalIdx, readAnswers, setReadAnswers, readSubmitted)}
-              </div>
-            )
-          })}
-        </div>
-        <div className="sticky bottom-0 pt-3 bg-navy-surface mt-4">
-          {!readSubmitted ? (
-            <button onClick={advance} disabled={!pageAnswered}
-              className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
-              {isLastPassage ? 'Хариултаа илгээх' : 'Дараагийн нийтлэл →'}
-            </button>
-          ) : (
-            <button onClick={() => setPhase('writing')}
-              disabled={!allReadAnswered}
-              className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5 disabled:opacity-40"
-              style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
-              Writing →
-            </button>
-          )}
-        </div>
-      </div>
-    )
-
     return (
-      <div className="h-dvh bg-navy flex flex-col overflow-hidden">
-        <NavBar lessonTitle="Reading" />
-        <div className="px-4 pt-3 pb-2 max-w-6xl mx-auto w-full flex-shrink-0 sticky top-0 z-10 bg-navy md:static">
-          <SectionProgress idx={sectionIdx} />
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold" style={{ color: '#F59E0B' }}>НИЙТЛЭЛ {pi + 1}/{passages.length}</p>
-            <p className="text-xs font-semibold" style={{ color: '#64748B' }}>{totalAnswered}/{totalReadQs} хариулсан · Буцах боломжгүй</p>
-          </div>
-          <div className="flex gap-1">
-            {passages.map((_, i) => (
-              <div key={i} className="flex-1 h-1 rounded-full" style={{ background: i < pi ? '#34D39988' : i === pi ? '#F59E0B' : '#334155' }} />
-            ))}
-          </div>
-        </div>
-
-        {/* Mobile tabs */}
-        <div className="md:hidden flex-1 flex flex-col px-4 pb-4 min-h-0">
-          <div
-            className="flex border-b border-navy-surface-2 mb-3 flex-shrink-0"
-            style={{
-              position: 'sticky',
-              top: 48,
-              zIndex: 20,
-              backgroundColor: '#0F172A',
-            }}
-          >
-            <button onClick={() => setReadMobileTab('passage')}
-              className="flex-1 py-2.5 min-h-[44px] text-sm font-semibold transition-colors"
-              style={{
-                color: readMobileTab === 'passage' ? '#F59E0B' : '#64748B',
-                borderBottom: readMobileTab === 'passage' ? '2px solid #F59E0B' : '2px solid transparent',
-              }}>
-              📖 Нийтлэл
-            </button>
-            <button onClick={() => setReadMobileTab('questions')}
-              className="flex-1 py-2.5 min-h-[44px] text-sm font-semibold transition-colors"
-              style={{
-                color: readMobileTab === 'questions' ? '#F59E0B' : '#64748B',
-                borderBottom: readMobileTab === 'questions' ? '2px solid #F59E0B' : '2px solid transparent',
-              }}>
-              ❓ Асуулт ({answeredOnPage}/{pg?.questions.length ?? 0})
-            </button>
-          </div>
-          <div className="flex-1 min-h-0" style={{ paddingTop: 4 }}>
-            {readMobileTab === 'passage' ? PassagePane : QuestionsPane}
-          </div>
-        </div>
-
-        {/* Desktop split screen — each pane scrolls independently */}
-        <div className="hidden md:flex flex-1 gap-4 px-4 pb-4 max-w-6xl mx-auto w-full min-h-0">
-          <div className="w-1/2 h-full">{PassagePane}</div>
-          <div className="w-1/2 h-full">{QuestionsPane}</div>
-        </div>
-      </div>
+      <IELTSReading
+        content={content}
+        sectionIdx={sectionIdx}
+        readAnswers={readAnswers}
+        setReadAnswers={setReadAnswers}
+        readSubmitted={readSubmitted}
+        setReadSubmitted={setReadSubmitted}
+        readPassageIdx={readPassageIdx}
+        setReadPassageIdx={setReadPassageIdx}
+        readMobileTab={readMobileTab}
+        setReadMobileTab={setReadMobileTab}
+        onAdvance={() => setPhase('writing')}
+      />
     )
   }
 
@@ -1677,218 +1253,19 @@ export function IELTSTest() {
   // ─── Writing ───
   if (phase === 'writing' && content) {
     return (
-      <div className="min-h-dvh bg-navy flex flex-col">
-        <NavBar lessonTitle={`Writing — Task ${writingTaskView}/2`} />
-        <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
-          <SectionProgress idx={sectionIdx} />
-          <div className="flex gap-2 mb-5">
-            {([1, 2] as const).map(task => {
-              const active = writingTaskView === task
-              return (
-                <button
-                  key={task}
-                  onClick={() => setWritingTaskView(task)}
-                  className="flex-1 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-[0.18em] transition-all"
-                  style={
-                    active
-                      ? {
-                          background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-                          color: '#0B1222',
-                          border: '1px solid transparent',
-                          boxShadow: '0 4px 14px rgba(245,158,11,0.25)',
-                        }
-                      : {
-                          background: '#0F1729',
-                          color: 'var(--text-secondary)',
-                          border: '1px solid var(--hairline)',
-                        }
-                  }
-                >
-                  Task {task}
-                </button>
-              )
-            })}
-          </div>
-          {writingTaskView === 1 ? (
-            <>
-              <div className="flex items-baseline justify-between mb-3">
-                <div>
-                  <div
-                    className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1"
-                    style={{ color: 'var(--champagne)' }}
-                  >
-                    Remaining
-                  </div>
-                  <span
-                    className="font-serif-display text-3xl font-bold nums-tabular"
-                    style={{ color: task1Remaining === 0 ? 'var(--gold)' : 'var(--text-primary)', letterSpacing: '-0.02em' }}
-                  >
-                    {mmss(task1Remaining)}
-                  </span>
-                </div>
-                {task1Remaining === 0 && (
-                  <span
-                    className="text-[11px] font-serif-display italic max-w-[60%] text-right"
-                    style={{ color: 'var(--gold)' }}
-                  >
-                    Цаг дууслаа — үргэлжлүүлж болно
-                  </span>
-                )}
-              </div>
-              <div
-                className="rounded-2xl p-5 mb-4 shadow-editorial"
-                style={{
-                  background: '#141C30',
-                  border: '1px solid var(--hairline)',
-                  borderLeftWidth: '3px',
-                  borderLeftColor: 'var(--gold)',
-                }}
-              >
-                <div
-                  className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-3"
-                  style={{ color: 'var(--champagne)' }}
-                >
-                  Task 01 · Minimum 150 words
-                </div>
-                <Task1Prompt prompt={content.writing.task1Prompt} />
-              </div>
-              <textarea
-                value={writingTask1}
-                onChange={e => setWritingTask1(e.target.value)}
-                placeholder="Энд бичнэ үү..."
-                rows={10}
-                className="w-full rounded-xl p-4 text-sm resize-none outline-none mb-2 transition-all font-serif-display"
-                style={{
-                  background: '#0F1729',
-                  border: '1px solid var(--hairline)',
-                  color: 'var(--text-primary)',
-                  lineHeight: 1.7,
-                }}
-                onFocus={e => {
-                  e.target.style.borderColor = 'var(--gold)'
-                  e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.18)'
-                }}
-                onBlur={e => {
-                  e.target.style.borderColor = 'var(--hairline)'
-                  e.target.style.boxShadow = 'none'
-                }}
-              />
-              <div className="flex justify-between text-[11px] uppercase tracking-wider mb-5">
-                <span style={{ color: 'var(--text-muted)' }}>
-                  <span className="nums-tabular font-medium" style={{ color: 'var(--champagne)' }}>{wordCount(writingTask1)}</span> үг
-                </span>
-                <span
-                  className="font-medium"
-                  style={{ color: wordCount(writingTask1) >= 150 ? '#34D399' : 'var(--text-muted)' }}
-                >
-                  {wordCount(writingTask1) >= 150 ? '150+ үг' : `${150 - wordCount(writingTask1)} үг дутуу`}
-                </span>
-              </div>
-              <button
-                onClick={() => setWritingTaskView(2)}
-                className="w-full font-semibold py-3.5 min-h-[48px] rounded-xl text-sm uppercase tracking-[0.18em] transition-all hover:-translate-y-0.5"
-                style={{
-                  background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-                  color: '#0B1222',
-                  boxShadow: '0 6px 20px rgba(245,158,11,0.28)',
-                }}
-              >
-                Task 2
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="flex items-baseline justify-between mb-3">
-                <div>
-                  <div
-                    className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1"
-                    style={{ color: 'var(--champagne)' }}
-                  >
-                    Remaining
-                  </div>
-                  <span
-                    className="font-serif-display text-3xl font-bold nums-tabular"
-                    style={{ color: task2Remaining === 0 ? 'var(--gold)' : 'var(--text-primary)', letterSpacing: '-0.02em' }}
-                  >
-                    {mmss(task2Remaining)}
-                  </span>
-                </div>
-                {task2Remaining === 0 && (
-                  <span
-                    className="text-[11px] font-serif-display italic max-w-[60%] text-right"
-                    style={{ color: 'var(--gold)' }}
-                  >
-                    Цаг дууслаа — үргэлжлүүлж болно
-                  </span>
-                )}
-              </div>
-              <div
-                className="rounded-2xl p-5 mb-4 shadow-editorial"
-                style={{
-                  background: '#141C30',
-                  border: '1px solid var(--hairline)',
-                  borderLeftWidth: '3px',
-                  borderLeftColor: 'var(--gold)',
-                }}
-              >
-                <div
-                  className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-3"
-                  style={{ color: 'var(--champagne)' }}
-                >
-                  Task 02 · Minimum 250 words
-                </div>
-                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>
-                  {content.writing.task2Prompt}
-                </p>
-              </div>
-              <textarea
-                value={writingTask2}
-                onChange={e => setWritingTask2(e.target.value)}
-                placeholder="Энд бичнэ үү..."
-                rows={12}
-                className="w-full rounded-xl p-4 text-sm resize-none outline-none mb-2 transition-all font-serif-display"
-                style={{
-                  background: '#0F1729',
-                  border: '1px solid var(--hairline)',
-                  color: 'var(--text-primary)',
-                  lineHeight: 1.7,
-                }}
-                onFocus={e => {
-                  e.target.style.borderColor = 'var(--gold)'
-                  e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.18)'
-                }}
-                onBlur={e => {
-                  e.target.style.borderColor = 'var(--hairline)'
-                  e.target.style.boxShadow = 'none'
-                }}
-              />
-              <div className="flex justify-between text-[11px] uppercase tracking-wider mb-5">
-                <span style={{ color: 'var(--text-muted)' }}>
-                  <span className="nums-tabular font-medium" style={{ color: 'var(--champagne)' }}>{wordCount(writingTask2)}</span> үг
-                </span>
-                <span
-                  className="font-medium"
-                  style={{ color: wordCount(writingTask2) >= 250 ? '#34D399' : 'var(--text-muted)' }}
-                >
-                  {wordCount(writingTask2) >= 250 ? '250+ үг' : `${250 - wordCount(writingTask2)} үг дутуу`}
-                </span>
-              </div>
-              <button
-                onClick={() => setPhase('speaking')}
-                disabled={wordCount(writingTask2) < 250}
-                className="w-full font-semibold py-3.5 min-h-[48px] rounded-xl text-sm uppercase tracking-[0.18em] transition-all hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
-                style={{
-                  background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-                  color: '#0B1222',
-                  boxShadow: '0 6px 20px rgba(245,158,11,0.28)',
-                }}
-              >
-                Speaking
-              </button>
-            </>
-          )}
-        </div>
-      </div>
+      <IELTSWriting
+        content={content}
+        sectionIdx={sectionIdx}
+        writingTask1={writingTask1}
+        setWritingTask1={setWritingTask1}
+        writingTask2={writingTask2}
+        setWritingTask2={setWritingTask2}
+        writingTaskView={writingTaskView}
+        setWritingTaskView={setWritingTaskView}
+        task1Remaining={task1Remaining}
+        task2Remaining={task2Remaining}
+        onAdvance={() => setPhase('speaking')}
+      />
     )
   }
 
