@@ -34,26 +34,49 @@ export async function POST(req: NextRequest) {
     ? body.wrongAnswers.slice(0, 20).map(s => String(s).slice(0, 300)).join('\n- ')
     : ''
   const wrongSection = wrongList
-    ? `\n\nThe student missed these items:\n- ${wrongList}`
+    ? `\n\nАлдсан асуултууд:\n- ${wrongList}`
     : ''
 
-  const prompt = `You are an IELTS expert examiner.
-A student got these scores:
-Listening: ${body.listeningScore}/10
-Reading: ${body.readingScore}/30
-Writing: ${body.writingBand}/9
-Speaking: ${body.speakingBand}/9
-Overall: ${body.overallBand}/9${wrongSection}
+  const prompt = `Та IELTS шалгалтын мэргэжлийн багш юм.
+Оюутан дараах оноо авлаа:
 
-Based on these results give:
-1. One paragraph overall assessment
-2. Their strongest section and why
-3. Their weakest section and why
-4. Three specific actionable recommendations
-5. What to focus on for next attempt
+Сонсох: ${body.listeningScore}/10
+Унших: ${body.readingScore}/30
+Бичих: ${body.writingBand}/9
+Ярих: ${body.speakingBand}/9
+Нийт: ${body.overallBand}/9${wrongSection}
 
-Write in Mongolian. Be encouraging but honest.
-Keep total response under 300 words.`
+ЧУХАЛ ФОРМАТЫН ДҮРЭМ:
+- Markdown ашиглахгүй
+- ## эсвэл # тэмдэгт ашиглахгүй
+- ** тэмдэгт ашиглахгүй (bold хийхгүй)
+- * тэмдэгт bullet-д ашиглахгүй
+- Тусгай тэмдэгт ашиглахгүй
+- Зөвхөн энгийн монгол текстээр бич
+- Тоотой жагсаалт: 1. 2. 3. хэлбэрээр
+- Хэсгүүдийг хоосон мөрөөр тусгаарла
+- Оюутантай шууд ярьж байгаа мэт бич
+
+Дараах бүтцээр хариулна уу:
+
+Ерөнхий үнэлгээ:
+[Оюутны гүйцэтгэлийн талаар 2-3 өгүүлбэр. Урамшуулалтай боловч үнэнч байх.]
+
+Хамгийн сайн хэсэг:
+[Аль хэсэгт хамгийн сайн гүйцэтгэл үзүүлснийг тодорхой тайлбарла.]
+
+Сайжруулах шаардлагатай хэсэг:
+[Хамгийн бага оноо авсан хэсгийг дурдаж яагаад тэгснийг тайлбарла.]
+
+3 зөвлөмж:
+1. [Тодорхой практик зөвлөмж]
+2. [Тодорхой практик зөвлөмж]
+3. [Тодорхой практик зөвлөмж]
+
+Дараагийн шалгалтын бэлтгэл:
+[Дараагийн оролдлогод юунд анхаарах талаар 1-2 өгүүлбэр.]
+
+Нийт хариулт 300 үгэнд багтаа.`
 
   let stream
   try {

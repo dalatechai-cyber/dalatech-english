@@ -1,6 +1,5 @@
 'use client'
 import { useEffect } from 'react'
-import { FlameIcon } from './Icon'
 
 interface StreakPopupProps {
   streak: number
@@ -9,15 +8,12 @@ interface StreakPopupProps {
 
 export function StreakPopup({ streak, onClose }: StreakPopupProps) {
   useEffect(() => {
-    const timer = setTimeout(onClose, 4000)
+    const timer = setTimeout(onClose, 4500)
     return () => clearTimeout(timer)
   }, [onClose])
 
   const isNew = streak === 1
-  const label = isNew ? 'Шинэ эхлэл' : 'Үргэлжилсэн цуврал'
-  const caption = isNew
-    ? 'Өнөөдрөөс дахин эхэлцгээе.'
-    : 'Өнөөдөр ч үргэлжлүүллээ.'
+  const encouragement = isNew ? 'Шинэ эхлэл!' : 'Маш сайн байна!'
 
   return (
     <div
@@ -27,70 +23,27 @@ export function StreakPopup({ streak, onClose }: StreakPopupProps) {
       onKeyDown={e => {
         if (e.key === 'Enter' || e.key === ' ') onClose()
       }}
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-2xl px-6 py-5 flex items-center gap-5 animate-slide-up shadow-editorial cursor-pointer"
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-3xl px-8 pt-6 pb-7 flex flex-col items-center text-center animate-slide-up cursor-pointer"
       style={{
-        background: '#141C30',
-        border: '1px solid var(--hairline)',
-        borderLeftWidth: '3px',
-        borderLeftColor: 'var(--gold)',
-        minWidth: 280,
+        background: 'linear-gradient(180deg, #141C30 0%, #0F1729 100%)',
+        border: '1px solid rgba(245,158,11,0.35)',
+        boxShadow:
+          '0 20px 60px rgba(0,0,0,0.55), 0 0 40px rgba(245,158,11,0.18), inset 0 1px 0 rgba(245,158,11,0.12)',
+        minWidth: 300,
+        maxWidth: 360,
       }}
     >
-      <span
-        className="flex items-center justify-center w-16 h-16 rounded-full flex-shrink-0"
-        style={{
-          background: 'rgba(245,158,11,0.14)',
-          color: 'var(--gold)',
-          border: '1px solid rgba(245,158,11,0.3)',
-        }}
-      >
-        <FlameIcon size={48} />
-      </span>
-
-      <div className="flex-1 min-w-0">
-        <div
-          className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-0.5"
-          style={{ color: 'var(--champagne)' }}
-        >
-          {label}
-        </div>
-        <div className="flex items-baseline gap-2">
-          <span
-            className="font-serif-display text-3xl font-bold leading-none nums-tabular"
-            style={{
-              background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 50%, #E4C08A 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
-          >
-            {streak}
-          </span>
-          <span
-            className="text-[11px] uppercase tracking-wider font-medium"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            хоног
-          </span>
-        </div>
-        <div
-          className="text-[12px] mt-1 font-serif-display italic"
-          style={{ color: 'var(--text-secondary)' }}
-        >
-          {caption}
-        </div>
-      </div>
-
       <button
         onClick={e => {
           e.stopPropagation()
           onClose()
         }}
         aria-label="Close"
-        className="flex items-center justify-center w-8 h-8 rounded-full transition-colors flex-shrink-0"
+        className="absolute top-3 right-3 flex items-center justify-center w-8 h-8 rounded-full transition-colors"
         style={{
           color: 'var(--text-muted)',
           border: '1px solid var(--hairline)',
+          background: 'rgba(255,255,255,0.02)',
         }}
         onMouseEnter={e => {
           e.currentTarget.style.borderColor = 'rgba(245,158,11,0.4)'
@@ -105,6 +58,47 @@ export function StreakPopup({ streak, onClose }: StreakPopupProps) {
           <path d="M6 6l12 12M18 6L6 18" />
         </svg>
       </button>
+
+      <div className="flex items-center justify-center gap-4 mt-1">
+        <span
+          aria-hidden="true"
+          style={{
+            fontSize: '4rem',
+            lineHeight: 1,
+            filter: 'drop-shadow(0 4px 14px rgba(245,158,11,0.45))',
+          }}
+        >
+          🔥
+        </span>
+        <span
+          className="font-serif-display font-bold nums-tabular"
+          style={{
+            fontSize: '4rem',
+            lineHeight: 1,
+            background: 'linear-gradient(135deg, #F59E0B, #FCD34D)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            letterSpacing: '-0.03em',
+          }}
+        >
+          {streak}
+        </span>
+      </div>
+
+      <div
+        className="mt-3 text-[10px] font-semibold uppercase tracking-[0.28em]"
+        style={{ color: 'var(--champagne)' }}
+      >
+        хоног дараалал
+      </div>
+
+      <div
+        className="mt-2 font-serif-display italic text-base"
+        style={{ color: 'var(--text-secondary)' }}
+      >
+        {encouragement}
+      </div>
     </div>
   )
 }
