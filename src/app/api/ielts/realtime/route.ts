@@ -172,16 +172,16 @@ export async function POST(req: NextRequest) {
         input_audio_transcription: { model: 'whisper-1', language: 'en' },
         turn_detection: {
           type: 'server_vad',
-          threshold: 0.7,
-          prefix_padding_ms: 500,
-          // 2.5s of silence before AI considers the student finished
-          // speaking. Longer window prevents Sarah from restarting her
-          // welcome / asking again while a quiet student is thinking.
-          silence_duration_ms: 2500,
+          threshold: 0.6,
+          prefix_padding_ms: 400,
+          // 1.8s of silence before AI considers the student finished —
+          // long enough for a natural thinking pause, short enough that
+          // the conversation doesn't feel broken.
+          silence_duration_ms: 1800,
           create_response: true,
           interrupt_response: false,
         },
-        temperature: 0.75,
+        temperature: 0.7,
       }),
     })
 
