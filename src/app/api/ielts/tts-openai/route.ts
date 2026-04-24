@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit } from '@/lib/rateLimit'
 
 // Tunable TTS config — keep together so voice/model/speed are easy to adjust.
-const TTS_MODEL = 'tts-1'
+// tts-1 is the real-time model; its output is noticeably muffled / low-bandwidth.
+// tts-1-hd produces the clean studio-quality audio IELTS Listening requires.
+const TTS_MODEL = 'tts-1-hd'
 const TTS_SPEED = 0.9
 const TTS_RESPONSE_FORMAT = 'mp3'
 const VOICE_BY_SPEAKER: Record<'A' | 'B', string> = {
