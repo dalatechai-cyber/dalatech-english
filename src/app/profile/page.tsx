@@ -70,7 +70,7 @@ export default function ProfilePage() {
     }, 0)
 
   const lessonsCompleted = history
-    .filter(t => t.type === 'quiz' && (t.passed || (t.score ?? 0) >= 18))
+    .filter(t => t.type === 'quiz')
     .length
 
   return (

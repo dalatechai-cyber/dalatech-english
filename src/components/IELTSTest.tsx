@@ -749,10 +749,15 @@ export function IELTSTest() {
       setGradeResult(result)
       const lTotal = content.listening.questions.length
       const rTotal = content.reading.passages.reduce((n, p) => n + p.questions.length, 0)
-      const lCorrect = Math.round((result.listening / 9) * lTotal)
-      const rCorrect = Math.round((result.reading / 9) * rTotal)
+      const listeningBand = Number.isFinite(result.listening) ? result.listening : 0
+      const readingBand = Number.isFinite(result.reading) ? result.reading : 0
+      const writingBand = Number.isFinite(result.writing) ? result.writing : 0
+      const speakingBand = Number.isFinite(result.speaking) ? result.speaking : 0
+      const overallBand = Number.isFinite(result.overall) ? result.overall : 0
+      const lCorrect = lTotal > 0 ? Math.round((listeningBand / 9) * lTotal) : 0
+      const rCorrect = rTotal > 0 ? Math.round((readingBand / 9) * rTotal) : 0
       const wrongAnswers = collectWrongAnswers(content, gradePayload)
-      saveIELTSResult({ date: new Date().toISOString().slice(0, 10), overall: result.overall, listening: result.listening, reading: result.reading, writing: result.writing, speaking: result.speaking, feedback: result.writingFeedback })
+      saveIELTSResult({ date: new Date().toISOString().slice(0, 10), overall: overallBand, listening: listeningBand, reading: readingBand, writing: writingBand, speaking: speakingBand, feedback: result.writingFeedback })
 
       // Generate AI feedback ONCE now so profile never re-hits the API.
       let feedbackText = ''
@@ -763,20 +768,14 @@ export function IELTSTest() {
           body: JSON.stringify({
             listeningScore: lCorrect,
             readingScore: rCorrect,
-            writingBand: result.writing,
-            speakingBand: result.speaking,
-            overallBand: result.overall,
+            writingBand,
+            speakingBand,
+            overallBand,
             wrongAnswers,
           }),
         })
-        if (fbRes.ok && fbRes.body) {
-          const reader = fbRes.body.getReader()
-          const decoder = new TextDecoder()
-          while (true) {
-            const { value, done } = await reader.read()
-            if (done) break
-            feedbackText += decoder.decode(value, { stream: true })
-          }
+        if (fbRes.ok) {
+          feedbackText = await fbRes.text()
         }
       } catch {
         // Swallow — empty feedback means profile shows the fallback message.
@@ -784,12 +783,12 @@ export function IELTSTest() {
 
       saveTestResult({
         type: 'ielts',
-        ieltsBand: result.overall,
-        overallBand: result.overall,
+        ieltsBand: overallBand,
+        overallBand,
         listeningScore: lCorrect,
         readingScore: rCorrect,
-        writingBand: result.writing,
-        speakingBand: result.speaking,
+        writingBand,
+        speakingBand,
         wrongAnswers,
         feedback: feedbackText,
       })
@@ -817,13 +816,24 @@ export function IELTSTest() {
   }
 
   const handleRealtimeStop = (partial: RealtimeCompletionPayload | null) => {
-    if (partial) {
-      setIsPartialResult(true)
-      void handleRealtimeComplete(partial)
-    } else {
+    // We're in the speaking phase here, so Listening + Reading + Writing are
+    // already complete — always grade and show results, even if the student
+    // answered zero speaking questions (speaking band will default low).
+    if (!content) {
       setError('Шалгалт эхлээгүй байна')
       setPhase('intro')
+      return
     }
+    setIsPartialResult(true)
+    const p1Count = content.speaking.part1Questions.length
+    const p3Count = content.speaking.part3Questions.length
+    const payload: RealtimeCompletionPayload = partial ?? {
+      speakingPart1: Array<string>(p1Count).fill(''),
+      speakingPart2: '',
+      speakingPart3: Array<string>(p3Count).fill(''),
+      fullTranscript: [],
+    }
+    void handleRealtimeComplete(payload)
   }
 
   // Stop handler — aborts flow and shows partial results if any answers collected
@@ -843,13 +853,10 @@ export function IELTSTest() {
     setSpeakPrepCountdown(null)
     setSpeakContinue(false)
 
-    if (questionsAskedRef.current > 0) {
-      setIsPartialResult(true)
-      gradeAndShowResults()
-    } else {
-      setError('Шалгалт эхлээгүй байна')
-      setPhase('intro')
-    }
+    // Writing is already complete by the time we reach the speaking phase,
+    // so always grade — speaking band just defaults low when unanswered.
+    setIsPartialResult(true)
+    gradeAndShowResults()
   }
 
   // ── Main Speaking flow ──
@@ -1285,7 +1292,7 @@ export function IELTSTest() {
     )
   }
 
-  if (phase === 'loading') return <Spinner label="Яриа бэлтгэж байна..." />
+  if (phase === 'loading') return <Spinner label="Шалгалт бэлдэж байна..." />
   if (phase === 'grading') return <Spinner label="Үнэлж байна... (30–60 секунд)" />
 
   // ══════════════════════════════════════════
