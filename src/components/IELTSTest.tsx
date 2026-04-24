@@ -363,7 +363,8 @@ export function IELTSTest() {
   }, [phase])
 
   // ── Pre-generate listening audio in small parallel batches ──
-  // ElevenLabs free tier caps at 4 concurrent requests; BATCH_SIZE=3 stays safely under it.
+  // ElevenLabs Starter plan caps at 3 concurrent requests; BATCH_SIZE=2 leaves a
+  // retry buffer so overlapping retries don't trip the 429 concurrent-limit error.
   // Gate on a ref (not state) so setState inside the effect doesn't retrigger cleanup.
   const ttsAbortRef = useRef<AbortController | null>(null)
   useEffect(() => {
@@ -383,7 +384,7 @@ export function IELTSTest() {
     setListenLoadProgress({ done: 0, total })
 
     ;(async () => {
-      const BATCH_SIZE = 3
+      const BATCH_SIZE = 2
       const urls: (string | null)[] = new Array(total).fill(null)
 
       // Retry once on 502/upstream errors before falling back to Web Speech.
