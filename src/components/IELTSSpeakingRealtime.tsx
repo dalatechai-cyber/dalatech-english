@@ -103,6 +103,10 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
   const partRef = useRef<TestPart>(1)
   const currentExaminerRespRef = useRef<string>('')
   const transcriptRef = useRef<RealtimeCompletionPayload['fullTranscript']>([])
+  // Direct-DOM refs: streaming transcripts bypass React re-renders on mobile.
+  const examinerTextRef = useRef<HTMLParagraphElement | null>(null)
+  const studentTranscriptRef = useRef<HTMLParagraphElement | null>(null)
+  const studentLiveRawRef = useRef<string>('')
   const studentAnswersByPart = useRef<{ part1: string[]; part2: string[]; part3: string[] }>({
     part1: [], part2: [], part3: [],
   })
@@ -391,7 +395,12 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
             case 'response.audio_transcript.delta':
               if (typeof msg.delta === 'string') {
                 currentExaminerRespRef.current += msg.delta
-                setExaminerText(stripMarkers(currentExaminerRespRef.current))
+                const stripped = stripMarkers(currentExaminerRespRef.current)
+                // Direct DOM update — bypass React re-render for mobile smoothness.
+                if (examinerTextRef.current) {
+                  examinerTextRef.current.textContent = stripped
+                }
+                setExaminerText(stripped)
                 setOrbState('speaking')
               }
               break
@@ -402,6 +411,10 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
               }
               break
             case 'input_audio_buffer.speech_started':
+              studentLiveRawRef.current = ''
+              if (studentTranscriptRef.current) {
+                studentTranscriptRef.current.textContent = ''
+              }
               setStudentLive('')
               setOrbState('listening')
               setStatusLabel('Сонсож байна...')
@@ -410,13 +423,28 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
               setOrbState('thinking')
               setStatusLabel('Боловсруулж байна...')
               break
+            case 'conversation.item.input_audio_transcription.delta':
+              if (typeof msg.delta === 'string') {
+                studentLiveRawRef.current += msg.delta
+                const liveText = studentLiveRawRef.current
+                // Direct DOM update — appears immediately on mobile.
+                if (studentTranscriptRef.current) {
+                  studentTranscriptRef.current.textContent = liveText
+                }
+                setStudentLive(liveText)
+              }
+              break
             case 'conversation.item.input_audio_transcription.completed':
               if (typeof msg.transcript === 'string') {
                 const t = msg.transcript.trim()
                 if (t && t !== 'CONTINUE_AFTER_PREP' && isEnglishText(t)) {
                   processStudentUtterance(t)
                   setStudentLive(t)
+                  if (studentTranscriptRef.current) {
+                    studentTranscriptRef.current.textContent = t
+                  }
                 }
+                studentLiveRawRef.current = ''
               }
               break
             case 'response.done':
@@ -489,14 +517,18 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
     return () => { cleanup() }
   }, [cleanup])
 
-  // Mute the local mic while the examiner is speaking so AI playback
-  // (via speakers on mobile) doesn't get re-captured and transcribed
-  // as student input. Re-enable for any non-speaking orb state.
+  // Mute mic while AI speaks (gold orb = 'speaking'); unmute on student turn
+  // (blue orb = 'listening'). Prevents AI audio bleeding into the mic on mobile.
   useEffect(() => {
-    const stream = localStreamRef.current
-    if (!stream) return
-    const enable = orbState !== 'speaking'
-    stream.getAudioTracks().forEach(track => { track.enabled = enable })
+    if (!localStreamRef.current) return
+    const tracks = localStreamRef.current.getAudioTracks()
+    if (orbState === 'speaking') {
+      // AI speaking (gold) — mute mic completely
+      tracks.forEach(t => { t.enabled = false })
+    } else if (orbState === 'listening') {
+      // Student turn (blue) — unmute mic
+      tracks.forEach(t => { t.enabled = true })
+    }
   }, [orbState])
 
   const statusColor =
@@ -632,13 +664,13 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
 
             {orbState === 'speaking' && examinerText && (
               <div className="text-center px-4 py-3 rounded-2xl w-full" style={{ background: '#0F172A55', border: '1px solid #334155' }}>
-                <p className="text-sm leading-relaxed text-text-primary">{examinerText}</p>
+                <p ref={examinerTextRef} className="text-sm leading-relaxed text-text-primary">{examinerText}</p>
               </div>
             )}
 
             {orbState !== 'speaking' && studentLive && (
               <div className="text-center px-4 py-3 rounded-2xl w-full" style={{ background: '#38BDF808', border: '1px solid #38BDF822' }}>
-                <p className="text-lg leading-relaxed text-white">{studentLive}</p>
+                <p ref={studentTranscriptRef} className="text-lg leading-relaxed text-white">{studentLive}</p>
               </div>
             )}
           </div>

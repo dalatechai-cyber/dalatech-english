@@ -128,9 +128,11 @@ export async function POST(req: NextRequest) {
         input_audio_transcription: { model: 'whisper-1', language: 'en' },
         turn_detection: {
           type: 'server_vad',
-          threshold: 0.6,
+          threshold: 0.5,
           prefix_padding_ms: 300,
-          silence_duration_ms: 700,
+          // 1.5s of silence before AI considers student finished speaking.
+          // Gives learners time to think without being cut off mid-answer.
+          silence_duration_ms: 1500,
           create_response: true,
           interrupt_response: false,
         },

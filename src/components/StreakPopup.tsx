@@ -37,14 +37,14 @@ export function StreakPopup({ streak, onClose }: StreakPopupProps) {
       }}
     >
       <span
-        className="flex items-center justify-center w-12 h-12 rounded-full flex-shrink-0"
+        className="flex items-center justify-center w-16 h-16 rounded-full flex-shrink-0"
         style={{
-          background: 'rgba(245,158,11,0.12)',
+          background: 'rgba(245,158,11,0.14)',
           color: 'var(--gold)',
-          border: '1px solid rgba(245,158,11,0.25)',
+          border: '1px solid rgba(245,158,11,0.3)',
         }}
       >
-        <FlameIcon size={24} />
+        <FlameIcon size={48} />
       </span>
 
       <div className="flex-1 min-w-0">
