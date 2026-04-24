@@ -281,7 +281,8 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 sm:p-6 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+      style={{ background: 'rgba(7,12,24,0.88)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <div
@@ -546,34 +547,54 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 mt-4">
+        <div className="flex flex-col gap-3 mt-5">
           <button
             onClick={handleDownload}
-            className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
-            style={{ background: GOLD, color: NAVY_DEEP }}
+            className="w-full font-semibold py-3.5 min-h-[48px] rounded-xl transition-all text-sm uppercase tracking-[0.18em] flex items-center justify-center gap-2.5"
+            style={{
+              background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+              color: '#0B1222',
+              boxShadow: '0 6px 20px rgba(245,158,11,0.28)',
+            }}
           >
-            📥 {t('download')}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 3v13M6 11l6 6 6-6M5 21h14" />
+            </svg>
+            {t('download')}
           </button>
 
           <p
-            className="hidden md:block text-center text-xs mt-1"
-            style={{ color: GOLD }}
+            className="hidden md:block text-center text-[11px] uppercase tracking-[0.2em] mt-1 font-serif-display italic normal-case"
+            style={{ color: 'var(--champagne)', letterSpacing: 'normal' }}
           >
-            Гэрчилгээгээ татаж аваад найзуудтайгаа хуваалцаарай 🎉
+            Гэрчилгээгээ татаж аваад найзуудтайгаа хуваалцаарай.
           </p>
           <p
-            className="md:hidden text-center text-xs mt-1 leading-relaxed px-2"
-            style={{ color: GOLD }}
+            className="md:hidden text-center text-[12px] mt-1 leading-relaxed px-2 font-serif-display italic"
+            style={{ color: 'var(--champagne)' }}
           >
-            📱 Утасны хэрэглэгчид: Зургийг татсаны дараа галерейд хадгалахын
-            тулд зургийг нээгээд &apos;Галерейд хадгалах&apos; дарна уу.
+            Утасны хэрэглэгчид: зургийг татсаны дараа галерейд хадгалахын тулд
+            зургийг нээгээд &apos;Галерейд хадгалах&apos; дарна уу.
           </p>
 
           <button
             onClick={onClose}
-            className="w-full bg-navy-surface border border-navy-surface-2 text-text-secondary hover:text-text-primary py-3 min-h-[44px] rounded-xl transition-colors text-sm mt-2"
+            className="w-full py-3 min-h-[44px] rounded-xl transition-all text-sm uppercase tracking-[0.18em] font-medium mt-1"
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--hairline)',
+              color: 'var(--text-secondary)',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = 'rgba(245,158,11,0.35)'
+              e.currentTarget.style.color = 'var(--gold)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = 'var(--hairline)'
+              e.currentTarget.style.color = 'var(--text-secondary)'
+            }}
           >
-            {t('close')} ✕
+            {t('close')}
           </button>
         </div>
       </div>

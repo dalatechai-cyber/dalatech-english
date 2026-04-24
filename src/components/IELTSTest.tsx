@@ -23,6 +23,7 @@ import {
   type ElevenVoice,
 } from '@/lib/elevenlabs'
 import { IELTSSpeakingRealtime, type RealtimeCompletionPayload } from './IELTSSpeakingRealtime'
+import { BookIcon, PencilIcon, HeadphonesIcon, MicIcon } from './Icon'
 
 // Flip to false to revert to the legacy ElevenLabs + Claude speaking pipeline kept below.
 const USE_REALTIME = true
@@ -138,11 +139,42 @@ function clearSavedSession(): void {
 }
 
 function SectionProgress({ idx }: { idx: number }) {
+  const labels = ['Listening', 'Reading', 'Writing', 'Speaking']
   return (
-    <div className="flex gap-1 mb-4">
-      {(['listening', 'reading', 'writing', 'speaking'] as Phase[]).map((_, i) => (
-        <div key={i} className="flex-1 h-1.5 rounded-full" style={{ background: i < idx ? '#F59E0B' : i === idx ? '#F59E0B88' : '#334155' }} />
-      ))}
+    <div className="mb-5">
+      <div className="flex items-center justify-between mb-2 text-[10px] uppercase tracking-[0.2em]">
+        <span style={{ color: 'var(--champagne)' }}>
+          Section {String(Math.min(idx + 1, 4)).padStart(2, '0')} · {labels[Math.min(idx, 3)]}
+        </span>
+        <span
+          className="nums-tabular font-medium"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          {Math.min(idx + 1, 4)}/4
+        </span>
+      </div>
+      <div className="flex gap-1">
+        {labels.map((_, i) => (
+          <div
+            key={i}
+            className="flex-1 h-1 rounded-full overflow-hidden"
+            style={{ background: 'rgba(255,255,255,0.06)' }}
+          >
+            <div
+              className="h-full transition-all duration-500"
+              style={{
+                width: i <= idx ? '100%' : '0%',
+                background:
+                  i < idx
+                    ? 'linear-gradient(90deg, #D97706 0%, #F59E0B 50%, #FCD34D 100%)'
+                    : i === idx
+                    ? 'linear-gradient(90deg, #F59E0B, #E4C08A)'
+                    : 'transparent',
+              }}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -1160,48 +1192,150 @@ export function IELTSTest() {
     return (
       <div className="min-h-dvh bg-navy flex flex-col">
         <NavBar lessonTitle="IELTS Mock Test" />
-        <div className="flex-1 flex flex-col items-center justify-center p-8 max-w-lg mx-auto w-full text-center page-enter-up">
-          <div className="text-5xl mb-4">📝</div>
-          <h1 className="text-2xl font-bold text-text-primary mb-2" style={{ letterSpacing: '-0.02em' }}>IELTS Academic Дадлага</h1>
-          <p className="text-sm mb-8" style={{ color: '#CBD5E1' }}>4 хэсэгтэй бүтэн тест. Listening, Reading, Writing, Speaking. Дуусгасны дараа 1–9 Band оноо авна.</p>
-          {error && <p className="text-rose-400 text-sm mb-4">{error}</p>}
-          <div className="grid grid-cols-2 gap-3 w-full mb-8">
+        <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 max-w-2xl mx-auto w-full text-center page-enter-up">
+          <div
+            className="text-[11px] font-semibold uppercase tracking-[0.22em] mb-4"
+            style={{ color: 'var(--champagne)' }}
+          >
+            IELTS · Academic
+          </div>
+          <h1
+            className="font-serif-display text-5xl sm:text-6xl font-bold leading-none mb-4"
+            style={{
+              background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 50%, #E4C08A 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              letterSpacing: '-0.03em',
+            }}
+          >
+            Mock Test
+          </h1>
+          <div
+            className="h-px w-16 mx-auto mb-5"
+            style={{ background: 'linear-gradient(90deg, transparent, var(--gold), transparent)' }}
+          />
+          <p
+            className="text-sm sm:text-base leading-relaxed mb-10 max-w-md"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            4 хэсэгтэй бүтэн тест. Listening, Reading, Writing, Speaking.
+            Дуусгасны дараа 1–9 Band оноо авна.
+          </p>
+          {error && (
+            <p
+              className="text-sm mb-4 px-4 py-2 rounded-lg"
+              style={{
+                color: '#F87171',
+                background: 'rgba(248,113,113,0.08)',
+                border: '1px solid rgba(248,113,113,0.25)',
+              }}
+            >
+              {error}
+            </p>
+          )}
+          <div className="grid grid-cols-2 gap-3 w-full mb-10">
             {[
-              { icon: '🎧', label: 'Listening', detail: '10 асуулт · Яриа 2 удаа' },
-              { icon: '📖', label: 'Reading', detail: '30 асуулт · 3 нийтлэл' },
-              { icon: '✍️', label: 'Writing', detail: 'Task 1 + Task 2' },
-              { icon: '🗣️', label: 'Speaking', detail: sttSupported ? 'AI яриа · Автомат' : 'Дуу таних боломжгүй' },
+              { num: '01', label: 'Listening', detail: '10 асуулт · Яриа 2 удаа' },
+              { num: '02', label: 'Reading', detail: '30 асуулт · 3 нийтлэл' },
+              { num: '03', label: 'Writing', detail: 'Task 1 + Task 2' },
+              { num: '04', label: 'Speaking', detail: sttSupported ? 'AI яриа · Автомат' : 'Дуу таних боломжгүй' },
             ].map(s => (
-              <div key={s.label} className="bg-navy-surface border border-gold/10 rounded-xl p-3 text-left">
-                <div className="text-xl mb-1">{s.icon}</div>
-                <div className="font-semibold text-text-primary text-sm">{s.label}</div>
-                <div className="text-xs mt-0.5" style={{ color: '#64748B' }}>{s.detail}</div>
+              <div
+                key={s.label}
+                className="rounded-2xl p-5 text-left shadow-editorial"
+                style={{
+                  background: '#141C30',
+                  border: '1px solid var(--hairline)',
+                }}
+              >
+                <div
+                  className="font-serif-display text-xs nums-tabular tracking-widest mb-3"
+                  style={{ color: 'var(--champagne)' }}
+                >
+                  {s.num}
+                </div>
+                <div
+                  className="font-serif-display text-lg font-medium mb-1"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  {s.label}
+                </div>
+                <div
+                  className="text-[11px] leading-relaxed uppercase tracking-wider"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  {s.detail}
+                </div>
               </div>
             ))}
           </div>
-          <button onClick={startTest} className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
-            Шинэ шалгалт эхлэх →
+          <button
+            onClick={startTest}
+            className="w-full sm:w-auto sm:px-10 font-semibold py-3.5 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5 text-sm uppercase tracking-[0.18em]"
+            style={{
+              background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+              color: '#0B1222',
+              boxShadow: '0 6px 20px rgba(245,158,11,0.28)',
+            }}
+          >
+            Шинэ шалгалт эхлэх
           </button>
         </div>
 
         {showRestorePrompt && savedSession && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(5,13,26,0.85)' }}>
-            <div className="max-w-sm w-full rounded-2xl p-6 border" style={{ background: '#0F172A', borderColor: '#F59E0B55' }}>
-              <h2 className="text-lg font-bold text-text-primary mb-2">Тест үргэлжлүүлэх үү?</h2>
-              <p className="text-sm mb-5" style={{ color: '#94A3B8' }}>
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: 'rgba(7,12,24,0.88)', backdropFilter: 'blur(4px)' }}
+          >
+            <div
+              className="max-w-sm w-full rounded-2xl p-6 shadow-editorial"
+              style={{
+                background: '#141C30',
+                border: '1px solid var(--hairline)',
+                borderLeftWidth: '3px',
+                borderLeftColor: 'var(--gold)',
+              }}
+            >
+              <div
+                className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2"
+                style={{ color: 'var(--champagne)' }}
+              >
+                Session · Restore
+              </div>
+              <h2
+                className="font-serif-display text-xl font-medium mb-2"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                Тест үргэлжлүүлэх үү?
+              </h2>
+              <p
+                className="text-sm leading-relaxed mb-5"
+                style={{ color: 'var(--text-secondary)' }}
+              >
                 Таны өмнөх тест хадгалагдсан байна. Үргэлжлүүлэх үү?
               </p>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2.5">
                 <button
                   onClick={resumeSavedSession}
-                  className="w-full font-bold py-3 min-h-[48px] rounded-xl"
-                  style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+                  className="w-full font-semibold py-3 min-h-[48px] rounded-xl text-sm uppercase tracking-[0.18em]"
+                  style={{
+                    background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                    color: '#0B1222',
+                    boxShadow: '0 4px 14px rgba(245,158,11,0.25)',
+                  }}
+                >
                   Үргэлжлүүлэх
                 </button>
                 <button
                   onClick={discardSavedSession}
-                  className="w-full font-semibold py-3 min-h-[48px] rounded-xl border"
-                  style={{ background: 'transparent', borderColor: '#334155', color: '#CBD5E1' }}>
+                  className="w-full font-medium py-3 min-h-[48px] rounded-xl text-sm uppercase tracking-[0.18em]"
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid var(--hairline)',
+                    color: 'var(--text-secondary)',
+                  }}
+                >
                   Шинэ тест эхлэх
                 </button>
               </div>
@@ -1542,62 +1676,209 @@ export function IELTSTest() {
         <NavBar lessonTitle={`Writing — Task ${writingTaskView}/2`} />
         <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
           <SectionProgress idx={sectionIdx} />
-          <div className="flex gap-2 mb-4">
-            {([1, 2] as const).map(task => (
-              <button key={task} onClick={() => setWritingTaskView(task)} className="flex-1 py-2 rounded-xl text-sm font-semibold transition-colors border"
-                style={writingTaskView === task ? { background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A', borderColor: 'transparent' } : { background: '#1E293B', color: '#94A3B8', borderColor: '#334155' }}>
-                Task {task}
-              </button>
-            ))}
+          <div className="flex gap-2 mb-5">
+            {([1, 2] as const).map(task => {
+              const active = writingTaskView === task
+              return (
+                <button
+                  key={task}
+                  onClick={() => setWritingTaskView(task)}
+                  className="flex-1 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-[0.18em] transition-all"
+                  style={
+                    active
+                      ? {
+                          background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                          color: '#0B1222',
+                          border: '1px solid transparent',
+                          boxShadow: '0 4px 14px rgba(245,158,11,0.25)',
+                        }
+                      : {
+                          background: '#0F1729',
+                          color: 'var(--text-secondary)',
+                          border: '1px solid var(--hairline)',
+                        }
+                  }
+                >
+                  Task {task}
+                </button>
+              )
+            })}
           </div>
           {writingTaskView === 1 ? (
             <>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-2xl font-extrabold tabular-nums" style={{ color: task1Remaining === 0 ? '#F59E0B' : '#F8FAFC' }}>⏱ {mmss(task1Remaining)}</span>
+              <div className="flex items-baseline justify-between mb-3">
+                <div>
+                  <div
+                    className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1"
+                    style={{ color: 'var(--champagne)' }}
+                  >
+                    Remaining
+                  </div>
+                  <span
+                    className="font-serif-display text-3xl font-bold nums-tabular"
+                    style={{ color: task1Remaining === 0 ? 'var(--gold)' : 'var(--text-primary)', letterSpacing: '-0.02em' }}
+                  >
+                    {mmss(task1Remaining)}
+                  </span>
+                </div>
                 {task1Remaining === 0 && (
-                  <span className="text-xs font-semibold" style={{ color: '#F59E0B' }}>Цаг дууслаа! Гэхдээ үргэлжлүүлж болно</span>
+                  <span
+                    className="text-[11px] font-serif-display italic max-w-[60%] text-right"
+                    style={{ color: 'var(--gold)' }}
+                  >
+                    Цаг дууслаа — үргэлжлүүлж болно
+                  </span>
                 )}
               </div>
-              <div className="bg-navy-surface border border-gold/20 rounded-2xl p-4 mb-3">
-                <div className="text-xs font-semibold text-gold uppercase tracking-wide mb-2">✍️ Task 1 — дор хаяж 150 үг</div>
+              <div
+                className="rounded-2xl p-5 mb-4 shadow-editorial"
+                style={{
+                  background: '#141C30',
+                  border: '1px solid var(--hairline)',
+                  borderLeftWidth: '3px',
+                  borderLeftColor: 'var(--gold)',
+                }}
+              >
+                <div
+                  className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-3"
+                  style={{ color: 'var(--champagne)' }}
+                >
+                  Task 01 · Minimum 150 words
+                </div>
                 <Task1Prompt prompt={content.writing.task1Prompt} />
               </div>
-              <textarea value={writingTask1} onChange={e => setWritingTask1(e.target.value)} placeholder="Энд бичнэ үү..." rows={8}
-                className="w-full rounded-xl p-4 text-sm resize-none outline-none mb-1"
-                style={{ background: '#1E293B', border: '1px solid #334155', color: '#F8FAFC', lineHeight: 1.6 }}
-                onFocus={e => (e.target.style.borderColor = 'rgba(245,158,11,0.5)')}
-                onBlur={e => (e.target.style.borderColor = '#334155')} />
-              <div className="flex justify-between text-xs mb-4" style={{ color: '#64748B' }}>
-                <span>{wordCount(writingTask1)} үг</span>
-                <span className={wordCount(writingTask1) >= 150 ? 'text-emerald-400' : ''}>{wordCount(writingTask1) >= 150 ? '✓ 150+ үг' : `${150 - wordCount(writingTask1)} үг дутуу`}</span>
+              <textarea
+                value={writingTask1}
+                onChange={e => setWritingTask1(e.target.value)}
+                placeholder="Энд бичнэ үү..."
+                rows={10}
+                className="w-full rounded-xl p-4 text-sm resize-none outline-none mb-2 transition-all font-serif-display"
+                style={{
+                  background: '#0F1729',
+                  border: '1px solid var(--hairline)',
+                  color: 'var(--text-primary)',
+                  lineHeight: 1.7,
+                }}
+                onFocus={e => {
+                  e.target.style.borderColor = 'var(--gold)'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.18)'
+                }}
+                onBlur={e => {
+                  e.target.style.borderColor = 'var(--hairline)'
+                  e.target.style.boxShadow = 'none'
+                }}
+              />
+              <div className="flex justify-between text-[11px] uppercase tracking-wider mb-5">
+                <span style={{ color: 'var(--text-muted)' }}>
+                  <span className="nums-tabular font-medium" style={{ color: 'var(--champagne)' }}>{wordCount(writingTask1)}</span> үг
+                </span>
+                <span
+                  className="font-medium"
+                  style={{ color: wordCount(writingTask1) >= 150 ? '#34D399' : 'var(--text-muted)' }}
+                >
+                  {wordCount(writingTask1) >= 150 ? '150+ үг' : `${150 - wordCount(writingTask1)} үг дутуу`}
+                </span>
               </div>
-              <button onClick={() => setWritingTaskView(2)} className="w-full font-bold py-3 min-h-[48px] rounded-xl" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>Task 2 →</button>
+              <button
+                onClick={() => setWritingTaskView(2)}
+                className="w-full font-semibold py-3.5 min-h-[48px] rounded-xl text-sm uppercase tracking-[0.18em] transition-all hover:-translate-y-0.5"
+                style={{
+                  background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                  color: '#0B1222',
+                  boxShadow: '0 6px 20px rgba(245,158,11,0.28)',
+                }}
+              >
+                Task 2
+              </button>
             </>
           ) : (
             <>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-2xl font-extrabold tabular-nums" style={{ color: task2Remaining === 0 ? '#F59E0B' : '#F8FAFC' }}>⏱ {mmss(task2Remaining)}</span>
+              <div className="flex items-baseline justify-between mb-3">
+                <div>
+                  <div
+                    className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1"
+                    style={{ color: 'var(--champagne)' }}
+                  >
+                    Remaining
+                  </div>
+                  <span
+                    className="font-serif-display text-3xl font-bold nums-tabular"
+                    style={{ color: task2Remaining === 0 ? 'var(--gold)' : 'var(--text-primary)', letterSpacing: '-0.02em' }}
+                  >
+                    {mmss(task2Remaining)}
+                  </span>
+                </div>
                 {task2Remaining === 0 && (
-                  <span className="text-xs font-semibold" style={{ color: '#F59E0B' }}>Цаг дууслаа! Гэхдээ үргэлжлүүлж болно</span>
+                  <span
+                    className="text-[11px] font-serif-display italic max-w-[60%] text-right"
+                    style={{ color: 'var(--gold)' }}
+                  >
+                    Цаг дууслаа — үргэлжлүүлж болно
+                  </span>
                 )}
               </div>
-              <div className="bg-navy-surface border border-gold/20 rounded-2xl p-4 mb-3">
-                <div className="text-xs font-semibold text-gold uppercase tracking-wide mb-2">✍️ Task 2 — дор хаяж 250 үг</div>
-                <p className="text-sm text-text-primary leading-relaxed">{content.writing.task2Prompt}</p>
+              <div
+                className="rounded-2xl p-5 mb-4 shadow-editorial"
+                style={{
+                  background: '#141C30',
+                  border: '1px solid var(--hairline)',
+                  borderLeftWidth: '3px',
+                  borderLeftColor: 'var(--gold)',
+                }}
+              >
+                <div
+                  className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-3"
+                  style={{ color: 'var(--champagne)' }}
+                >
+                  Task 02 · Minimum 250 words
+                </div>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+                  {content.writing.task2Prompt}
+                </p>
               </div>
-              <textarea value={writingTask2} onChange={e => setWritingTask2(e.target.value)} placeholder="Энд бичнэ үү..." rows={10}
-                className="w-full rounded-xl p-4 text-sm resize-none outline-none mb-1"
-                style={{ background: '#1E293B', border: '1px solid #334155', color: '#F8FAFC', lineHeight: 1.6 }}
-                onFocus={e => (e.target.style.borderColor = 'rgba(245,158,11,0.5)')}
-                onBlur={e => (e.target.style.borderColor = '#334155')} />
-              <div className="flex justify-between text-xs mb-4" style={{ color: '#64748B' }}>
-                <span>{wordCount(writingTask2)} үг</span>
-                <span className={wordCount(writingTask2) >= 250 ? 'text-emerald-400' : ''}>{wordCount(writingTask2) >= 250 ? '✓ 250+ үг' : `${250 - wordCount(writingTask2)} үг дутуу`}</span>
+              <textarea
+                value={writingTask2}
+                onChange={e => setWritingTask2(e.target.value)}
+                placeholder="Энд бичнэ үү..."
+                rows={12}
+                className="w-full rounded-xl p-4 text-sm resize-none outline-none mb-2 transition-all font-serif-display"
+                style={{
+                  background: '#0F1729',
+                  border: '1px solid var(--hairline)',
+                  color: 'var(--text-primary)',
+                  lineHeight: 1.7,
+                }}
+                onFocus={e => {
+                  e.target.style.borderColor = 'var(--gold)'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.18)'
+                }}
+                onBlur={e => {
+                  e.target.style.borderColor = 'var(--hairline)'
+                  e.target.style.boxShadow = 'none'
+                }}
+              />
+              <div className="flex justify-between text-[11px] uppercase tracking-wider mb-5">
+                <span style={{ color: 'var(--text-muted)' }}>
+                  <span className="nums-tabular font-medium" style={{ color: 'var(--champagne)' }}>{wordCount(writingTask2)}</span> үг
+                </span>
+                <span
+                  className="font-medium"
+                  style={{ color: wordCount(writingTask2) >= 250 ? '#34D399' : 'var(--text-muted)' }}
+                >
+                  {wordCount(writingTask2) >= 250 ? '250+ үг' : `${250 - wordCount(writingTask2)} үг дутуу`}
+                </span>
               </div>
-              <button onClick={() => setPhase('speaking')} disabled={wordCount(writingTask2) < 250}
-                className="w-full font-bold py-3 min-h-[48px] rounded-xl disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
-                Speaking →
+              <button
+                onClick={() => setPhase('speaking')}
+                disabled={wordCount(writingTask2) < 250}
+                className="w-full font-semibold py-3.5 min-h-[48px] rounded-xl text-sm uppercase tracking-[0.18em] transition-all hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
+                style={{
+                  background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                  color: '#0B1222',
+                  boxShadow: '0 6px 20px rgba(245,158,11,0.28)',
+                }}
+              >
+                Speaking
               </button>
             </>
           )}
@@ -1790,67 +2071,294 @@ export function IELTSTest() {
     const passThreshold = Math.round(maxTotal * 0.7)
     const passedPts = totalPts >= passThreshold
     return (
-      <div className="min-h-dvh bg-navy flex flex-col">
+      <div className="min-h-dvh flex flex-col" style={{ background: 'var(--navy-deep)' }}>
         <NavBar lessonTitle="IELTS — Үр дүн" />
-        <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full page-enter-up">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 max-w-2xl mx-auto w-full page-enter-up">
           {isPartialResult && (
-            <div className="mb-4 rounded-xl border p-3 text-sm" style={{ background: '#78350F', borderColor: '#F59E0B', color: '#FEF3C7' }}>
+            <div
+              className="mb-5 rounded-xl p-4 text-sm shadow-editorial"
+              style={{
+                background: 'rgba(245,158,11,0.08)',
+                border: '1px solid var(--hairline)',
+                borderLeftWidth: '3px',
+                borderLeftColor: 'var(--gold)',
+                color: 'var(--text-primary)',
+              }}
+            >
+              <div
+                className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1"
+                style={{ color: 'var(--champagne)' }}
+              >
+                Partial · Assessment
+              </div>
               Шалгалт дутуу дууссан. Өгсөн хариултуудын үндсэн дээр үнэлгээ:
             </div>
           )}
-          <div className="text-center mb-6 py-6">
-            <div className="text-8xl font-extrabold mb-2 leading-none" style={{ color: bandColor(gradeResult.overall), letterSpacing: '-0.04em' }}>{gradeResult.overall}</div>
-            <div className="text-text-secondary text-sm mb-1">Нийт IELTS Band оноо</div>
-            <div className="text-xs font-semibold" style={{ color: bandColor(gradeResult.overall) }}>{bandLabel(gradeResult.overall)}</div>
+
+          <div className="text-center mb-8 py-8">
+            <div
+              className="text-[10px] font-semibold uppercase tracking-[0.28em] mb-3"
+              style={{ color: 'var(--champagne)' }}
+            >
+              Overall · Band
+            </div>
+            <div
+              className="font-serif-display font-medium leading-none nums-tabular mb-3"
+              style={{
+                fontSize: 'clamp(5rem, 18vw, 8rem)',
+                background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 50%, #E4C08A 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                letterSpacing: '-0.04em',
+              }}
+            >
+              {gradeResult.overall}
+            </div>
+            <div
+              className="h-px w-16 mx-auto mb-3"
+              style={{ background: 'linear-gradient(90deg, transparent, var(--gold), transparent)' }}
+            />
+            <div
+              className="text-[11px] font-semibold uppercase tracking-[0.24em]"
+              style={{ color: bandColor(gradeResult.overall) }}
+            >
+              {bandLabel(gradeResult.overall)}
+            </div>
           </div>
-          <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 mb-4">
-            <div className="text-sm font-semibold text-text-primary mb-3">Хэсэг тус бүрийн оноо</div>
+
+          <div
+            className="rounded-2xl p-5 mb-4 shadow-editorial"
+            style={{
+              background: '#141C30',
+              border: '1px solid var(--hairline)',
+            }}
+          >
+            <div
+              className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-4"
+              style={{ color: 'var(--champagne)' }}
+            >
+              Section · Scores
+            </div>
             <div className="grid grid-cols-2 gap-3">
-              {[{ label: '🎧 Listening', value: gradeResult.listening }, { label: '📖 Reading', value: gradeResult.reading }, { label: '✍️ Writing', value: gradeResult.writing }, { label: '🗣️ Speaking', value: gradeResult.speaking }].map(s => (
-                <div key={s.label} className="bg-navy rounded-xl p-3 text-center">
-                  <div className="text-xs mb-1" style={{ color: '#64748B' }}>{s.label}</div>
-                  <div className="text-2xl font-bold" style={{ color: bandColor(s.value) }}>{s.value}</div>
-                  <div className="text-xs mt-0.5" style={{ color: bandColor(s.value), opacity: 0.7 }}>{bandLabel(s.value)}</div>
+              {[
+                { label: 'Listening', value: gradeResult.listening, Icon: HeadphonesIcon },
+                { label: 'Reading', value: gradeResult.reading, Icon: BookIcon },
+                { label: 'Writing', value: gradeResult.writing, Icon: PencilIcon },
+                { label: 'Speaking', value: gradeResult.speaking, Icon: MicIcon },
+              ].map(s => (
+                <div
+                  key={s.label}
+                  className="rounded-xl p-4 text-center"
+                  style={{
+                    background: '#0F1729',
+                    border: '1px solid var(--hairline)',
+                  }}
+                >
+                  <span
+                    className="inline-flex items-center justify-center w-9 h-9 rounded-full mb-2"
+                    style={{
+                      background: 'rgba(245,158,11,0.10)',
+                      color: 'var(--gold)',
+                      border: '1px solid rgba(245,158,11,0.22)',
+                    }}
+                  >
+                    <s.Icon size={18} />
+                  </span>
+                  <div
+                    className="text-[10px] font-semibold uppercase tracking-[0.18em] mb-1.5"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    {s.label}
+                  </div>
+                  <div
+                    className="font-serif-display text-3xl font-medium nums-tabular leading-none"
+                    style={{ color: bandColor(s.value) }}
+                  >
+                    {s.value}
+                  </div>
+                  <div
+                    className="text-[9px] font-semibold uppercase tracking-[0.18em] mt-1.5"
+                    style={{ color: bandColor(s.value), opacity: 0.85 }}
+                  >
+                    {bandLabel(s.value)}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 mb-4">
-            <div className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#64748B' }}>Түүхий оноо (мэдээллийн зорилгоор)</div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs" style={{ color: '#94A3B8' }}>🎧 Listening</span>
-              <span className="text-sm font-semibold text-text-primary">{listenCorrect}/{listenTotal}</span>
+          <div
+            className="rounded-2xl p-5 mb-4 shadow-editorial"
+            style={{
+              background: '#141C30',
+              border: '1px solid var(--hairline)',
+            }}
+          >
+            <div
+              className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-3"
+              style={{ color: 'var(--champagne)' }}
+            >
+              Raw · Scores
             </div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs" style={{ color: '#94A3B8' }}>📖 Reading</span>
-              <span className="text-sm font-semibold text-text-primary">{readCorrect}/{readTotal}</span>
+            <div className="flex items-center justify-between py-1.5">
+              <span className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                <HeadphonesIcon size={14} />
+                Listening
+              </span>
+              <span
+                className="text-sm font-semibold nums-tabular"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                {listenCorrect}<span style={{ color: 'var(--text-muted)' }}>/{listenTotal}</span>
+              </span>
             </div>
-            <div className="h-px bg-navy-surface-2 my-2" />
-            <p className="text-sm leading-relaxed text-text-primary">
-              Сонсох <span className="font-semibold">{listenCorrect}</span>/{listenTotal} · Уншлага <span className="font-semibold">{readCorrect}</span>/{readTotal} · Бичих <span className="font-semibold">{writingPts}</span>/6 · Ярих <span className="font-semibold">{speakPts}</span>/15 · Нийт: <span className="font-bold" style={{ color: passedPts ? '#34D399' : '#F59E0B' }}>{totalPts}</span>/{maxTotal}
+            <div className="flex items-center justify-between py-1.5">
+              <span className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                <BookIcon size={14} />
+                Reading
+              </span>
+              <span
+                className="text-sm font-semibold nums-tabular"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                {readCorrect}<span style={{ color: 'var(--text-muted)' }}>/{readTotal}</span>
+              </span>
+            </div>
+            <div className="h-px my-3" style={{ background: 'var(--hairline)' }} />
+            <p
+              className="text-sm leading-relaxed font-serif-display italic"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              Сонсох <span className="font-semibold not-italic nums-tabular" style={{ color: 'var(--text-primary)' }}>{listenCorrect}</span>/{listenTotal} · Уншлага <span className="font-semibold not-italic nums-tabular" style={{ color: 'var(--text-primary)' }}>{readCorrect}</span>/{readTotal} · Бичих <span className="font-semibold not-italic nums-tabular" style={{ color: 'var(--text-primary)' }}>{writingPts}</span>/6 · Ярих <span className="font-semibold not-italic nums-tabular" style={{ color: 'var(--text-primary)' }}>{speakPts}</span>/15 · Нийт: <span className="font-bold not-italic nums-tabular" style={{ color: passedPts ? '#34D399' : 'var(--gold)' }}>{totalPts}</span>/{maxTotal}
             </p>
-            <p className="text-xs mt-1" style={{ color: '#64748B' }}>
-              Тэнцэх оноо: {passThreshold}/{maxTotal}
+            <p
+              className="text-[11px] mt-2 uppercase tracking-[0.18em] font-semibold"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              Pass · {passThreshold}/{maxTotal}
             </p>
           </div>
+
           {criteriaRows.length > 0 && (
-            <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 mb-4">
-              <div className="text-sm font-semibold text-text-primary mb-3">✍️ Writing шалгуур</div>
-              <div className="space-y-2">{criteriaRows.map(r => <div key={r.label} className="flex items-center justify-between"><span className="text-xs" style={{ color: '#94A3B8' }}>{r.label}</span><span className="text-sm font-bold" style={{ color: bandColor(r.value) }}>{r.value}</span></div>)}</div>
-              {gradeResult.writingFeedback && <p className="text-xs mt-3 pt-3 border-t border-navy-surface-2" style={{ color: '#94A3B8' }}>{gradeResult.writingFeedback}</p>}
+            <div
+              className="rounded-2xl p-5 mb-4 shadow-editorial"
+              style={{
+                background: '#141C30',
+                border: '1px solid var(--hairline)',
+                borderLeftWidth: '3px',
+                borderLeftColor: 'var(--gold)',
+              }}
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <span style={{ color: 'var(--gold)' }}><PencilIcon size={16} /></span>
+                <div
+                  className="text-[10px] font-semibold uppercase tracking-[0.22em]"
+                  style={{ color: 'var(--champagne)' }}
+                >
+                  Writing · Criteria
+                </div>
+              </div>
+              <div className="space-y-2.5">
+                {criteriaRows.map(r => (
+                  <div key={r.label} className="flex items-center justify-between">
+                    <span
+                      className="text-[13px] font-serif-display italic"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      {r.label}
+                    </span>
+                    <span
+                      className="font-serif-display text-lg font-medium nums-tabular"
+                      style={{ color: bandColor(r.value) }}
+                    >
+                      {r.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {gradeResult.writingFeedback && (
+                <p
+                  className="text-[13px] mt-4 pt-4 leading-relaxed font-serif-display italic"
+                  style={{ color: 'var(--text-secondary)', borderTop: '1px solid var(--hairline)' }}
+                >
+                  {gradeResult.writingFeedback}
+                </p>
+              )}
             </div>
           )}
+
           {speakRows.length > 0 && (
-            <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 mb-6">
-              <div className="text-sm font-semibold text-text-primary mb-3">🗣️ Speaking шалгуур</div>
-              <div className="space-y-2">{speakRows.map(r => <div key={r.label} className="flex items-center justify-between"><span className="text-xs" style={{ color: '#94A3B8' }}>{r.label}</span><span className="text-sm font-bold" style={{ color: bandColor(r.value) }}>{r.value}</span></div>)}</div>
-              {gradeResult.speakingFeedback && <p className="text-xs mt-3 pt-3 border-t border-navy-surface-2" style={{ color: '#94A3B8' }}>{gradeResult.speakingFeedback}</p>}
+            <div
+              className="rounded-2xl p-5 mb-6 shadow-editorial"
+              style={{
+                background: '#141C30',
+                border: '1px solid var(--hairline)',
+                borderLeftWidth: '3px',
+                borderLeftColor: 'var(--gold)',
+              }}
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <span style={{ color: 'var(--gold)' }}><MicIcon size={16} /></span>
+                <div
+                  className="text-[10px] font-semibold uppercase tracking-[0.22em]"
+                  style={{ color: 'var(--champagne)' }}
+                >
+                  Speaking · Criteria
+                </div>
+              </div>
+              <div className="space-y-2.5">
+                {speakRows.map(r => (
+                  <div key={r.label} className="flex items-center justify-between">
+                    <span
+                      className="text-[13px] font-serif-display italic"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      {r.label}
+                    </span>
+                    <span
+                      className="font-serif-display text-lg font-medium nums-tabular"
+                      style={{ color: bandColor(r.value) }}
+                    >
+                      {r.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {gradeResult.speakingFeedback && (
+                <p
+                  className="text-[13px] mt-4 pt-4 leading-relaxed font-serif-display italic"
+                  style={{ color: 'var(--text-secondary)', borderTop: '1px solid var(--hairline)' }}
+                >
+                  {gradeResult.speakingFeedback}
+                </p>
+              )}
             </div>
           )}
+
           <div className="flex flex-col gap-3">
-            <button onClick={() => { stopSpeech(); setPhase('intro'); setGradeResult(null); setIsPartialResult(false) }} className="w-full font-bold py-3 min-h-[48px] rounded-xl hover:-translate-y-0.5 transition-all" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>Дахин өгөх</button>
-            <a href="/profile" className="w-full font-semibold py-3 min-h-[48px] rounded-xl border text-center text-sm" style={{ background: '#1E293B', borderColor: '#334155', color: '#94A3B8' }}>Профайл руу буцах →</a>
+            <button
+              onClick={() => { stopSpeech(); setPhase('intro'); setGradeResult(null); setIsPartialResult(false) }}
+              className="w-full font-semibold py-3 min-h-[48px] rounded-xl transition-all text-sm uppercase tracking-[0.18em]"
+              style={{
+                background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                color: '#0B1222',
+                boxShadow: '0 6px 20px rgba(245,158,11,0.28)',
+              }}
+            >
+              Дахин өгөх
+            </button>
+            <a
+              href="/profile"
+              className="w-full py-3 min-h-[48px] rounded-xl text-center text-[13px] uppercase tracking-[0.18em] font-semibold transition-colors"
+              style={{
+                background: 'transparent',
+                border: '1px solid var(--hairline)',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              Профайл руу буцах →
+            </a>
           </div>
         </div>
       </div>

@@ -8,6 +8,7 @@ import {
   type DailyChallengeQ,
 } from '@/lib/dailyChallenges'
 import { t } from '@/lib/i18n'
+import { TrophyIcon, CheckCircleIcon, XCircleIcon } from './Icon'
 
 export function DailyChallenge() {
   const [q, setQ] = useState<DailyChallengeQ | null>(null)
@@ -60,48 +61,120 @@ export function DailyChallenge() {
   if (!q) return null
 
   return (
-    <div
-      className="rounded-2xl p-5 relative overflow-hidden"
+    <section
+      className="rounded-2xl p-6 sm:p-7 shadow-editorial relative overflow-hidden"
       style={{
-        background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
-        border: '1px solid rgba(245,158,11,0.35)',
-        boxShadow: '0 0 30px rgba(245,158,11,0.08)',
+        background: '#141C30',
+        border: '1px solid var(--hairline)',
+        borderLeftWidth: '3px',
+        borderLeftColor: 'var(--gold)',
       }}
     >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gold/5 rounded-full blur-2xl pointer-events-none" />
-      <div className="relative flex items-center gap-3 mb-4">
-        <div className="w-9 h-9 rounded-xl bg-gold/15 border border-gold/30 flex items-center justify-center text-lg flex-shrink-0">
-          🏅
-        </div>
-        <div>
-          <div className="text-gold font-bold text-sm">{t('dailyChallenge')}</div>
-          <div className="text-xs text-text-secondary/70">Өдөр бүр шинэ асуулт</div>
-        </div>
-        <span className="ml-auto text-xs font-bold text-gold bg-gold/10 border border-gold/25 rounded-full px-2.5 py-0.5">{q.level}</span>
-      </div>
-      <div className="relative">
+      <div
+        className="absolute top-0 right-0 w-32 h-32 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(circle at top right, rgba(245,158,11,0.10) 0%, transparent 60%)',
+        }}
+      />
 
-      <p className="text-text-primary font-medium mb-4">{q.question}</p>
+      <div className="relative flex items-start justify-between gap-4 mb-5">
+        <div className="flex items-start gap-3">
+          <span
+            className="flex items-center justify-center w-9 h-9 rounded-full flex-shrink-0 mt-0.5"
+            style={{ background: 'rgba(245,158,11,0.12)', color: 'var(--gold)' }}
+          >
+            <TrophyIcon size={18} />
+          </span>
+          <div>
+            <div
+              className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1"
+              style={{ color: 'var(--champagne)' }}
+            >
+              Daily · Challenge
+            </div>
+            <h3
+              className="font-serif-display text-xl sm:text-2xl font-medium leading-tight"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              {t('dailyChallenge')}
+            </h3>
+          </div>
+        </div>
+        <span
+          className="text-[10px] font-semibold uppercase tracking-[0.2em] rounded-full px-2.5 py-1 flex-shrink-0"
+          style={{
+            background: 'rgba(245,158,11,0.12)',
+            color: 'var(--gold)',
+            border: '1px solid rgba(245,158,11,0.25)',
+          }}
+        >
+          {q.level}
+        </span>
+      </div>
+
+      <div
+        className="h-px w-12 mb-5"
+        style={{ background: 'linear-gradient(90deg, var(--gold), transparent)' }}
+      />
+
+      <p
+        className="text-[15px] leading-relaxed mb-5 font-medium"
+        style={{ color: 'var(--text-primary)' }}
+      >
+        {q.question}
+      </p>
 
       {q.type === 'mc' && q.options && (
-        <div className="space-y-2 mb-4">
+        <div className="space-y-2 mb-5">
           {q.options.map((opt, i) => {
-            let style = 'border-navy-surface-2 text-text-primary hover:border-gold/40'
+            let bg = '#0F1729'
+            let border = 'var(--hairline)'
+            let color = 'var(--text-primary)'
             if (submitted) {
-              if (i === q.correct) style = 'border-emerald-500 bg-emerald-500/10 text-emerald-400'
-              else if (i === selected && i !== q.correct) style = 'border-rose-500 bg-rose-500/10 text-rose-400'
-              else style = 'border-navy-surface-2 text-text-secondary opacity-50'
+              if (i === q.correct) {
+                bg = 'rgba(52,211,153,0.08)'
+                border = 'rgba(52,211,153,0.4)'
+                color = '#34D399'
+              } else if (i === selected && i !== q.correct) {
+                bg = 'rgba(248,113,113,0.08)'
+                border = 'rgba(248,113,113,0.4)'
+                color = '#F87171'
+              } else {
+                color = 'var(--text-muted)'
+              }
             } else if (selected === i) {
-              style = 'border-gold bg-gold/10 text-gold'
+              bg = 'rgba(245,158,11,0.10)'
+              border = 'var(--gold)'
+              color = 'var(--gold)'
             }
             return (
               <button
                 key={i}
                 disabled={submitted}
                 onClick={() => !submitted && setSelected(i)}
-                className={`w-full text-left px-4 py-2.5 rounded-xl border transition-colors text-sm ${style}`}
+                className="w-full text-left px-4 py-3 rounded-xl transition-all text-sm flex items-center gap-3"
+                style={{
+                  background: bg,
+                  border: `1px solid ${border}`,
+                  color,
+                }}
+                onMouseEnter={e => {
+                  if (submitted || selected === i) return
+                  e.currentTarget.style.borderColor = 'rgba(245,158,11,0.4)'
+                }}
+                onMouseLeave={e => {
+                  if (submitted || selected === i) return
+                  e.currentTarget.style.borderColor = 'var(--hairline)'
+                }}
               >
-                {String.fromCharCode(65 + i)}. {opt}
+                <span
+                  className="font-serif-display text-xs tracking-widest"
+                  style={{ color: 'var(--champagne)' }}
+                >
+                  {String.fromCharCode(65 + i)}
+                </span>
+                <span className="flex-1">{opt}</span>
               </button>
             )
           })}
@@ -109,7 +182,7 @@ export function DailyChallenge() {
       )}
 
       {q.type === 'fill' && (
-        <div className="mb-4">
+        <div className="mb-5">
           <input
             type="text"
             value={fillInput}
@@ -117,7 +190,20 @@ export function DailyChallenge() {
             onKeyDown={e => e.key === 'Enter' && !submitted && handleSubmit()}
             disabled={submitted}
             placeholder={t('yourType')}
-            className="w-full bg-navy border border-navy-surface-2 focus:border-gold/40 focus:ring-2 focus:ring-amber-400 rounded-xl px-4 py-2.5 text-text-primary text-sm outline-none transition-colors disabled:opacity-60"
+            className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all disabled:opacity-60"
+            style={{
+              background: '#0F1729',
+              border: '1px solid var(--hairline)',
+              color: 'var(--text-primary)',
+            }}
+            onFocus={e => {
+              e.currentTarget.style.borderColor = 'var(--gold)'
+              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.18)'
+            }}
+            onBlur={e => {
+              e.currentTarget.style.borderColor = 'var(--hairline)'
+              e.currentTarget.style.boxShadow = 'none'
+            }}
           />
         </div>
       )}
@@ -126,7 +212,12 @@ export function DailyChallenge() {
         <button
           onClick={handleSubmit}
           disabled={q.type === 'mc' ? selected === null : !fillInput.trim()}
-          className="w-full bg-gold hover:bg-gold-dark disabled:opacity-40 text-navy font-semibold py-2.5 rounded-xl transition-colors text-sm"
+          className="w-full font-semibold py-3 min-h-[48px] rounded-xl transition-all text-sm uppercase tracking-[0.18em] disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{
+            background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+            color: '#0B1222',
+            boxShadow: '0 4px 14px rgba(245,158,11,0.25)',
+          }}
         >
           {t('submitAnswer')}
         </button>
@@ -134,23 +225,48 @@ export function DailyChallenge() {
 
       {submitted && (
         <>
-          <div className={`rounded-xl p-3 text-sm ${correct ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400' : 'bg-rose-500/10 border border-rose-500/30 text-rose-400'}`}>
-            <div className="font-semibold mb-1">
-              {correct ? `✅ ${t('correct')}` : `❌ ${t('wrong')}`}
+          <div
+            className="rounded-xl p-4 text-sm"
+            style={{
+              background: correct ? 'rgba(52,211,153,0.08)' : 'rgba(248,113,113,0.08)',
+              border: `1px solid ${correct ? 'rgba(52,211,153,0.3)' : 'rgba(248,113,113,0.3)'}`,
+              color: correct ? '#34D399' : '#F87171',
+            }}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              {correct ? <CheckCircleIcon size={18} /> : <XCircleIcon size={18} />}
+              <span className="font-semibold uppercase tracking-[0.18em] text-[11px]">
+                {correct ? t('correct') : t('wrong')}
+              </span>
             </div>
             {!correct && (
-              <div className="text-xs mb-1 text-text-secondary">
-                {t('correctAnswer')}: <span className="text-emerald-400 font-medium">{String(q.correct)}</span>
+              <div
+                className="text-[13px] mb-1.5 flex gap-2"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                <span className="uppercase tracking-wider text-[10px] font-semibold flex-shrink-0 mt-0.5">
+                  {t('correctAnswer')}
+                </span>
+                <span className="font-medium" style={{ color: '#34D399' }}>
+                  {String(q.correct)}
+                </span>
               </div>
             )}
-            <div className="text-xs text-text-secondary">{q.explanation}</div>
+            <div
+              className="text-[13px] leading-relaxed italic font-serif-display"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              {q.explanation}
+            </div>
           </div>
-          <p className="text-center text-sm font-semibold text-gold mt-3">
-            ✅ Өнөөдрийн даалгавар дууссан. Маргааш дахин ирээрэй!
+          <p
+            className="text-center text-[13px] font-serif-display italic mt-4"
+            style={{ color: 'var(--champagne)' }}
+          >
+            Өнөөдрийн даалгавар дууссан. Маргааш дахин ирээрэй.
           </p>
         </>
       )}
-      </div>
-    </div>
+    </section>
   )
 }

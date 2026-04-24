@@ -158,6 +158,26 @@ export function UserIcon({ size = 20, ...p }: IconProps) {
   )
 }
 
+export function HeadphonesIcon({ size = 20, ...p }: IconProps) {
+  return (
+    <svg {...base(size)} {...p} aria-hidden>
+      <path d="M4 13a8 8 0 0 1 16 0" />
+      <path d="M4 13v4a2 2 0 0 0 2 2h1v-8H6a2 2 0 0 0-2 2z" />
+      <path d="M20 13v4a2 2 0 0 1-2 2h-1v-8h1a2 2 0 0 1 2 2z" />
+    </svg>
+  )
+}
+
+export function MicIcon({ size = 20, ...p }: IconProps) {
+  return (
+    <svg {...base(size)} {...p} aria-hidden>
+      <rect x="9" y="3" width="6" height="12" rx="3" />
+      <path d="M5 11a7 7 0 0 0 14 0" />
+      <path d="M12 18v3" />
+    </svg>
+  )
+}
+
 export function NotebookIcon({ size = 20, ...p }: IconProps) {
   return (
     <svg {...base(size)} {...p} aria-hidden>
