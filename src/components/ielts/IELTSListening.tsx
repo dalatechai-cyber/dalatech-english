@@ -33,6 +33,7 @@ interface IELTSListeningProps {
   isPlaying: boolean
   showTranscript: boolean
   setShowTranscript: (fn: (v: boolean) => boolean) => void
+  ttsSupported: boolean
   playConversationTwice: () => void
   listenCurrentHandleRef: RefObject<AudioHandle | null>
   onAdvance: () => void
@@ -55,6 +56,7 @@ export function IELTSListening({
   isPlaying,
   showTranscript,
   setShowTranscript,
+  ttsSupported,
   playConversationTwice,
   listenCurrentHandleRef,
   onAdvance,
@@ -129,7 +131,7 @@ export function IELTSListening({
               ) : (
                 <div className="flex flex-col items-center gap-2 py-2">
                   {listenPlayCount === 3 && <p className="text-xs font-semibold" style={{ color: '#34D399' }}>✓ Яриа дууссан</p>}
-                  {listenAudioReady && (
+                  {listenAudioReady && ttsSupported && (
                     <button onClick={playConversationTwice}
                       className="px-6 py-2 rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5"
                       style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
