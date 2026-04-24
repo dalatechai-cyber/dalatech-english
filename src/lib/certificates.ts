@@ -32,16 +32,11 @@ export function saveCertificate(entry: Omit<CertificateEntry, 'id' | 'date' | 'i
     issuedAt: now,
   }
   if (typeof window !== 'undefined') {
-    // Re-read just before write to narrow multi-tab race window
     const latest = loadCertificates()
-    const recentDuplicate = latest.find(
-      c => c.level === entry.level && typeof c.issuedAt === 'number' && now - c.issuedAt < 5000,
-    )
-    if (recentDuplicate) return recentDuplicate
-    const existing = latest.find(
-      c => c.level === entry.level && c.date === today && c.type === entry.type,
-    )
-    if (existing) return existing
+    // One certificate per level, ever. Subsequent passes are captured in
+    // test history only — the first certificate is the keepsake.
+    const alreadyHasCert = latest.find(c => c.level === entry.level)
+    if (alreadyHasCert) return alreadyHasCert
     try {
       localStorage.setItem(KEY, JSON.stringify([cert, ...latest].slice(0, MAX_CERTIFICATES)))
     } catch (e) {

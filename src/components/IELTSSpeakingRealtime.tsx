@@ -34,6 +34,32 @@ function isEnglishText(text: string): boolean {
   return latinChars.length / text.length > 0.5
 }
 
+function playBoopSound() {
+  try {
+    const Ctor: typeof AudioContext | undefined =
+      typeof window !== 'undefined'
+        ? (window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)
+        : undefined
+    if (!Ctor) return
+    const audioCtx = new Ctor()
+    const oscillator = audioCtx.createOscillator()
+    const gainNode = audioCtx.createGain()
+    oscillator.connect(gainNode)
+    gainNode.connect(audioCtx.destination)
+    oscillator.type = 'sine'
+    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime)
+    oscillator.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.15)
+    gainNode.gain.setValueAtTime(0, audioCtx.currentTime)
+    gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.02)
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3)
+    oscillator.start(audioCtx.currentTime)
+    oscillator.stop(audioCtx.currentTime + 0.3)
+    oscillator.onended = () => { try { audioCtx.close() } catch { /* ignore */ } }
+  } catch (e) {
+    console.warn('Boop sound failed:', e)
+  }
+}
+
 function stripMarkers(text: string): string {
   return text
     .replace(/\[PART_2_START\]/g, '')
@@ -392,12 +418,14 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
               localStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = false })
               break
             case 'response.audio.done':
-              // 800ms grace period lets the tail of AI audio fully play out of
-              // the speaker before we re-enable the mic. Tracked so cleanup
-              // cancels the timer on unmount.
+              // 800ms grace: AI tail finishes playing, then flip to blue +
+              // boop and re-enable the mic in the same step so the UI and
+              // mic state change together.
               if (micReenableTimeoutRef.current) clearTimeout(micReenableTimeoutRef.current)
               micReenableTimeoutRef.current = setTimeout(() => {
                 localStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = true })
+                setOrbState('listening')
+                playBoopSound()
                 micReenableTimeoutRef.current = null
               }, 800)
               break
@@ -413,9 +441,6 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
                 currentExaminerRespRef.current = ''
               }
               break
-            case 'input_audio_buffer.speech_started':
-              setOrbState('listening')
-              break
             case 'input_audio_buffer.speech_stopped':
               setOrbState('thinking')
               break
@@ -426,9 +451,6 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
                   processStudentUtterance(t)
                 }
               }
-              break
-            case 'response.done':
-              setOrbState('listening')
               break
             case 'error':
               console.error('[Realtime] error event:', msg.error)

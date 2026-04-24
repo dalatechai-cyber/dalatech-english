@@ -1,13 +1,13 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { NavBar } from '@/components/NavBar'
 import { CertificateModal } from '@/components/CertificateModal'
 import { loadCertificates, formatMongolianDate, type CertificateEntry } from '@/lib/certificates'
 import { loadTestHistory, type TestHistoryEntry } from '@/lib/testHistory'
 import { loadStreak } from '@/lib/streak'
-import { loadIELTSResults, type IELTSResult } from '@/lib/ielts'
 import { loadProgress } from '@/lib/storage'
 import { t } from '@/lib/i18n'
+import type { LevelCode } from '@/lib/types'
 import {
   FlameIcon,
   StarIcon,
@@ -16,44 +16,68 @@ import {
   CertificateIcon,
   ClipboardIcon,
   NotebookIcon,
-  ArrowRightIcon,
-  BookIcon,
 } from '@/components/Icon'
+
+const QUIZ_LEVELS: LevelCode[] = ['A1', 'A2', 'B1', 'B2', 'C1']
+const QUIZ_PAGE_SIZE = 8
 
 export default function ProfilePage() {
   const [certs, setCerts] = useState<CertificateEntry[]>([])
-  const [testHistory, setTestHistory] = useState<TestHistoryEntry[]>([])
-  const [ieltsHistory, setIeltsHistory] = useState<IELTSResult[]>([])
+  const [history, setHistory] = useState<TestHistoryEntry[]>([])
   const [streak, setStreak] = useState({ current: 0, longest: 0 })
   const [lessonsCompleted, setLessonsCompleted] = useState(0)
-  const [passedExams, setPassedExams] = useState(0)
   const [selectedCert, setSelectedCert] = useState<CertificateEntry | null>(null)
+  const [quizFilter, setQuizFilter] = useState<'all' | LevelCode>('all')
+  const [quizVisible, setQuizVisible] = useState(QUIZ_PAGE_SIZE)
 
   useEffect(() => {
-    const loadedCerts = loadCertificates()
-    const loadedHistory = loadTestHistory()
-    setCerts(loadedCerts)
-    setTestHistory(loadedHistory)
-    setIeltsHistory(loadIELTSResults())
-    const s = loadStreak()
-    setStreak({ current: s.current, longest: s.longest })
-    const progress = loadProgress()
-    const lessons = Object.values(progress.levels).reduce(
-      (sum, lp) => sum + (lp?.completedLessons?.length ?? 0),
-      0,
-    )
-    setLessonsCompleted(lessons)
-    setPassedExams(loadedCerts.length)
+    try {
+      setCerts(loadCertificates())
+      setHistory(loadTestHistory())
+      const s = loadStreak()
+      setStreak({ current: s.current, longest: s.longest })
+      const progress = loadProgress()
+      const lessons = Object.values(progress.levels).reduce(
+        (sum, lp) => sum + (lp?.completedLessons?.length ?? 0),
+        0,
+      )
+      setLessonsCompleted(lessons)
+    } catch (e) {
+      console.warn('Profile load failed:', e)
+    }
   }, [])
 
-  const totalPoints = lessonsCompleted * 10 + passedExams * 50
+  // Keep one certificate per level (defensive — storage already enforces this).
+  const uniqueCerts = useMemo(() => {
+    const byLevel = new Map<string, CertificateEntry>()
+    for (const c of certs) {
+      if (!byLevel.has(c.level)) byLevel.set(c.level, c)
+    }
+    return Array.from(byLevel.values())
+  }, [certs])
+
+  const quizHistory = useMemo(
+    () =>
+      history
+        .filter(h => h.type === 'quiz')
+        .filter(h => quizFilter === 'all' || h.level === quizFilter)
+        .sort((a, b) => (a.date < b.date ? 1 : -1)),
+    [history, quizFilter],
+  )
+
+  const ieltsHistory = useMemo(
+    () => history.filter(h => h.type === 'ielts').sort((a, b) => (a.date < b.date ? 1 : -1)),
+    [history],
+  )
+
+  const totalPoints = lessonsCompleted * 10 + uniqueCerts.length * 50
 
   return (
     <div className="min-h-screen bg-navy">
       <NavBar />
       <div className="max-w-3xl mx-auto px-5 py-8 sm:py-12 page-enter-up">
 
-        {/* Profile header — editorial */}
+        {/* Profile header */}
         <div className="mb-10 pb-8 border-b hairline">
           <div className="text-[11px] font-semibold tracking-[0.22em] uppercase mb-3" style={{ color: 'var(--champagne)' }}>
             Таны профайл
@@ -63,7 +87,7 @@ export default function ProfilePage() {
           </h1>
         </div>
 
-        {/* Stats hero row — premium grid with hairline separators */}
+        {/* Stats strip */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/[0.04] rounded-2xl overflow-hidden border hairline shadow-editorial mb-12">
           {[
             { Icon: FlameIcon, val: streak.current, label: 'Одоогийн streak' },
@@ -71,17 +95,10 @@ export default function ProfilePage() {
             { Icon: CheckCircleIcon, val: lessonsCompleted, label: 'Хичээл' },
             { Icon: TrophyIcon, val: totalPoints, label: 'Нийт оноо' },
           ].map(s => (
-            <div
-              key={s.label}
-              className="bg-navy-surface p-5 sm:p-6 transition-colors duration-300 hover:bg-navy-surface-2 relative"
-            >
+            <div key={s.label} className="bg-navy-surface p-5 sm:p-6">
               <span
                 className="inline-flex items-center justify-center w-9 h-9 rounded-lg mb-4"
-                style={{
-                  color: 'var(--gold)',
-                  background: 'rgba(245,158,11,0.06)',
-                  border: '1px solid rgba(245,158,11,0.15)',
-                }}
+                style={{ color: 'var(--gold)', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)' }}
               >
                 <s.Icon size={16} />
               </span>
@@ -97,138 +114,134 @@ export default function ProfilePage() {
               >
                 {s.val}
               </div>
-              <div className="text-[11px] uppercase tracking-[0.15em]" style={{ color: 'var(--text-muted)' }}>
+              <div className="font-sans text-[11px] uppercase tracking-[0.15em]" style={{ color: 'var(--text-muted)' }}>
                 {s.label}
               </div>
             </div>
           ))}
         </div>
 
-        {/* ── Certificates ── */}
+        {/* ── 01 · Certificates ── */}
         <SectionHeader label="01" kicker="Амжилт" title={t('certificates')} />
 
-        {certs.length === 0 ? (
-          <EmptyState Icon={CertificateIcon} primary={t('noCertificates')} secondary="Тест өгч 18/25 аваад гэрчилгээ аваарай." />
+        {uniqueCerts.length === 0 ? (
+          <EmptyState Icon={CertificateIcon} primary="Одоогоор гэрчилгээ байхгүй байна" secondary="Тест өгч 18/25 аваад гэрчилгээ аваарай." />
         ) : (
-          <div className="space-y-2 mb-12">
-            {certs.map(cert => (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-12">
+            {uniqueCerts.map(cert => (
               <button
                 key={cert.id}
                 onClick={() => setSelectedCert(cert)}
-                className="w-full rounded-xl p-4 flex items-center gap-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-gold text-left group"
+                className="rounded-2xl p-5 flex flex-col items-center text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-gold group"
                 style={{
                   background: 'linear-gradient(#141C30, #141C30) padding-box, linear-gradient(135deg, #F59E0B 0%, #E4C08A 50%, #D97706 100%) border-box',
-                  border: '1px solid transparent',
+                  border: '2px solid transparent',
                 }}
               >
                 <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 font-serif-display font-bold text-navy nums-tabular"
-                  style={{ background: 'linear-gradient(135deg, #FCD34D, #D97706)', fontSize: 18 }}
+                  className="w-14 h-14 rounded-xl flex items-center justify-center mb-3 font-serif-display font-bold text-navy nums-tabular"
+                  style={{ background: 'linear-gradient(135deg, #FCD34D, #D97706)', fontSize: 20 }}
                 >
                   {cert.level}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-white text-sm mb-0.5" style={{ letterSpacing: '-0.01em' }}>
-                    {cert.level} гэрчилгээ
-                  </div>
-                  <div className="text-[11px] nums-tabular" style={{ color: 'var(--text-muted)' }}>
-                    {cert.score}/{cert.total} · {formatMongolianDate(cert.date)}
-                  </div>
+                <div className="font-serif-display text-lg text-white mb-1">
+                  {cert.level} гэрчилгээ
                 </div>
-                <div className="flex items-center gap-1.5 text-xs font-medium flex-shrink-0 transition-transform group-hover:translate-x-0.5" style={{ color: 'var(--gold)' }}>
-                  Харах
-                  <ArrowRightIcon size={14} />
+                <div className="font-sans text-[11px] nums-tabular" style={{ color: 'var(--text-muted)' }}>
+                  {cert.score}/{cert.total} · {formatMongolianDate(cert.date)}
                 </div>
               </button>
             ))}
           </div>
         )}
 
-        {/* ── Test History ── */}
-        <SectionHeader label="02" kicker="Түүх" title="Шалгалтын түүх" />
+        {/* ── 02 · Quiz history ── */}
+        <SectionHeader label="02" kicker="Түүх" title="Тестийн түүх" />
 
-        {testHistory.length === 0 ? (
-          <EmptyState Icon={ClipboardIcon} primary="Шалгалтын түүх байхгүй" secondary="Тест эсвэл IELTS өгсний дараа энд харагдана." />
-        ) : (
-          <div className="space-y-2 mb-12">
-            {testHistory.map(entry => (
-              <div
-                key={entry.id}
-                className="rounded-xl p-4 flex items-center gap-4 border hairline transition-colors hover:bg-white/[0.02]"
-                style={{ background: '#141C30' }}
+        <div className="flex flex-wrap gap-2 mb-5">
+          {(['all', ...QUIZ_LEVELS] as const).map(opt => {
+            const active = quizFilter === opt
+            return (
+              <button
+                key={opt}
+                onClick={() => { setQuizFilter(opt); setQuizVisible(QUIZ_PAGE_SIZE) }}
+                className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] px-3.5 py-1.5 rounded-full transition-colors min-h-[36px]"
+                style={{
+                  background: active ? 'rgba(245,158,11,0.12)' : 'transparent',
+                  color: active ? 'var(--gold)' : 'var(--text-muted)',
+                  border: `1px solid ${active ? 'rgba(245,158,11,0.35)' : 'var(--hairline)'}`,
+                }}
               >
+                {opt === 'all' ? 'All' : opt}
+              </button>
+            )
+          })}
+        </div>
+
+        {quizHistory.length === 0 ? (
+          <EmptyState Icon={ClipboardIcon} primary="Шалгалтын түүх байхгүй" secondary="Түвшингийн тест өгсний дараа энд харагдана." />
+        ) : (
+          <>
+            <div className="space-y-2 mb-4">
+              {quizHistory.slice(0, quizVisible).map(entry => (
                 <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{
-                    color: 'var(--gold)',
-                    background: 'rgba(245,158,11,0.06)',
-                    border: '1px solid rgba(245,158,11,0.15)',
-                  }}
+                  key={entry.id}
+                  className="rounded-xl p-4 flex items-center gap-4 border hairline"
+                  style={{ background: '#141C30' }}
                 >
-                  {entry.type === 'ielts' ? <NotebookIcon size={16} /> : <BookIcon size={16} />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-white text-sm">
-                    {entry.type === 'ielts' ? 'IELTS Mock Test' : `${entry.level} Тест`}
+                  <span
+                    className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] px-2.5 py-1 rounded-full flex-shrink-0"
+                    style={{ background: 'rgba(245,158,11,0.12)', color: 'var(--gold)', border: '1px solid rgba(245,158,11,0.25)' }}
+                  >
+                    {entry.level}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-sans font-semibold text-white text-sm nums-tabular">
+                      {entry.score ?? 0}/{entry.total ?? 25}
+                    </div>
+                    <div className="font-sans text-[11px] mt-0.5 nums-tabular" style={{ color: 'var(--text-muted)' }}>
+                      {formatMongolianDate(entry.date)}
+                    </div>
                   </div>
-                  <div className="text-[11px] mt-0.5 nums-tabular" style={{ color: 'var(--text-muted)' }}>
-                    {entry.type === 'ielts'
-                      ? `Band ${entry.ieltsBand ?? '—'}`
-                      : `${entry.score ?? 0}/${entry.total ?? 25}`}
-                    {' · '}{formatMongolianDate(entry.date)}
-                  </div>
-                </div>
-                {entry.type === 'quiz' && (
-                  <span className={`text-[10px] font-semibold tracking-[0.15em] uppercase px-2.5 py-1 rounded-full flex-shrink-0 ${
+                  <span className={`font-sans text-[10px] font-semibold tracking-[0.15em] uppercase px-2.5 py-1 rounded-full flex-shrink-0 ${
                     entry.passed
                       ? 'bg-emerald-500/[0.08] text-emerald-400 border border-emerald-500/25'
                       : 'bg-rose-500/[0.08] text-rose-400 border border-rose-500/25'
                   }`}>
                     {entry.passed ? 'Тэнцсэн' : 'Тэнцээгүй'}
                   </span>
-                )}
-                {entry.type === 'ielts' && (
-                  <span className={`text-[10px] font-semibold tracking-[0.15em] uppercase px-2.5 py-1 rounded-full flex-shrink-0 nums-tabular ${
-                    (entry.ieltsBand ?? 0) >= 5
-                      ? 'bg-emerald-500/[0.08] text-emerald-400 border border-emerald-500/25'
-                      : 'bg-rose-500/[0.08] text-rose-400 border border-rose-500/25'
-                  }`}>
-                    Band {entry.ieltsBand ?? '—'}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ── IELTS History ── */}
-        {ieltsHistory.length > 0 && (
-          <>
-            <SectionHeader label="03" kicker="IELTS" title="IELTS түүх" />
-            <div className="space-y-2">
-              {ieltsHistory.map((r, i) => (
-                <div
-                  key={i}
-                  className="rounded-xl p-4 flex items-center gap-4 border hairline"
-                  style={{ background: '#141C30' }}
-                >
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center font-serif-display font-bold text-navy text-lg flex-shrink-0 nums-tabular"
-                    style={{ background: 'linear-gradient(135deg, #FCD34D, #D97706)' }}
-                  >
-                    {r.overall}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-white text-sm">IELTS Overall Band</div>
-                    <div className="text-[11px] mt-0.5 nums-tabular" style={{ color: 'var(--text-muted)' }}>
-                      L {r.listening} · R {r.reading} · W {r.writing} · S {r.speaking}
-                      <span className="opacity-60"> · {formatMongolianDate(r.date)}</span>
-                    </div>
-                  </div>
                 </div>
               ))}
             </div>
+            {quizHistory.length > quizVisible ? (
+              <button
+                onClick={() => setQuizVisible(v => v + QUIZ_PAGE_SIZE)}
+                className="w-full font-sans text-[11px] font-semibold uppercase tracking-[0.18em] py-3 min-h-[44px] rounded-xl mb-12 transition-colors"
+                style={{
+                  background: 'transparent',
+                  border: '1px solid var(--hairline)',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                Харах ({quizHistory.length - quizVisible})
+              </button>
+            ) : (
+              <div className="mb-12" />
+            )}
           </>
+        )}
+
+        {/* ── 03 · IELTS history ── */}
+        <SectionHeader label="03" kicker="IELTS" title="IELTS Түүх" />
+
+        {ieltsHistory.length === 0 ? (
+          <EmptyState Icon={NotebookIcon} primary="IELTS түүх байхгүй" secondary="IELTS Mock Test өгсний дараа энд харагдана." />
+        ) : (
+          <div className="space-y-3 mb-12">
+            {ieltsHistory.map(entry => (
+              <IELTSHistoryRow key={entry.id} entry={entry} />
+            ))}
+          </div>
         )}
       </div>
 
@@ -244,11 +257,198 @@ export default function ProfilePage() {
   )
 }
 
+function IELTSHistoryRow({ entry }: { entry: TestHistoryEntry }) {
+  const [expanded, setExpanded] = useState(false)
+  const [feedback, setFeedback] = useState('')
+  const [feedbackLoading, setFeedbackLoading] = useState(false)
+  const [feedbackErr, setFeedbackErr] = useState<string | null>(null)
+  const loadedRef = useRef(false)
+
+  const band = entry.overallBand ?? entry.ieltsBand ?? 0
+  const listening = entry.listeningScore ?? 0
+  const reading = entry.readingScore ?? 0
+  const writing = entry.writingBand ?? 0
+  const speaking = entry.speakingBand ?? 0
+  const wrongAnswers = entry.wrongAnswers ?? []
+
+  const fetchFeedback = async () => {
+    if (loadedRef.current || feedbackLoading) return
+    loadedRef.current = true
+    setFeedbackLoading(true)
+    setFeedbackErr(null)
+    try {
+      const res = await fetch('/api/ielts/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listeningScore: listening,
+          readingScore: reading,
+          writingBand: writing,
+          speakingBand: speaking,
+          overallBand: band,
+          wrongAnswers,
+        }),
+      })
+      if (!res.ok || !res.body) throw new Error(`Feedback ${res.status}`)
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let accum = ''
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+        accum += decoder.decode(value, { stream: true })
+        setFeedback(accum)
+      }
+    } catch (e) {
+      loadedRef.current = false
+      setFeedbackErr('Үнэлгээ ачаалахад алдаа гарлаа.')
+      console.warn('Feedback fetch failed:', e)
+    } finally {
+      setFeedbackLoading(false)
+    }
+  }
+
+  const handleToggle = () => {
+    const next = !expanded
+    setExpanded(next)
+    if (next) void fetchFeedback()
+  }
+
+  return (
+    <div
+      className="rounded-2xl border hairline overflow-hidden"
+      style={{ background: '#141C30' }}
+    >
+      <button
+        onClick={handleToggle}
+        className="w-full p-4 flex items-center gap-4 text-left transition-colors hover:bg-white/[0.02]"
+      >
+        <div
+          className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 font-serif-display font-bold nums-tabular"
+          style={{
+            background: 'linear-gradient(135deg, #FCD34D, #D97706)',
+            color: '#0B1222',
+            fontSize: 22,
+            letterSpacing: '-0.02em',
+          }}
+        >
+          {band}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="font-sans font-semibold text-white text-sm">IELTS Mock Test</div>
+          <div className="font-sans text-[11px] mt-0.5 nums-tabular" style={{ color: 'var(--text-muted)' }}>
+            {formatMongolianDate(entry.date)}
+          </div>
+        </div>
+        <span
+          className="font-sans text-[10px] font-semibold tracking-[0.15em] uppercase flex-shrink-0 transition-transform"
+          style={{
+            color: 'var(--gold)',
+            transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
+            transformOrigin: 'center',
+          }}
+        >
+          ▸
+        </span>
+      </button>
+
+      <div
+        className="overflow-hidden transition-[max-height,opacity] duration-300 ease-out"
+        style={{
+          maxHeight: expanded ? 2000 : 0,
+          opacity: expanded ? 1 : 0,
+        }}
+      >
+        <div className="px-4 pb-4 pt-1 border-t hairline">
+          {/* Section scores */}
+          <div className="grid grid-cols-2 gap-2 mt-3 mb-4">
+            <ScoreCell label="Listening" value={`${listening}/10`} />
+            <ScoreCell label="Reading" value={`${reading}/30`} />
+            <ScoreCell label="Writing" value={`Band ${writing}`} />
+            <ScoreCell label="Speaking" value={`Band ${speaking}`} />
+          </div>
+
+          {/* Wrong answers */}
+          {wrongAnswers.length > 0 && (
+            <div className="mb-4">
+              <div className="font-sans text-[10px] font-semibold tracking-[0.18em] uppercase mb-2" style={{ color: 'var(--champagne)' }}>
+                Алдсан асуултууд
+              </div>
+              <ul className="space-y-1.5">
+                {wrongAnswers.slice(0, 10).map((w, i) => (
+                  <li key={i} className="font-sans text-[12px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                    • {w}
+                  </li>
+                ))}
+                {wrongAnswers.length > 10 && (
+                  <li className="font-sans text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                    …+{wrongAnswers.length - 10} нэмэлт
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
+
+          {/* AI feedback */}
+          <div className="mb-4">
+            <div className="font-sans text-[10px] font-semibold tracking-[0.18em] uppercase mb-2" style={{ color: 'var(--champagne)' }}>
+              AI үнэлгээ
+            </div>
+            {feedbackLoading && !feedback && (
+              <div className="flex items-center gap-2 py-3">
+                <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: 'var(--gold)' }} />
+                <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: 'var(--gold)', animationDelay: '0.15s' }} />
+                <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: 'var(--gold)', animationDelay: '0.3s' }} />
+              </div>
+            )}
+            {feedbackErr && (
+              <div className="font-sans text-[12px]" style={{ color: '#F87171' }}>{feedbackErr}</div>
+            )}
+            {feedback && (
+              <div className="font-sans text-[13px] leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--text-secondary)' }}>
+                {feedback}
+              </div>
+            )}
+          </div>
+
+          <a
+            href="/ielts"
+            className="inline-flex items-center justify-center font-sans text-[11px] font-semibold uppercase tracking-[0.18em] px-5 py-3 min-h-[44px] rounded-xl transition-transform hover:-translate-y-0.5"
+            style={{
+              background: 'linear-gradient(135deg, #F59E0B, #D97706)',
+              color: '#0B1222',
+              boxShadow: '0 6px 20px rgba(245,158,11,0.28)',
+            }}
+          >
+            Дахин өгөх
+          </a>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ScoreCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      className="rounded-xl px-3 py-3 text-center"
+      style={{ background: '#0F1729', border: '1px solid var(--hairline)' }}
+    >
+      <div className="font-sans text-[10px] font-semibold tracking-[0.18em] uppercase mb-1" style={{ color: 'var(--text-muted)' }}>
+        {label}
+      </div>
+      <div className="font-sans text-sm font-semibold nums-tabular" style={{ color: 'var(--gold)' }}>
+        {value}
+      </div>
+    </div>
+  )
+}
+
 function SectionHeader({ label, kicker, title }: { label: string; kicker: string; title: string }) {
   return (
     <div className="flex items-end justify-between mb-5 border-b hairline pb-4">
       <div>
-        <div className="text-[10px] font-semibold tracking-[0.22em] uppercase mb-1.5" style={{ color: 'var(--champagne)' }}>
+        <div className="font-sans text-[10px] font-semibold tracking-[0.22em] uppercase mb-1.5" style={{ color: 'var(--champagne)' }}>
           {kicker}
         </div>
         <h2 className="font-serif-display text-xl sm:text-2xl text-white leading-tight">
@@ -272,8 +472,8 @@ function EmptyState({ Icon, primary, secondary }: { Icon: (p: { size?: number })
       }}>
         <Icon size={20} />
       </div>
-      <p className="text-sm font-medium text-white mb-1.5">{primary}</p>
-      <p className="text-xs max-w-xs mx-auto" style={{ color: 'var(--text-muted)' }}>{secondary}</p>
+      <p className="font-sans text-sm font-medium text-white mb-1.5">{primary}</p>
+      <p className="font-sans text-xs max-w-xs mx-auto" style={{ color: 'var(--text-muted)' }}>{secondary}</p>
     </div>
   )
 }

@@ -68,6 +68,50 @@ const PART2_INTRO = "Now I'd like you to talk about a topic. You have one minute
 const PART2_BEGIN = "Please begin."
 const CLOSING = "Thank you very much. That's the end of the speaking test. Well done for completing it. Your detailed results will be ready in just a moment."
 
+function answerLabel(q: IELTSContent['listening']['questions'][number], a: IELTSAnswer): string {
+  if (typeof a === 'number' && q.options) return q.options[a] ?? String(a)
+  if (typeof a === 'string') return a
+  return '—'
+}
+
+function correctLabel(q: IELTSContent['listening']['questions'][number]): string {
+  if (typeof q.correct === 'number' && q.options) return q.options[q.correct] ?? ''
+  if (q.acceptedAnswers?.[0]) return q.acceptedAnswers[0]
+  return ''
+}
+
+function isAnswerWrong(q: IELTSContent['listening']['questions'][number], a: IELTSAnswer): boolean {
+  const type = q.type ?? 'mc'
+  if (type === 'fill' || type === 'short') {
+    if (typeof a !== 'string' || !a.trim()) return true
+    const list = q.acceptedAnswers ?? []
+    const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9а-яёөү\s]/g, '').replace(/\s+/g, ' ').trim()
+    const s = norm(a)
+    return !list.some(x => norm(x) === s)
+  }
+  return typeof a !== 'number' || a !== q.correct
+}
+
+function collectWrongAnswers(content: IELTSContent, ans: IELTSAnswers): string[] {
+  const out: string[] = []
+  content.listening.questions.forEach((q, i) => {
+    if (isAnswerWrong(q, ans.listeningAnswers[i] ?? null)) {
+      out.push(`Listening Q${i + 1}: ${q.question} → Таны хариулт: ${answerLabel(q, ans.listeningAnswers[i] ?? null)}; Зөв: ${correctLabel(q)}`)
+    }
+  })
+  let ri = 0
+  content.reading.passages.forEach(p => {
+    p.questions.forEach(q => {
+      const a = ans.readingAnswers[ri] ?? null
+      if (isAnswerWrong(q, a)) {
+        out.push(`Reading Q${ri + 1}: ${q.question} → Таны хариулт: ${answerLabel(q, a)}; Зөв: ${correctLabel(q)}`)
+      }
+      ri += 1
+    })
+  })
+  return out
+}
+
 function bandColor(b: number) { return b >= 7 ? '#34D399' : b >= 5 ? '#F59E0B' : '#F87171' }
 function bandLabel(b: number) {
   if (b >= 8) return 'Маш сайн'
@@ -703,8 +747,22 @@ export function IELTSTest() {
       if (!res.ok) throw new Error('Grading failed')
       const result = await res.json() as GradeResult
       setGradeResult(result)
+      const lTotal = content.listening.questions.length
+      const rTotal = content.reading.passages.reduce((n, p) => n + p.questions.length, 0)
+      const lCorrect = Math.round((result.listening / 9) * lTotal)
+      const rCorrect = Math.round((result.reading / 9) * rTotal)
+      const wrongAnswers = collectWrongAnswers(content, gradePayload)
       saveIELTSResult({ date: new Date().toISOString().slice(0, 10), overall: result.overall, listening: result.listening, reading: result.reading, writing: result.writing, speaking: result.speaking, feedback: result.writingFeedback })
-      saveTestResult({ type: 'ielts', ieltsBand: result.overall })
+      saveTestResult({
+        type: 'ielts',
+        ieltsBand: result.overall,
+        overallBand: result.overall,
+        listeningScore: lCorrect,
+        readingScore: rCorrect,
+        writingBand: result.writing,
+        speakingBand: result.speaking,
+        wrongAnswers,
+      })
       clearSavedSession()
       setPhase('results')
     } catch {
@@ -1554,7 +1612,7 @@ export function IELTSTest() {
                     {s.label}
                   </div>
                   <div
-                    className="font-serif-display text-3xl font-medium nums-tabular leading-none"
+                    className="font-sans text-3xl font-semibold nums-tabular leading-none"
                     style={{ color: bandColor(s.value) }}
                   >
                     {s.value}
@@ -1609,7 +1667,7 @@ export function IELTSTest() {
             </div>
             <div className="h-px my-3" style={{ background: 'var(--hairline)' }} />
             <p
-              className="text-sm leading-relaxed font-serif-display italic"
+              className="font-sans text-sm leading-relaxed"
               style={{ color: 'var(--text-secondary)' }}
             >
               Сонсох <span className="font-semibold not-italic nums-tabular" style={{ color: 'var(--text-primary)' }}>{listenCorrect}</span>/{listenTotal} · Уншлага <span className="font-semibold not-italic nums-tabular" style={{ color: 'var(--text-primary)' }}>{readCorrect}</span>/{readTotal} · Бичих <span className="font-semibold not-italic nums-tabular" style={{ color: 'var(--text-primary)' }}>{writingPts}</span>/6 · Ярих <span className="font-semibold not-italic nums-tabular" style={{ color: 'var(--text-primary)' }}>{speakPts}</span>/15 · Нийт: <span className="font-bold not-italic nums-tabular" style={{ color: passedPts ? '#34D399' : 'var(--gold)' }}>{totalPts}</span>/{maxTotal}
@@ -1645,13 +1703,13 @@ export function IELTSTest() {
                 {criteriaRows.map(r => (
                   <div key={r.label} className="flex items-center justify-between">
                     <span
-                      className="text-[13px] font-serif-display italic"
+                      className="font-sans text-[13px]"
                       style={{ color: 'var(--text-secondary)' }}
                     >
                       {r.label}
                     </span>
                     <span
-                      className="font-serif-display text-lg font-medium nums-tabular"
+                      className="font-sans text-lg font-semibold nums-tabular"
                       style={{ color: bandColor(r.value) }}
                     >
                       {r.value}
@@ -1661,7 +1719,7 @@ export function IELTSTest() {
               </div>
               {gradeResult.writingFeedback && (
                 <p
-                  className="text-[13px] mt-4 pt-4 leading-relaxed font-serif-display italic"
+                  className="font-sans text-[13px] mt-4 pt-4 leading-relaxed"
                   style={{ color: 'var(--text-secondary)', borderTop: '1px solid var(--hairline)' }}
                 >
                   {gradeResult.writingFeedback}
@@ -1693,13 +1751,13 @@ export function IELTSTest() {
                 {speakRows.map(r => (
                   <div key={r.label} className="flex items-center justify-between">
                     <span
-                      className="text-[13px] font-serif-display italic"
+                      className="font-sans text-[13px]"
                       style={{ color: 'var(--text-secondary)' }}
                     >
                       {r.label}
                     </span>
                     <span
-                      className="font-serif-display text-lg font-medium nums-tabular"
+                      className="font-sans text-lg font-semibold nums-tabular"
                       style={{ color: bandColor(r.value) }}
                     >
                       {r.value}
@@ -1709,7 +1767,7 @@ export function IELTSTest() {
               </div>
               {gradeResult.speakingFeedback && (
                 <p
-                  className="text-[13px] mt-4 pt-4 leading-relaxed font-serif-display italic"
+                  className="font-sans text-[13px] mt-4 pt-4 leading-relaxed"
                   style={{ color: 'var(--text-secondary)', borderTop: '1px solid var(--hairline)' }}
                 >
                   {gradeResult.speakingFeedback}
