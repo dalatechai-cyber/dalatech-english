@@ -19,6 +19,7 @@ import {
   transcribeAudio,
   fetchReaction,
   clearTTSCache,
+  isQuotaOrRateLimit,
   type AudioHandle,
   type ElevenVoice,
 } from '@/lib/elevenlabs'
@@ -346,6 +347,8 @@ export function IELTSTest() {
     const total = turns.length
     setListenLoadProgress({ done: 0, total })
 
+    let sawQuotaOrRateLimit = false
+
     ;(async () => {
       const BATCH_SIZE = 2
       const urls: (string | null)[] = new Array(total).fill(null)
@@ -356,11 +359,17 @@ export function IELTSTest() {
           return await generateTTS(text, voice, signal)
         } catch (err) {
           if (signal.aborted) throw err
+          if (isQuotaOrRateLimit(err)) sawQuotaOrRateLimit = true
           const msg = err instanceof Error ? err.message : String(err)
           if (/502|503|504/.test(msg)) {
             await new Promise(r => setTimeout(r, 1000))
             if (signal.aborted) throw err
-            return await generateTTS(text, voice, signal)
+            try {
+              return await generateTTS(text, voice, signal)
+            } catch (retryErr) {
+              if (isQuotaOrRateLimit(retryErr)) sawQuotaOrRateLimit = true
+              throw retryErr
+            }
           }
           throw err
         }
@@ -392,12 +401,14 @@ export function IELTSTest() {
       const successCount = urls.filter(u => u !== null).length
       const failedCount = total - successCount
       listenAudiosRef.current = urls.map(u => u ?? '')
+      // IELTSListening already prepends "⚠" to listenNotice, so don't duplicate it here.
+      const quotaNotice = 'Дуу чанар стандартаас бага байна. ElevenLabs кредит дууссан.'
       if (successCount === 0) {
         setListenAudioError(true)
-        setListenNotice('ElevenLabs холбогдсонгүй, өөр дуу ашиглаж байна')
+        setListenNotice(sawQuotaOrRateLimit ? quotaNotice : 'ElevenLabs холбогдсонгүй, өөр дуу ашиглаж байна')
       } else {
         if (failedCount > 0) {
-          setListenNotice(`${failedCount} хэсэгт өөр дуу ашиглана`)
+          setListenNotice(sawQuotaOrRateLimit ? quotaNotice : `${failedCount} хэсэгт өөр дуу ашиглана`)
         }
         setListenAudioReady(true)
       }
