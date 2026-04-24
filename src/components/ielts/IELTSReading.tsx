@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import type { IELTSContent, IELTSAnswer } from '@/lib/ielts'
 import { NavBar } from '../NavBar'
 import { SectionProgress, renderQuestionBody, isAnswered } from './ielts-shared'
@@ -32,11 +32,14 @@ export function IELTSReading({
   onAdvance,
 }: IELTSReadingProps) {
   const passages = content.reading.passages
-  const passageRef = useRef<HTMLDivElement>(null)
-  const questionsRef = useRef<HTMLDivElement>(null)
+  // Reset scroll on every rendered instance. PassagePane / QuestionsPane JSX
+  // is reused in the mobile (md:hidden) and desktop (hidden md:flex) sections
+  // — a single ref on the shared JSX would bind to whichever element committed
+  // last, missing the visible one on mobile and leaving questions scrolled.
   useEffect(() => {
-    if (passageRef.current) passageRef.current.scrollTop = 0
-    if (questionsRef.current) questionsRef.current.scrollTop = 0
+    document
+      .querySelectorAll<HTMLElement>('[data-reading-scroll]')
+      .forEach(el => { el.scrollTop = 0 })
   }, [readPassageIdx])
   // Reading content may still be loading (listening fetch completes first while
   // generate-content request is in flight). Show skeleton until passages arrive.
@@ -83,7 +86,7 @@ export function IELTSReading({
 
   const PassagePane = (
     <div
-      ref={passageRef}
+      data-reading-scroll="passage"
       className="bg-navy-surface border border-navy-surface-2 rounded-2xl h-full overflow-y-auto"
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
@@ -123,7 +126,7 @@ export function IELTSReading({
   const QuestionsPane = (
     <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl h-full flex flex-col overflow-hidden">
       <div
-        ref={questionsRef}
+        data-reading-scroll="questions"
         className="flex-1 overflow-y-auto p-4"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
