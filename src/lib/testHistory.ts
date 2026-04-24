@@ -5,6 +5,7 @@ const KEY = 'core-test-history'
 export interface TestHistoryEntry {
   id: string
   date: string
+  timestamp?: number
   type: 'quiz' | 'ielts'
   // Quiz fields
   level?: string
@@ -19,6 +20,7 @@ export interface TestHistoryEntry {
   speakingBand?: number
   overallBand?: number
   wrongAnswers?: string[]
+  feedback?: string
 }
 
 export function loadTestHistory(): TestHistoryEntry[] {
@@ -34,10 +36,12 @@ export function saveTestResult(entry: Omit<TestHistoryEntry, 'id' | 'date'>): vo
   if (typeof window === 'undefined') return
   try {
     const history = loadTestHistory()
+    const now = Date.now()
     const newEntry: TestHistoryEntry = {
       ...entry,
-      id: `test-${Date.now()}`,
+      id: `test-${now}`,
       date: new Date().toISOString().slice(0, 10),
+      timestamp: now,
     }
     history.unshift(newEntry)
     localStorage.setItem(KEY, JSON.stringify(history.slice(0, MAX_TEST_HISTORY)))

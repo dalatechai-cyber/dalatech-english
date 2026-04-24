@@ -1,11 +1,10 @@
 'use client'
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { NavBar } from '@/components/NavBar'
 import { CertificateModal } from '@/components/CertificateModal'
 import { loadCertificates, formatMongolianDate, type CertificateEntry } from '@/lib/certificates'
 import { loadTestHistory, type TestHistoryEntry } from '@/lib/testHistory'
 import { loadStreak } from '@/lib/streak'
-import { loadProgress } from '@/lib/storage'
 import { t } from '@/lib/i18n'
 import type { LevelCode } from '@/lib/types'
 import {
@@ -25,7 +24,6 @@ export default function ProfilePage() {
   const [certs, setCerts] = useState<CertificateEntry[]>([])
   const [history, setHistory] = useState<TestHistoryEntry[]>([])
   const [streak, setStreak] = useState({ current: 0, longest: 0 })
-  const [lessonsCompleted, setLessonsCompleted] = useState(0)
   const [selectedCert, setSelectedCert] = useState<CertificateEntry | null>(null)
   const [quizFilter, setQuizFilter] = useState<'all' | LevelCode>('all')
   const [quizVisible, setQuizVisible] = useState(QUIZ_PAGE_SIZE)
@@ -36,12 +34,6 @@ export default function ProfilePage() {
       setHistory(loadTestHistory())
       const s = loadStreak()
       setStreak({ current: s.current, longest: s.longest })
-      const progress = loadProgress()
-      const lessons = Object.values(progress.levels).reduce(
-        (sum, lp) => sum + (lp?.completedLessons?.length ?? 0),
-        0,
-      )
-      setLessonsCompleted(lessons)
     } catch (e) {
       console.warn('Profile load failed:', e)
     }
@@ -70,7 +62,16 @@ export default function ProfilePage() {
     [history],
   )
 
-  const totalPoints = lessonsCompleted * 10 + uniqueCerts.length * 50
+  const totalPoints = history
+    .filter(t => t.type === 'quiz')
+    .reduce((sum, t) => {
+      const passed = t.passed || (t.score ?? 0) >= 18
+      return sum + (t.score || 0) + (passed ? 50 : 0)
+    }, 0)
+
+  const lessonsCompleted = history
+    .filter(t => t.type === 'quiz' && (t.passed || (t.score ?? 0) >= 18))
+    .length
 
   return (
     <div className="min-h-screen bg-navy">
@@ -259,10 +260,6 @@ export default function ProfilePage() {
 
 function IELTSHistoryRow({ entry }: { entry: TestHistoryEntry }) {
   const [expanded, setExpanded] = useState(false)
-  const [feedback, setFeedback] = useState('')
-  const [feedbackLoading, setFeedbackLoading] = useState(false)
-  const [feedbackErr, setFeedbackErr] = useState<string | null>(null)
-  const loadedRef = useRef(false)
 
   const band = entry.overallBand ?? entry.ieltsBand ?? 0
   const listening = entry.listeningScore ?? 0
@@ -270,49 +267,9 @@ function IELTSHistoryRow({ entry }: { entry: TestHistoryEntry }) {
   const writing = entry.writingBand ?? 0
   const speaking = entry.speakingBand ?? 0
   const wrongAnswers = entry.wrongAnswers ?? []
+  const feedback = entry.feedback ?? ''
 
-  const fetchFeedback = async () => {
-    if (loadedRef.current || feedbackLoading) return
-    loadedRef.current = true
-    setFeedbackLoading(true)
-    setFeedbackErr(null)
-    try {
-      const res = await fetch('/api/ielts/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          listeningScore: listening,
-          readingScore: reading,
-          writingBand: writing,
-          speakingBand: speaking,
-          overallBand: band,
-          wrongAnswers,
-        }),
-      })
-      if (!res.ok || !res.body) throw new Error(`Feedback ${res.status}`)
-      const reader = res.body.getReader()
-      const decoder = new TextDecoder()
-      let accum = ''
-      while (true) {
-        const { value, done } = await reader.read()
-        if (done) break
-        accum += decoder.decode(value, { stream: true })
-        setFeedback(accum)
-      }
-    } catch (e) {
-      loadedRef.current = false
-      setFeedbackErr('Үнэлгээ ачаалахад алдаа гарлаа.')
-      console.warn('Feedback fetch failed:', e)
-    } finally {
-      setFeedbackLoading(false)
-    }
-  }
-
-  const handleToggle = () => {
-    const next = !expanded
-    setExpanded(next)
-    if (next) void fetchFeedback()
-  }
+  const handleToggle = () => setExpanded(v => !v)
 
   return (
     <div
@@ -394,19 +351,13 @@ function IELTSHistoryRow({ entry }: { entry: TestHistoryEntry }) {
             <div className="font-sans text-[10px] font-semibold tracking-[0.18em] uppercase mb-2" style={{ color: 'var(--champagne)' }}>
               AI үнэлгээ
             </div>
-            {feedbackLoading && !feedback && (
-              <div className="flex items-center gap-2 py-3">
-                <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: 'var(--gold)' }} />
-                <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: 'var(--gold)', animationDelay: '0.15s' }} />
-                <span className="w-2 h-2 rounded-full animate-bounce" style={{ background: 'var(--gold)', animationDelay: '0.3s' }} />
-              </div>
-            )}
-            {feedbackErr && (
-              <div className="font-sans text-[12px]" style={{ color: '#F87171' }}>{feedbackErr}</div>
-            )}
-            {feedback && (
+            {feedback ? (
               <div className="font-sans text-[13px] leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--text-secondary)' }}>
                 {feedback}
+              </div>
+            ) : (
+              <div className="font-sans text-[13px]" style={{ color: 'var(--text-muted)' }}>
+                Үнэлгээ байхгүй байна
               </div>
             )}
           </div>

@@ -59,27 +59,23 @@ export function StreakPopup({ streak, onClose }: StreakPopupProps) {
         </svg>
       </button>
 
-      <div className="flex items-center justify-center gap-4 mt-1">
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+        }}
+      >
+        <span style={{ fontSize: '4rem', lineHeight: 1 }}>🔥</span>
         <span
-          aria-hidden="true"
           style={{
             fontSize: '4rem',
-            lineHeight: 1,
-            filter: 'drop-shadow(0 4px 14px rgba(245,158,11,0.45))',
-          }}
-        >
-          🔥
-        </span>
-        <span
-          className="font-serif-display font-bold nums-tabular"
-          style={{
-            fontSize: '4rem',
+            fontWeight: 900,
             lineHeight: 1,
             background: 'linear-gradient(135deg, #F59E0B, #FCD34D)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            letterSpacing: '-0.03em',
           }}
         >
           {streak}

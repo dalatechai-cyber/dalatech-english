@@ -753,6 +753,35 @@ export function IELTSTest() {
       const rCorrect = Math.round((result.reading / 9) * rTotal)
       const wrongAnswers = collectWrongAnswers(content, gradePayload)
       saveIELTSResult({ date: new Date().toISOString().slice(0, 10), overall: result.overall, listening: result.listening, reading: result.reading, writing: result.writing, speaking: result.speaking, feedback: result.writingFeedback })
+
+      // Generate AI feedback ONCE now so profile never re-hits the API.
+      let feedbackText = ''
+      try {
+        const fbRes = await fetch('/api/ielts/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            listeningScore: lCorrect,
+            readingScore: rCorrect,
+            writingBand: result.writing,
+            speakingBand: result.speaking,
+            overallBand: result.overall,
+            wrongAnswers,
+          }),
+        })
+        if (fbRes.ok && fbRes.body) {
+          const reader = fbRes.body.getReader()
+          const decoder = new TextDecoder()
+          while (true) {
+            const { value, done } = await reader.read()
+            if (done) break
+            feedbackText += decoder.decode(value, { stream: true })
+          }
+        }
+      } catch {
+        // Swallow — empty feedback means profile shows the fallback message.
+      }
+
       saveTestResult({
         type: 'ielts',
         ieltsBand: result.overall,
@@ -762,6 +791,7 @@ export function IELTSTest() {
         writingBand: result.writing,
         speakingBand: result.speaking,
         wrongAnswers,
+        feedback: feedbackText,
       })
       clearSavedSession()
       setPhase('results')
