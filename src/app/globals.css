@@ -248,6 +248,13 @@ body::before {
   51%, 100% { opacity: 0; }
 }
 
+.streaming-text {
+  opacity: 1;
+  transition: none;
+  animation: none;
+  contain: content;
+}
+
 *:focus-visible {
   outline: 2px solid #F59E0B;
   outline-offset: 2px;

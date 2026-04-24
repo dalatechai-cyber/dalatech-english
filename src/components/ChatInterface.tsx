@@ -33,9 +33,6 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
   const [streakData, setStreakData] = useState<{ current: number; isNewDay: boolean } | null>(null)
   const [hasRecordedStreak, setHasRecordedStreak] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
-  const streamingContentRef = useRef('')
-  const streamingIdRef = useRef<string | null>(null)
-  const rafPendingRef = useRef(false)
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -75,60 +72,52 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
     setInput('')
     setIsLoading(true)
 
-    const aiMsgId = `a-${Date.now()}`
-    streamingIdRef.current = aiMsgId
-    streamingContentRef.current = ''
-    setMessages(prev => [...prev, { id: aiMsgId, role: 'assistant', content: '', timestamp: Date.now() }])
-    setStreamingId(aiMsgId)
+    // Add empty assistant message with id='streaming' sentinel
+    setMessages(prev => [...prev, { id: 'streaming', role: 'assistant', content: '', timestamp: Date.now() }])
+    setStreamingId('streaming')
 
-    const scheduleDomUpdate = () => {
-      if (rafPendingRef.current) return
-      rafPendingRef.current = true
-      requestAnimationFrame(() => {
-        rafPendingRef.current = false
-        const id = streamingIdRef.current
-        if (!id) return
-        const el = document.getElementById(`msg-${id}`)
-        if (el) el.textContent = streamingContentRef.current
-        bottomRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' })
-      })
-    }
+    let fullText = ''
 
     try {
       const apiMessages = newMessages.map(m => ({ role: m.role, content: m.content }))
-      const res = await fetch('/api/chat', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: apiMessages, level, lessonId }),
       })
 
-      if (!res.ok) throw new Error('API error ' + res.status)
-      if (!res.body) throw new Error('No stream body')
-      const reader = res.body.getReader()
+      if (!response.ok) throw new Error('API error ' + response.status)
+      if (!response.body) throw new Error('No stream body')
+      const reader = response.body.getReader()
       const decoder = new TextDecoder()
 
+      // Read stream — bypass React, update DOM directly
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
+
         const chunk = decoder.decode(value, { stream: true })
-        streamingContentRef.current += chunk
-        scheduleDomUpdate()
+        fullText += chunk
+
+        // Update DOM directly - bypass React entirely
+        const el = document.querySelector('[data-streaming="true"]')
+        if (el) el.textContent = fullText
       }
 
-      const fullContent = streamingContentRef.current
-      streamingIdRef.current = null
+      // When done - update React state once with final content and real id
+      const finalId = `a-${Date.now()}`
       setStreamingId(null)
       setMessages(prev =>
-        prev.map(m => (m.id === aiMsgId ? { ...m, content: fullContent } : m))
+        prev.map(m => (m.id === 'streaming' ? { ...m, id: finalId, content: fullText } : m))
       )
 
       // Save corrections to mistake diary
-      const corrections = parseCorrectionsFromContent(fullContent, level)
+      const corrections = parseCorrectionsFromContent(fullText, level)
       corrections.forEach(c => saveMistake(c))
 
-      if (fullContent.includes('<exam-result>')) {
-        setLastExamContent(fullContent)
-        parseExamResult(fullContent)
+      if (fullText.includes('<exam-result>')) {
+        setLastExamContent(fullText)
+        parseExamResult(fullText)
         if (!lessonMeta?.isExam) {
           completeLesson(level, lessonId)
           setIsComplete(true)
@@ -140,13 +129,12 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
         }
       }
     } catch (err: unknown) {
-      streamingIdRef.current = null
       setStreamingId(null)
       if ((err as Error).name !== 'AbortError') {
         setMessages(prev =>
           prev.map(m =>
-            m.id === aiMsgId
-              ? { ...m, content: 'Алдаа гарлаа. Дахин оролдоно уу.' }
+            m.id === 'streaming'
+              ? { ...m, id: `a-${Date.now()}`, content: 'Алдаа гарлаа. Дахин оролдоно уу.' }
               : m
           )
         )
