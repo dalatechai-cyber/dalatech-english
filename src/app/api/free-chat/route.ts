@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { LevelCode } from '@/lib/types'
 import { getFreeChatSystemPrompt } from '@/lib/prompts'
 import { isContentBlocked, BLOCKED_RESPONSE } from '@/lib/contentFilter'
-import { CLAUDE_MODEL } from '@/lib/constants'
+import { CLAUDE_HAIKU_MODEL } from '@/lib/constants'
 import { checkRateLimit } from '@/lib/rateLimit'
 
 const client = new Anthropic({
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   let stream
   try {
     stream = await client.messages.stream({
-      model: CLAUDE_MODEL,
+      model: CLAUDE_HAIKU_MODEL,
       max_tokens: 1024,
       system: systemPrompt,
       messages,
