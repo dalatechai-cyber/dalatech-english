@@ -120,6 +120,12 @@ ENDING:
 - Then end with the exact silent tag: [TEST_COMPLETE]
 - Do not read any of the bracketed tags ([PART_2_START], [PREP_START], [PREP_END], [PART_3_START], [TEST_COMPLETE]) aloud. They are silent markers for the UI only.
 
+IMPORTANT TIMING RULES:
+- After asking a question WAIT for the student to respond. Do not repeat yourself.
+- If the student is silent for a few seconds they are thinking — do not interrupt.
+- Never repeat your welcome message.
+- Only move to the next question after the student has given an answer.
+
 IMPORTANT:
 - Track which part you are in internally.
 - After 8 Part 1 questions, move to Part 2.
@@ -168,9 +174,10 @@ export async function POST(req: NextRequest) {
           type: 'server_vad',
           threshold: 0.7,
           prefix_padding_ms: 500,
-          // 1.5s of silence before AI considers student finished speaking.
-          // Gives learners time to think without being cut off mid-answer.
-          silence_duration_ms: 1500,
+          // 2.5s of silence before AI considers the student finished
+          // speaking. Longer window prevents Sarah from restarting her
+          // welcome / asking again while a quiet student is thinking.
+          silence_duration_ms: 2500,
           create_response: true,
           interrupt_response: false,
         },

@@ -418,16 +418,19 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
               localStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = false })
               break
             case 'response.audio.done':
-              // 800ms grace: AI tail finishes playing, then flip to blue +
-              // boop and re-enable the mic in the same step so the UI and
-              // mic state change together.
+              // 1500ms grace lets the tail of Sarah's audio drain from the
+              // element buffer; then we boop, wait 300ms so the boop itself
+              // doesn't bleed into the student's first word, then flip the
+              // orb to blue and unmute the mic.
               if (micReenableTimeoutRef.current) clearTimeout(micReenableTimeoutRef.current)
               micReenableTimeoutRef.current = setTimeout(() => {
-                localStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = true })
-                setOrbState('listening')
                 playBoopSound()
-                micReenableTimeoutRef.current = null
-              }, 800)
+                micReenableTimeoutRef.current = setTimeout(() => {
+                  setOrbState('listening')
+                  localStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = true })
+                  micReenableTimeoutRef.current = null
+                }, 300)
+              }, 1500)
               break
             case 'response.audio_transcript.delta':
               if (typeof msg.delta === 'string') {
