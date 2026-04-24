@@ -21,7 +21,8 @@ const config: Config = {
         'text-secondary': 'var(--text-secondary)',
       },
       fontFamily: {
-        serif: ['Playfair Display', 'EB Garamond', 'Georgia', 'serif'],
+        serif: ['var(--font-playfair)', 'EB Garamond', 'Georgia', 'serif'],
+        display: ['var(--font-playfair)', 'Georgia', 'serif'],
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in-out',
