@@ -7,6 +7,7 @@ const RATE_LIMIT_MESSAGE = 'Хэт олон хүсэлт илгээлээ. 1 м�
 type LimitKey =
   | 'ielts-generate'
   | 'quiz'
+  | 'quiz-grade-writing'
   | 'ielts-grade'
   | 'ielts-tts'
   | 'ielts-stt'
@@ -19,6 +20,7 @@ type LimitKey =
 const LIMITS: Record<LimitKey, number> = {
   'ielts-generate': 5,
   quiz: 5,
+  'quiz-grade-writing': 10,
   'ielts-grade': 10,
   'ielts-tts': 60,
   'ielts-stt': 20,

@@ -51,10 +51,9 @@ Rules:
     })
     text = response.content[0]?.type === 'text' ? response.content[0].text : ''
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e)
     console.error('Generate listening error (Anthropic call):', e)
     console.error('Error details:', JSON.stringify(e, Object.getOwnPropertyNames(e as object)))
-    return NextResponse.json({ error: `Anthropic API error: ${msg}` }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to generate listening content' }, { status: 500 })
   }
 
   const jsonMatch = text.match(/\{[\s\S]*\}/)

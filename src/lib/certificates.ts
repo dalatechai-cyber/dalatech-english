@@ -28,12 +28,17 @@ export function saveCertificate(entry: Omit<CertificateEntry, 'id' | 'date'>): C
     date: today,
   }
   if (typeof window !== 'undefined') {
-    const certs = loadCertificates()
-    const existing = certs.find(
+    // Re-read just before write to narrow multi-tab race window
+    const latest = loadCertificates()
+    const existing = latest.find(
       c => c.level === entry.level && c.date === today && c.type === entry.type
     )
     if (existing) return existing
-    localStorage.setItem(KEY, JSON.stringify([cert, ...certs]))
+    try {
+      localStorage.setItem(KEY, JSON.stringify([cert, ...latest]))
+    } catch (e) {
+      console.warn('Storage full:', e)
+    }
   }
   return cert
 }

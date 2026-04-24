@@ -114,11 +114,13 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
   const prepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const part2TimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const finishTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const micReenableTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const cleanup = useCallback(() => {
     if (prepTimerRef.current) { clearInterval(prepTimerRef.current); prepTimerRef.current = null }
     if (part2TimerRef.current) { clearInterval(part2TimerRef.current); part2TimerRef.current = null }
     if (finishTimeoutRef.current) { clearTimeout(finishTimeoutRef.current); finishTimeoutRef.current = null }
+    if (micReenableTimeoutRef.current) { clearTimeout(micReenableTimeoutRef.current); micReenableTimeoutRef.current = null }
     if (dcRef.current) {
       try { dcRef.current.close() } catch { /* ignore */ }
       dcRef.current = null
@@ -400,9 +402,12 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
               break
             case 'response.audio.done':
               // 800ms grace period lets the tail of AI audio fully play out of
-              // the speaker before we re-enable the mic.
-              setTimeout(() => {
+              // the speaker before we re-enable the mic. Tracked so cleanup
+              // cancels the timer on unmount.
+              if (micReenableTimeoutRef.current) clearTimeout(micReenableTimeoutRef.current)
+              micReenableTimeoutRef.current = setTimeout(() => {
                 localStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = true })
+                micReenableTimeoutRef.current = null
               }, 800)
               break
             case 'response.audio_transcript.delta':
@@ -556,7 +561,7 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
           <div className="hidden md:block fixed top-4 right-4 z-50">
             <button
               onClick={handleStop}
-              className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors"
+              className="px-4 py-2 rounded-xl text-sm font-semibold transition-colors min-h-[44px]"
               style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #EF4444', color: '#FCA5A5' }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.4)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)' }}>

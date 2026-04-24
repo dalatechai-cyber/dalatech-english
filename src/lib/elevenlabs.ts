@@ -1,9 +1,11 @@
 'use client'
 
+import { MAX_TTS_CACHE, TTS_RETRY_DELAY_MS } from './constants'
+
 export type ElevenVoice = 'alice' | 'george'
 
 const audioCache = new Map<string, string>()
-const MAX_CACHE = 30
+const MAX_CACHE = MAX_TTS_CACHE
 
 function cacheKey(text: string, voice: ElevenVoice) {
   return `${voice}::${text}`
@@ -106,7 +108,7 @@ export async function transcribeAudio(blob: Blob): Promise<string> {
   let res = await fetch('/api/ielts/stt', { method: 'POST', body: makeBody() })
   if (res.status === 401) {
     console.warn('[STT] 401 — retrying once with fresh request')
-    await new Promise(r => setTimeout(r, 500))
+    await new Promise(r => setTimeout(r, TTS_RETRY_DELAY_MS))
     res = await fetch('/api/ielts/stt', { method: 'POST', body: makeBody() })
   }
   if (!res.ok) {

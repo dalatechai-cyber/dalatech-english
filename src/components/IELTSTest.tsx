@@ -24,6 +24,7 @@ import {
 } from '@/lib/elevenlabs'
 import { IELTSSpeakingRealtime, type RealtimeCompletionPayload } from './IELTSSpeakingRealtime'
 import { BookIcon, PencilIcon, HeadphonesIcon, MicIcon } from './Icon'
+import { wordCount } from '@/lib/textUtils'
 
 // Flip to false to revert to the legacy ElevenLabs + Claude speaking pipeline kept below.
 const USE_REALTIME = true
@@ -80,8 +81,6 @@ function bandLabel(b: number) {
   if (b >= 4) return 'Хязгаарлагдмал'
   return 'Суурь'
 }
-function wordCount(t: string) { return t.trim().split(/\s+/).filter(Boolean).length }
-
 function Spinner({ label }: { label: string }) {
   return (
     <div className="min-h-dvh bg-navy flex flex-col">
@@ -681,6 +680,11 @@ export function IELTSTest() {
         mr.start()
       } catch {
         mr = null
+        if (stream) {
+          stream.getTracks().forEach(t => { try { t.stop() } catch { /* ignore */ } })
+          mediaStreamRef.current = null
+          stream = null
+        }
       }
 
       const stopAll = () => {

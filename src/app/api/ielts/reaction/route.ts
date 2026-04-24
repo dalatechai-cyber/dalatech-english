@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { CLAUDE_HAIKU_MODEL } from '@/lib/constants'
 import { checkRateLimit } from '@/lib/rateLimit'
 import { sanitizeForPrompt } from '@/lib/sanitize'
+import { wordCount } from '@/lib/textUtils'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -37,10 +38,6 @@ const PROBES = [
 function pickAck(part: 1 | 2 | 3): string {
   const pool = part === 3 ? ACK_PART3 : ACK_PART1
   return pool[Math.floor(Math.random() * pool.length)]
-}
-
-function wordCount(t: string) {
-  return t.trim().split(/\s+/).filter(Boolean).length
 }
 
 interface ReactionPayload {

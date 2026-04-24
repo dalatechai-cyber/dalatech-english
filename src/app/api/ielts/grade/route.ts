@@ -11,7 +11,7 @@ function normalize(s: string): string {
   return s
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/[^a-z0-9а-яёөү\s]/g, '')
     .replace(/\s+/g, ' ')
 }
 

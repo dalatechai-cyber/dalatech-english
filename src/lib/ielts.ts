@@ -1,3 +1,5 @@
+import { MAX_IELTS_RESULTS } from './constants'
+
 const IELTS_STORAGE_KEY = 'core-english-ielts-results'
 
 export interface IELTSResult {
@@ -91,5 +93,5 @@ export function saveIELTSResult(result: IELTSResult): void {
   if (typeof window === 'undefined') return
   const results = loadIELTSResults()
   results.unshift(result)
-  localStorage.setItem(IELTS_STORAGE_KEY, JSON.stringify(results.slice(0, 10)))
+  localStorage.setItem(IELTS_STORAGE_KEY, JSON.stringify(results.slice(0, MAX_IELTS_RESULTS)))
 }

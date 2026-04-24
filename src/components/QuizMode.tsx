@@ -188,8 +188,8 @@ export function QuizMode({ level }: QuizModeProps) {
       const result = await res.json() as { score: number; feedback: string }
       setWritingScore(result.score)
       setWritingFeedback(result.feedback)
-      const currentMcScore = mcAnswers.filter((a, i) => a === mcQuestions[i]?.correctIndex).length
-      const currentReadingScore = readingAnswers.filter((a, i) => a === readingQuestions[i]?.correctIndex).length * 2
+      const currentMcScore = mcAnswers.filter((a, i) => i < mcQuestions.length && a != null && a === mcQuestions[i]?.correctIndex).length
+      const currentReadingScore = readingAnswers.filter((a, i) => i < readingQuestions.length && a != null && a === readingQuestions[i]?.correctIndex).length * 2
       const currentTotal = currentMcScore + currentReadingScore + result.score
       saveTestResult({ type: 'quiz', level, score: currentTotal, total: 25, passed: currentTotal >= 18 })
       setPhase('results')
@@ -199,8 +199,8 @@ export function QuizMode({ level }: QuizModeProps) {
     }
   }
 
-  const mcScore = mcAnswers.filter((a, i) => a === mcQuestions[i]?.correctIndex).length
-  const readingScore = readingAnswers.filter((a, i) => a === readingQuestions[i]?.correctIndex).length * 2
+  const mcScore = mcAnswers.filter((a, i) => i < mcQuestions.length && a != null && a === mcQuestions[i]?.correctIndex).length
+  const readingScore = readingAnswers.filter((a, i) => i < readingQuestions.length && a != null && a === readingQuestions[i]?.correctIndex).length * 2
   const totalScore = mcScore + readingScore + writingScore
   const passed = totalScore >= 18
 

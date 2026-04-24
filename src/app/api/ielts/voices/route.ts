@@ -16,7 +16,7 @@ export async function GET() {
     if (!r.ok) {
       const msg = await r.text().catch(() => 'upstream error')
       console.error('[ElevenLabs voices]', r.status, msg.slice(0, 500))
-      return NextResponse.json({ error: msg, status: r.status }, { status: r.status })
+      return NextResponse.json({ error: 'Failed to fetch voices' }, { status: r.status })
     }
     const data = (await r.json()) as { voices?: Array<Record<string, unknown>> }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,13 +29,9 @@ export async function GET() {
       description: v.labels?.description,
       use_case: v.labels?.use_case,
     }))
-    console.log('[ElevenLabs voices] count:', summarized.length)
-    for (const v of summarized) {
-      console.log(`  ${v.voice_id} | ${v.name} | ${v.category || ''} | ${v.accent || ''} ${v.gender || ''} ${v.description || ''}`)
-    }
     return NextResponse.json({ voices: summarized })
   } catch (e) {
     console.error('[ElevenLabs voices] exception:', e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to fetch voices' }, { status: 500 })
   }
 }

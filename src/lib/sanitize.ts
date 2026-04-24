@@ -9,6 +9,7 @@ export const sanitizeForPrompt = (
     .replace(/\[INST\]/gi, '')
     .replace(/<<SYS>>/gi, '')
     .replace(/[<>\[\]{}]/g, '')
+    .replace(/["`\\]/g, '')
     .replace(/\n{3,}/g, '\n\n')
     .slice(0, maxLength)
     .trim()

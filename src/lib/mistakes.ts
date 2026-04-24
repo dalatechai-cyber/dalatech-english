@@ -1,4 +1,5 @@
 import type { LevelCode } from './types'
+import { MAX_MISTAKES } from './constants'
 
 export interface MistakeEntry {
   id: string
@@ -10,7 +11,6 @@ export interface MistakeEntry {
 }
 
 const KEY = 'core-mistakes'
-const MAX = 100
 
 export function loadMistakes(): MistakeEntry[] {
   if (typeof window === 'undefined') return []
@@ -24,12 +24,17 @@ export function loadMistakes(): MistakeEntry[] {
 export function saveMistake(entry: Omit<MistakeEntry, 'id' | 'date'>): void {
   if (typeof window === 'undefined') return
   const mistakes = loadMistakes()
+  const origTrim = entry.original.trim().toLowerCase()
+  const corrTrim = entry.corrected.trim().toLowerCase()
+  const deduped = mistakes.filter(
+    m => m.original.trim().toLowerCase() !== origTrim || m.corrected.trim().toLowerCase() !== corrTrim
+  )
   const newEntry: MistakeEntry = {
     ...entry,
     id: `m-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     date: new Date().toISOString().slice(0, 10),
   }
-  const updated = [newEntry, ...mistakes].slice(0, MAX)
+  const updated = [newEntry, ...deduped].slice(0, MAX_MISTAKES)
   try {
     localStorage.setItem(KEY, JSON.stringify(updated))
   } catch (e) {

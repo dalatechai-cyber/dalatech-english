@@ -34,17 +34,29 @@ export function parseExamResult(text: string): ParsedResult | null {
   const [scoreNum, totalNum] = scoreStr?.split('/') ?? []
   const passStr = get('PASS')
 
+  const parseFirstNumber = (raw: string | undefined): number | undefined => {
+    if (!raw) return undefined
+    const n = parseInt(raw.split('/')[0] ?? '')
+    return Number.isNaN(n) ? undefined : n
+  }
+
+  const grammarRaw = get('GRAMMAR')
+  const styleRaw = get('STYLE')
+  const cohesionRaw = get('COHESION')
+  const vocabularyRaw = get('VOCABULARY')
+  const bonusRaw = get('BONUS')
+
   return {
     score: scoreNum ? parseInt(scoreNum) : undefined,
     total: totalNum ? parseInt(totalNum) : undefined,
     passed: passStr?.toLowerCase() === 'true',
     feedback: get('FEEDBACK'),
     certificate: get('CERTIFICATE'),
-    grammar: get('GRAMMAR') ? parseInt(get('GRAMMAR')!.split('/')[0]) : undefined,
-    style: get('STYLE') ? parseInt(get('STYLE')!.split('/')[0]) : undefined,
-    cohesion: get('COHESION') ? parseInt(get('COHESION')!.split('/')[0]) : undefined,
-    vocabulary: get('VOCABULARY') ? parseInt(get('VOCABULARY')!.split('/')[0]) : undefined,
-    bonus: get('BONUS') ? parseInt(get('BONUS')!) : undefined,
+    grammar: parseFirstNumber(grammarRaw),
+    style: parseFirstNumber(styleRaw),
+    cohesion: parseFirstNumber(cohesionRaw),
+    vocabulary: parseFirstNumber(vocabularyRaw),
+    bonus: bonusRaw ? parseInt(bonusRaw) : undefined,
   }
 }
 

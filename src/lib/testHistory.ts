@@ -1,3 +1,5 @@
+import { MAX_TEST_HISTORY } from './constants'
+
 const KEY = 'core-test-history'
 
 export interface TestHistoryEntry {
@@ -30,7 +32,7 @@ export function saveTestResult(entry: Omit<TestHistoryEntry, 'id' | 'date'>): vo
   }
   history.unshift(newEntry)
   try {
-    localStorage.setItem(KEY, JSON.stringify(history.slice(0, 50)))
+    localStorage.setItem(KEY, JSON.stringify(history.slice(0, MAX_TEST_HISTORY)))
   } catch (e) {
     console.warn('Storage full:', e)
   }

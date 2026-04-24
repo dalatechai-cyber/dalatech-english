@@ -2,10 +2,14 @@ import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import type { LevelCode } from '@/lib/types'
 import { CLAUDE_MODEL } from '@/lib/constants'
+import { checkRateLimit } from '@/lib/rateLimit'
+import { sanitizeForPrompt } from '@/lib/sanitize'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
+  const limited = await checkRateLimit(req, 'quiz-grade-writing')
+  if (limited) return limited
   try {
     const body = await req.json().catch(() => null) as {
       level?: LevelCode
@@ -14,8 +18,10 @@ export async function POST(req: NextRequest) {
       grammarFocus?: string
     } | null
     if (!body) return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
-    const { level, prompt, grammarFocus } = body
-    const answer = typeof body.answer === 'string' ? body.answer.slice(0, 2000) : ''
+    const { level } = body
+    const prompt = sanitizeForPrompt(body.prompt ?? '', 500)
+    const grammarFocus = sanitizeForPrompt(body.grammarFocus ?? '', 200)
+    const answer = sanitizeForPrompt(typeof body.answer === 'string' ? body.answer : '', 2000)
     if (!level || !prompt || !grammarFocus) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
     }
