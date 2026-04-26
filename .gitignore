@@ -37,3 +37,6 @@ next-env.d.ts
 
 # git worktrees
 /.worktrees/
+
+# local diagnostic probes (never commit)
+/tmp-investigate/

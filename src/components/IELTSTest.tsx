@@ -7,11 +7,9 @@ import { saveTestResult } from '@/lib/testHistory'
 import {
   speakTurn,
   stopSpeech,
-  isSpeechSupported,
   isSpeechRecognitionSupported,
   getSpeechRecognition,
   selectListeningVoiceA,
-  selectListeningVoiceB,
 } from '@/lib/tts'
 import {
   generateTTS,
@@ -21,6 +19,12 @@ import {
   clearTTSCache,
   type AudioHandle,
 } from '@/lib/elevenlabs'
+import {
+  generateOpenAITTS,
+  clearOpenAITTSCache,
+  isOpenAITTSQuotaOrRateLimit,
+  type OpenAISpeaker,
+} from '@/lib/openaiTTS'
 import { IELTSSpeakingRealtime, type RealtimeCompletionPayload } from './IELTSSpeakingRealtime'
 import { BookIcon, PencilIcon, HeadphonesIcon, MicIcon } from './Icon'
 import { IELTSListening } from './ielts/IELTSListening'
@@ -225,7 +229,7 @@ export function IELTSTest() {
   const [listenAudioError, setListenAudioError] = useState(false)
   const [listenCurrentTurn, setListenCurrentTurn] = useState(-1)
   const [listenNotice, setListenNotice] = useState<string | null>(null)
-  const [listenLoadProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 })
+  const [listenLoadProgress, setListenLoadProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 })
   const playingRef = useRef(false)
   const listenAudiosRef = useRef<string[]>([])
   const listenCurrentHandleRef = useRef<AudioHandle | null>(null)
@@ -270,10 +274,8 @@ export function IELTSTest() {
 
   // Browser-capability flags: default to true for SSR to avoid hydration mismatch,
   // then re-check client-side in useEffect.
-  const [ttsSupported, setTtsSupported] = useState(true)
   const [sttSupported, setSttSupported] = useState(true)
   useEffect(() => {
-    setTtsSupported(isSpeechSupported())
     setSttSupported(isSpeechRecognitionSupported())
     setMounted(true)
     // Check for restorable in-flight test from a prior tab/refresh.
@@ -293,6 +295,7 @@ export function IELTSTest() {
     try { mediaRecorderRef.current?.stop() } catch { /* ignore */ }
     mediaStreamRef.current?.getTracks().forEach(t => t.stop())
     clearTTSCache()
+    clearOpenAITTSCache()
   }, [])
 
   useEffect(() => {
@@ -324,24 +327,105 @@ export function IELTSTest() {
     }
   }, [phase])
 
-  // ── Listening audio: Web Speech only (reverted from OpenAI TTS due to
-  // unresolved crackling). No server-side preload — synthesis happens on
-  // the device at play time. Gate on ref so setState in the effect doesn't
-  // retrigger cleanup.
+  // ── Pre-generate listening audio in small parallel batches ──
+  // ElevenLabs Starter plan caps at 3 concurrent requests; BATCH_SIZE=2 leaves a
+  // retry buffer so overlapping retries don't trip the 429 concurrent-limit error.
+  // Gate on a ref (not state) so setState inside the effect doesn't retrigger cleanup.
+  const ttsAbortRef = useRef<AbortController | null>(null)
   useEffect(() => {
     if (phase !== 'listening' || !content) return
     if (listenLoadStartedRef.current) return
     listenLoadStartedRef.current = true
 
-    setListenAudioLoading(false)
+    let cancelled = false
+    const controller = new AbortController()
+    ttsAbortRef.current = controller
+    const { signal } = controller
+    setListenAudioLoading(true)
     setListenNotice(null)
-    listenAudiosRef.current = []
 
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      setListenAudioReady(true)
-    } else {
-      setListenAudioError(true)
-      setListenNotice('Таны хөтөч дуу дуудлагыг дэмждэггүй')
+    const turns = content.listening.conversation
+    const total = turns.length
+    setListenLoadProgress({ done: 0, total })
+
+    let sawQuotaOrRateLimit = false
+
+    ;(async () => {
+      const BATCH_SIZE = 2
+      const urls: (string | null)[] = new Array(total).fill(null)
+
+      // Retry once on 502/upstream errors before giving up on this turn.
+      const loadWithRetry = async (text: string, speaker: OpenAISpeaker): Promise<string> => {
+        try {
+          return await generateOpenAITTS(text, speaker, signal)
+        } catch (err) {
+          if (signal.aborted) throw err
+          if (isOpenAITTSQuotaOrRateLimit(err)) sawQuotaOrRateLimit = true
+          const msg = err instanceof Error ? err.message : String(err)
+          if (/502|503|504/.test(msg)) {
+            await new Promise(r => setTimeout(r, 1000))
+            if (signal.aborted) throw err
+            try {
+              return await generateOpenAITTS(text, speaker, signal)
+            } catch (retryErr) {
+              if (isOpenAITTSQuotaOrRateLimit(retryErr)) sawQuotaOrRateLimit = true
+              throw retryErr
+            }
+          }
+          throw err
+        }
+      }
+
+      for (let i = 0; i < total; i += BATCH_SIZE) {
+        if (cancelled || signal.aborted) return
+        const batch = turns.slice(i, i + BATCH_SIZE)
+        await Promise.all(
+          batch.map(async (turn, j) => {
+            if (signal.aborted) return
+            const idx = i + j
+            const trimmed = typeof turn.text === 'string' ? turn.text.trim() : ''
+            // Skip empty/whitespace turns — firing the API for them produces
+            // bare 400 "Missing text" responses and clutters logs.
+            if (!trimmed) {
+              urls[idx] = null
+              return
+            }
+            try {
+              const url = await loadWithRetry(trimmed, turn.speaker)
+              urls[idx] = url
+            } catch {
+              urls[idx] = null
+            }
+            setListenLoadProgress({
+              done: urls.filter(u => u !== null).length,
+              total,
+            })
+          })
+        )
+      }
+
+      if (cancelled || signal.aborted) return
+      const successCount = urls.filter(u => u !== null).length
+      const failedCount = total - successCount
+      listenAudiosRef.current = urls.map(u => u ?? '')
+      // IELTSListening already prepends "⚠" to listenNotice, so don't duplicate it here.
+      const quotaNotice = 'Дуу ачааллахад алдаа гарлаа. Хэсэг хугацааны дараа дахин оролдоно уу.'
+      if (successCount === 0) {
+        setListenAudioError(true)
+        setListenNotice(sawQuotaOrRateLimit ? quotaNotice : 'Дуу ачааллахад алдаа гарлаа')
+      } else {
+        if (failedCount > 0) {
+          setListenNotice(sawQuotaOrRateLimit ? quotaNotice : `${failedCount} хэсэг ачаалагдсангүй`)
+        }
+        setListenAudioReady(true)
+      }
+      setListenAudioLoading(false)
+    })()
+
+    return () => {
+      cancelled = true
+      controller.abort()
+      if (ttsAbortRef.current === controller) ttsAbortRef.current = null
     }
   }, [phase, content])
 
@@ -451,32 +535,25 @@ export function IELTSTest() {
   }, [speakPart2Countdown])
 
   // ── Play conversation twice (OpenAI TTS — skip turns that failed to preload) ──
-  // Play the conversation twice via Web Speech. Lower fidelity than a
-  // server-side TTS but crackle-free and universally available.
   const playConversationTwice = async () => {
     if (!content || isPlaying) return
     setIsPlaying(true)
     playingRef.current = true
-
-    const voiceA = selectListeningVoiceA()
-    const voiceB = selectListeningVoiceB()
-    const voices = typeof window !== 'undefined' ? window.speechSynthesis.getVoices() : []
-    const onlyOne = voices.filter(v => v.lang.startsWith('en')).length <= 1
 
     for (let play = 1; play <= 2; play++) {
       if (!playingRef.current) break
       setListenPlayCount(play)
       for (let i = 0; i < content.listening.conversation.length; i++) {
         if (!playingRef.current) break
-        const turn = content.listening.conversation[i]
         if (i > 0) { await new Promise<void>(r => setTimeout(r, 350)); if (!playingRef.current) break }
         setListenCurrentTurn(i)
 
-        await speakTurn(turn.text, {
-          voice: turn.speaker === 'A' ? voiceA : voiceB,
-          pitch: turn.speaker === 'A' ? 1.05 : (onlyOne ? 0.75 : 0.85),
-          rate: 0.88,
-        })
+        const cachedUrl = listenAudiosRef.current[i] ?? ''
+        if (!cachedUrl) continue
+        const handle = playAudioURL(cachedUrl)
+        listenCurrentHandleRef.current = handle
+        await handle.promise
+        listenCurrentHandleRef.current = null
       }
       if (play === 1 && playingRef.current) {
         await new Promise<void>(r => setTimeout(r, 1500))
@@ -970,6 +1047,7 @@ export function IELTSTest() {
     setPhase('loading')
     setError(null)
     clearTTSCache()
+    clearOpenAITTSCache()
     listenAudiosRef.current = []
     setListenAnswers(Array(10).fill(null))
     setListenPlayCount(0)
@@ -1243,7 +1321,6 @@ export function IELTSTest() {
         isPlaying={isPlaying}
         showTranscript={showTranscript}
         setShowTranscript={setShowTranscript}
-        ttsSupported={ttsSupported}
         playConversationTwice={playConversationTwice}
         listenCurrentHandleRef={listenCurrentHandleRef}
         onAdvance={() => setPhase('reading')}
