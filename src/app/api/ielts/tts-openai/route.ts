@@ -56,14 +56,6 @@ const MAX_TEXT_LENGTH = 1500
 
 export const runtime = 'edge'
 
-// One-shot diagnostic flags: log the literal outgoing request body once
-// per cold start for each speaker, so ops can verify from Vercel logs
-// that `instructions` is actually reaching OpenAI and is well-formed.
-// Remove these flags and the corresponding console.log in a follow-up
-// commit once verification is complete.
-let outgoingLoggedA = false
-let outgoingLoggedB = false
-
 type Body = { text?: unknown; speaker?: unknown }
 
 type UpstreamPayload = {
@@ -140,18 +132,13 @@ export async function POST(req: NextRequest) {
       instructions: INSTRUCTIONS_BY_SPEAKER[speaker],
     }
 
-    // One-shot outgoing-body log for verification. See comment on
-    // outgoingLoggedA/B at the top of the file. Truncate `input` to keep
-    // the log line bounded; keep `instructions` whole so we can confirm
-    // it's well-formed. Remove in a follow-up commit after verification.
-    const shouldLog =
-      (speaker === 'A' && !outgoingLoggedA) ||
-      (speaker === 'B' && !outgoingLoggedB)
-    if (shouldLog) {
+    // Diagnostic: log full outgoing body on every request so Vercel logs
+    // always show that `instructions` is reaching OpenAI and is well-formed.
+    // Remove this block after user confirms both speaker=A and speaker=B
+    // log lines appear with complete, correct instructions.
+    {
       const redacted = { ...primaryPayload, input: text.slice(0, 60) + (text.length > 60 ? '…' : '') }
       console.log(`[OpenAI TTS] outgoing speaker=${speaker} body=${JSON.stringify(redacted)}`)
-      if (speaker === 'A') outgoingLoggedA = true
-      else outgoingLoggedB = true
     }
 
     let r = await callOpenAI(apiKey, primaryPayload)
