@@ -21,20 +21,14 @@ const FALLBACK_MODEL = 'tts-1-hd'
 const TTS_SPEED = 0.9
 const TTS_RESPONSE_FORMAT = 'wav'
 const TTS_CONTENT_TYPE = 'audio/wav'
-// Voice choice within gpt-4o-mini-tts. Previous pair was nova/onyx —
-// Speaker A (nova) was producing audible crackling at speed 0.9, and both
-// voices sounded flat despite full instructions directives. Switched to:
-//   A: coral  — warm, expressive female; darker timbre than nova's bright
-//               upper-frequency character (less click-prone) and reported
-//               to respond more strongly to prosody instructions.
-//   B: ash    — deep, authoritative male; more prosodically responsive
-//               than onyx while preserving academic gravitas.
-// Model stays gpt-4o-mini-tts — it is the only standard TTS model that
-// honours the `instructions` parameter; tts-1/tts-1-hd ignore it and
-// guarantee flat output.
+// Voice pair: nova (Speaker A, female) + onyx (Speaker B, male).
+// coral/ash was tried in a prior commit but introduced crackling on both
+// channels — a regression against priority 1 (no crackling). Reverted.
+// nova/onyx is the stable baseline: only Speaker A crackles (under
+// investigation), Speaker B (onyx) is clean.
 const VOICE_BY_SPEAKER: Record<'A' | 'B', string> = {
-  A: 'coral',
-  B: 'ash',
+  A: 'nova',
+  B: 'onyx',
 }
 // Per-speaker instructions — gpt-4o-mini-tts honours these as prosody
 // directives, not just persona hints. Keep them short, specific, and
