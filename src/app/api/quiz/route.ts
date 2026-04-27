@@ -26,13 +26,16 @@ function validateMCQuestion(q: MCQuestion): { valid: boolean; reason?: string } 
   const normalizedOptions = q.options.map((o) => o.trim().toLowerCase())
   if (new Set(normalizedOptions).size !== 4) return { valid: false, reason: 'options must be distinct' }
 
-  const stemLower = q.question.toLowerCase()
-  const stemWithoutBlank = stemLower.replace('___', ' BLANK ')
+  const blankIndex = q.question.toLowerCase().indexOf('___')
+  const beforeBlank = q.question.substring(0, blankIndex).trim()
+  const afterBlank = q.question.substring(blankIndex + 3).trim()
+
+  const wordBefore = beforeBlank.split(/\s+/).pop()?.toLowerCase().replace(/[^a-z']/g, '') ?? ''
+  const wordAfter = afterBlank.split(/\s+/)[0]?.toLowerCase().replace(/[^a-z']/g, '') ?? ''
+
   for (const opt of normalizedOptions) {
-    const escaped = opt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    const wordBoundaryRegex = new RegExp(`(^|[^a-z])${escaped}([^a-z]|$)`, 'i')
-    if (wordBoundaryRegex.test(stemWithoutBlank)) {
-      return { valid: false, reason: `option "${opt}" already appears in stem` }
+    if (opt === wordBefore || opt === wordAfter) {
+      return { valid: false, reason: `option "${opt}" matches word immediately adjacent to blank` }
     }
   }
 
