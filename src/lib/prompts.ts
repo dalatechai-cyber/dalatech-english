@@ -291,6 +291,19 @@ Rules for writing task:
 - One clear prompt in Mongolian asking the student to write ${level === 'A1' || level === 'A2' ? '2-3' : '3-5'} sentences using specific grammar from this level
 - Field "grammar_focus": one short English phrase naming the key grammar point (e.g. "Past Simple", "Third Conditional")
 
+CRITICAL QUESTION QUALITY RULES — every multiple choice question MUST satisfy ALL of these:
+
+1. The stem must contain exactly one blank marked as ___.
+2. The blank must be fillable by exactly one of the four options. The correct option, when substituted into the blank, must produce a grammatically and semantically correct sentence.
+3. The other three options must be plausible distractors but produce incorrect sentences when substituted.
+4. NEVER include in the stem any word that is also an option, an inflection of an option, or a near-spelling of an option. Example of FORBIDDEN pattern: "These are ___ cats." with options [cats, cates, cat, cat's] — the word "cats" already appears in the stem.
+5. All four options must be valid English forms or recognizable distractors. Do NOT invent nonsense words like "cates," "catses," "runned," "goed."
+6. Each option must be distinct from the others. No duplicates, no near-duplicates that differ only in casing or whitespace.
+7. The four options must be of similar grammatical category (all verbs, all nouns, all prepositions, etc.) when the question tests a specific grammar point.
+8. Avoid stems where the blank is at the very beginning or very end if a more contextual placement is natural.
+
+If you cannot generate a question that satisfies all these rules for a given grammar topic, generate a question on a DIFFERENT topic from the level's topic list rather than producing a malformed question.
+
 Return ONLY valid JSON, no extra text:
 {
   "mc_questions": [
