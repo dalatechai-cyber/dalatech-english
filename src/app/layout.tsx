@@ -35,7 +35,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="mn" className={`${playfair.variable} ${ebGaramond.variable}`}>
-      <body className="min-h-dvh bg-midnight-ink text-text-primary">
+      <body className="min-h-screen bg-midnight-ink text-text-primary">
         <ErrorReporter />
         <div className="page-enter">
           {children}

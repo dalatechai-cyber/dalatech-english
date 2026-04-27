@@ -126,7 +126,7 @@ function bandLabel(b: number) {
 }
 function Spinner({ label }: { label: string }) {
   return (
-    <div className="min-h-dvh bg-midnight-ink flex flex-col">
+    <div className="min-h-screen bg-midnight-ink flex flex-col">
       <NavBar lessonTitle="IELTS" />
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
@@ -1146,7 +1146,7 @@ export function IELTSTest() {
   // ─── Intro ───
   if (phase === 'intro') {
     return (
-      <div className="min-h-dvh bg-midnight-ink flex flex-col">
+      <div className="min-h-screen bg-midnight-ink flex flex-col">
         <NavBar lessonTitle="IELTS Mock Test" />
         <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 max-w-2xl mx-auto w-full text-center page-enter-up">
           <div
@@ -1389,7 +1389,7 @@ export function IELTSTest() {
   if (phase === 'speaking') {
     if (!sttSupported) {
       return (
-        <div className="min-h-dvh bg-midnight-ink flex flex-col items-center justify-center p-8 text-center">
+        <div className="min-h-screen bg-midnight-ink flex flex-col items-center justify-center p-8 text-center">
           <NavBar lessonTitle="Speaking" />
           <div className="flex-1 flex flex-col items-center justify-center gap-6">
             <div className="text-5xl">🎤</div>
@@ -1414,7 +1414,7 @@ export function IELTSTest() {
       '#8B5CF6'
 
     return (
-      <div className="min-h-dvh bg-midnight-ink flex flex-col" style={{ background: '#050D1A' }}>
+      <div className="min-h-screen bg-midnight-ink flex flex-col" style={{ background: '#050D1A' }}>
         {/* Stop button — mobile: fixed bottom-center (clears hamburger); desktop: top-right */}
         {speakPhase !== 'ready' && (
           <>
@@ -1557,7 +1557,7 @@ export function IELTSTest() {
     const passThreshold = Math.round(maxTotal * 0.7)
     const passedPts = totalPts >= passThreshold
     return (
-      <div className="min-h-dvh flex flex-col" style={{ background: 'var(--midnight-ink-deep)' }}>
+      <div className="min-h-screen flex flex-col" style={{ background: 'var(--midnight-ink-deep)' }}>
         <NavBar lessonTitle="IELTS — Үр дүн" />
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 max-w-2xl mx-auto w-full page-enter-up">
           {isPartialResult && (
