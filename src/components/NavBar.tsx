@@ -44,6 +44,7 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
       <div className="flex items-center gap-3 max-w-6xl mx-auto">
         <Link
           href="/"
+          lang="en"
           className="font-serif-display text-lg sm:text-xl font-bold tracking-tight transition-colors flex-shrink-0"
           style={{ color: 'var(--gold)' }}
         >
@@ -92,6 +93,7 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
           {/* Desktop nav links — champagne, uppercase, tracked */}
           <Link
             href="/ielts"
+            lang="en"
             className="text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors hidden sm:block hover:text-gold"
             style={{ color: 'var(--champagne)' }}
           >
@@ -158,6 +160,7 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
               >
                 <Link
                   href="/ielts"
+                  lang="en"
                   className="flex items-center gap-3 px-5 min-h-14 text-[12px] font-semibold uppercase tracking-[0.18em] active:bg-gold/10"
                   style={{ color: 'var(--champagne)' }}
                   onClick={() => setMenuOpen(false)}

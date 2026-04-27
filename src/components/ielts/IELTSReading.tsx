@@ -119,7 +119,7 @@ export function IELTSReading({
       disabled={!allReadAnswered}
       className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5 disabled:opacity-40"
       style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
-      Writing →
+      <span lang="en">Writing →</span>
     </button>
   )
 

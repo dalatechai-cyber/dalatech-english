@@ -269,7 +269,7 @@ export function IELTSWriting({
                 boxShadow: '0 6px 20px rgba(245,158,11,0.28)',
               }}
             >
-              Speaking
+              <span lang="en">Speaking</span>
             </button>
           </>
         )}

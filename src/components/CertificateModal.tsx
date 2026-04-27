@@ -364,6 +364,7 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
               </div>
 
               <div
+                lang="en"
                 style={{
                   color: NAVY_DEEP,
                   fontSize: 26,
@@ -378,6 +379,7 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
               </div>
 
               <div
+                lang="en"
                 style={{
                   color: GOLD_DARK,
                   fontSize: 9.5,
@@ -397,6 +399,7 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
               </div>
 
               <div
+                lang="en"
                 style={{
                   color: NAVY_DEEP,
                   fontSize: 14,
@@ -494,6 +497,7 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
                     }}
                   />
                   <div
+                    lang="en"
                     style={{
                       fontSize: 9,
                       letterSpacing: 3,
@@ -512,6 +516,7 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
 
                 <div style={{ textAlign: 'center', minWidth: 170 }}>
                   <div
+                    lang="en"
                     style={{
                       fontFamily: '"Playfair Display", Georgia, serif',
                       fontStyle: 'italic',
@@ -531,6 +536,7 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
                     }}
                   />
                   <div
+                    lang="en"
                     style={{
                       fontSize: 9,
                       letterSpacing: 3,

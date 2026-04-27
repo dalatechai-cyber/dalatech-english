@@ -194,7 +194,7 @@ export function IELTSListening({
             <button onClick={() => { stopSpeech(); listenCurrentHandleRef.current?.stop(); onAdvance() }}
               className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5"
               style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
-              Reading →
+              <span lang="en">Reading →</span>
             </button>
           </div>
         )}
