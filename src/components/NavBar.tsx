@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { loadStreak } from '@/lib/streak'
 import { t } from '@/lib/i18n'
-import { FlameIcon } from './Icon'
+import { StreakFlame } from './StreakFlame'
 
 interface NavBarProps {
   levelCode?: string
@@ -111,7 +111,9 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
               className="text-sm font-medium flex items-center gap-1.5 flex-shrink-0 nums-tabular min-w-11 min-h-11"
               style={{ color: 'var(--candlelight-gold)' }}
             >
-              <FlameIcon size={20} />
+              <span id="navbar-streak-flame" className="inline-flex items-center justify-center">
+                <StreakFlame size={20} />
+              </span>
               {streak}
               <span
                 className="hidden sm:inline text-[11px] uppercase tracking-wider"
