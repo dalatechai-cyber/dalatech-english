@@ -111,12 +111,16 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
               className="text-sm font-medium flex items-center gap-1.5 flex-shrink-0 nums-tabular min-w-11 min-h-11"
               style={{ color: 'var(--candlelight-gold)' }}
             >
-              <span id="navbar-streak-flame" className="inline-flex items-center justify-center">
-                <StreakFlame size={20} />
-              </span>
-              {streak}
               <span
-                className="hidden sm:inline text-[11px] uppercase tracking-wider"
+                id="navbar-streak-flame"
+                className="inline-flex items-center justify-center"
+                style={{ transform: 'translateY(1px)' }}
+              >
+                <StreakFlame size={16} />
+              </span>
+              <span className="leading-none">{streak}</span>
+              <span
+                className="hidden sm:inline text-[11px] uppercase tracking-wider leading-none"
                 style={{ color: 'var(--vellum-champagne)' }}
               >
                 {t('streak')}
