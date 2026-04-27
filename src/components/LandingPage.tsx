@@ -60,6 +60,7 @@ export function LandingPage() {
 
           {/* Wordmark — serif for editorial premium feel */}
           <h1
+            lang="en"
             className="mb-6 leading-[0.95]"
             style={{ fontSize: 'clamp(52px, 9vw, 96px)' }}
           >
