@@ -74,17 +74,17 @@ export default function ProfilePage() {
     .length
 
   return (
-    <div className="min-h-screen bg-navy">
+    <div className="min-h-screen bg-midnight-ink">
       <NavBar />
       <div className="max-w-3xl mx-auto px-5 py-8 sm:py-12 page-enter-up">
 
         {/* Profile header */}
         <div className="mb-10 pb-8 border-b hairline">
-          <div className="text-[11px] font-semibold tracking-[0.22em] uppercase mb-3" style={{ color: 'var(--champagne)' }}>
+          <div className="text-[11px] font-semibold tracking-[0.22em] uppercase mb-3" style={{ color: 'var(--vellum-champagne)' }}>
             Таны профайл
           </div>
           <h1 className="font-serif-display text-4xl sm:text-5xl text-white leading-tight">
-            Дэвшлийн <em className="italic" style={{ color: 'var(--gold)' }}>хураангуй</em>
+            Дэвшлийн <em className="italic" style={{ color: 'var(--candlelight-gold)' }}>хураангуй</em>
           </h1>
         </div>
 
@@ -96,10 +96,10 @@ export default function ProfilePage() {
             { Icon: CheckCircleIcon, val: lessonsCompleted, label: 'Хичээл' },
             { Icon: TrophyIcon, val: totalPoints, label: 'Нийт оноо' },
           ].map(s => (
-            <div key={s.label} className="bg-navy-surface p-5 sm:p-6">
+            <div key={s.label} className="bg-midnight-ink-surface p-5 sm:p-6">
               <span
                 className="inline-flex items-center justify-center w-9 h-9 rounded-lg mb-4"
-                style={{ color: 'var(--gold)', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)' }}
+                style={{ color: 'var(--candlelight-gold)', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)' }}
               >
                 <s.Icon size={16} />
               </span>
@@ -140,7 +140,7 @@ export default function ProfilePage() {
                 }}
               >
                 <div
-                  className="w-14 h-14 rounded-xl flex items-center justify-center mb-3 font-serif-display font-bold text-navy nums-tabular"
+                  className="w-14 h-14 rounded-xl flex items-center justify-center mb-3 font-serif-display font-bold text-midnight-ink nums-tabular"
                   style={{ background: 'linear-gradient(135deg, #FCD34D, #D97706)', fontSize: 20 }}
                 >
                   {cert.level}
@@ -169,7 +169,7 @@ export default function ProfilePage() {
                 className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] px-3.5 py-1.5 rounded-full transition-colors min-h-[36px]"
                 style={{
                   background: active ? 'rgba(245,158,11,0.12)' : 'transparent',
-                  color: active ? 'var(--gold)' : 'var(--text-muted)',
+                  color: active ? 'var(--candlelight-gold)' : 'var(--text-muted)',
                   border: `1px solid ${active ? 'rgba(245,158,11,0.35)' : 'var(--hairline)'}`,
                 }}
               >
@@ -192,7 +192,7 @@ export default function ProfilePage() {
                 >
                   <span
                     className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] px-2.5 py-1 rounded-full flex-shrink-0"
-                    style={{ background: 'rgba(245,158,11,0.12)', color: 'var(--gold)', border: '1px solid rgba(245,158,11,0.25)' }}
+                    style={{ background: 'rgba(245,158,11,0.12)', color: 'var(--candlelight-gold)', border: '1px solid rgba(245,158,11,0.25)' }}
                   >
                     {entry.level}
                   </span>
@@ -300,7 +300,7 @@ function IELTSHistoryRow({ entry }: { entry: TestHistoryEntry }) {
         <span
           className="font-sans text-[10px] font-semibold tracking-[0.15em] uppercase flex-shrink-0 transition-transform"
           style={{
-            color: 'var(--gold)',
+            color: 'var(--candlelight-gold)',
             transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
             transformOrigin: 'center',
           }}
@@ -328,7 +328,7 @@ function IELTSHistoryRow({ entry }: { entry: TestHistoryEntry }) {
           {/* Wrong answers */}
           {wrongAnswers.length > 0 && (
             <div className="mb-4">
-              <div className="font-sans text-[10px] font-semibold tracking-[0.18em] uppercase mb-2" style={{ color: 'var(--champagne)' }}>
+              <div className="font-sans text-[10px] font-semibold tracking-[0.18em] uppercase mb-2" style={{ color: 'var(--vellum-champagne)' }}>
                 Алдсан асуултууд
               </div>
               <ul className="space-y-1.5">
@@ -348,7 +348,7 @@ function IELTSHistoryRow({ entry }: { entry: TestHistoryEntry }) {
 
           {/* AI feedback */}
           <div className="mb-4">
-            <div className="font-sans text-[10px] font-semibold tracking-[0.18em] uppercase mb-2" style={{ color: 'var(--champagne)' }}>
+            <div className="font-sans text-[10px] font-semibold tracking-[0.18em] uppercase mb-2" style={{ color: 'var(--vellum-champagne)' }}>
               AI үнэлгээ
             </div>
             {feedback ? (
@@ -388,7 +388,7 @@ function ScoreCell({ label, value }: { label: string; value: string }) {
       <div className="font-sans text-[10px] font-semibold tracking-[0.18em] uppercase mb-1" style={{ color: 'var(--text-muted)' }}>
         {label}
       </div>
-      <div className="font-sans text-sm font-semibold nums-tabular" style={{ color: 'var(--gold)' }}>
+      <div className="font-sans text-sm font-semibold nums-tabular" style={{ color: 'var(--candlelight-gold)' }}>
         {value}
       </div>
     </div>
@@ -399,7 +399,7 @@ function SectionHeader({ label, kicker, title }: { label: string; kicker: string
   return (
     <div className="flex items-end justify-between mb-5 border-b hairline pb-4">
       <div>
-        <div className="font-sans text-[10px] font-semibold tracking-[0.22em] uppercase mb-1.5" style={{ color: 'var(--champagne)' }}>
+        <div className="font-sans text-[10px] font-semibold tracking-[0.22em] uppercase mb-1.5" style={{ color: 'var(--vellum-champagne)' }}>
           {kicker}
         </div>
         <h2 className="font-serif-display text-xl sm:text-2xl text-white leading-tight">

@@ -22,7 +22,7 @@ export function ChatBubble({ message, isStreaming = false }: ChatBubbleProps) {
     <div className={`flex ${isAI ? 'justify-start' : 'justify-end'} mb-3 animate-fade-in`}>
       {isAI && (
         <div
-          className="w-9 h-9 rounded-full flex items-center justify-center text-navy text-xs font-bold mr-2 flex-shrink-0 mt-1"
+          className="w-9 h-9 rounded-full flex items-center justify-center text-midnight-ink text-xs font-bold mr-2 flex-shrink-0 mt-1"
           style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)' }}
         >
           AI

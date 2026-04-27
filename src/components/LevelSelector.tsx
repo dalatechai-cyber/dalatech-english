@@ -52,14 +52,14 @@ export function LevelSelector() {
                   <span
                     lang="en"
                     className="text-[10px] font-semibold tracking-[0.2em] uppercase"
-                    style={{ color: lp.examPassed ? 'var(--champagne)' : 'var(--text-muted)' }}
+                    style={{ color: lp.examPassed ? 'var(--vellum-champagne)' : 'var(--text-muted)' }}
                   >
                     CEFR
                   </span>
                   <span
                     className="flex items-center justify-center w-7 h-7 rounded-full"
                     style={{
-                      color: lp.examPassed ? 'var(--gold)' : 'var(--text-muted)',
+                      color: lp.examPassed ? 'var(--candlelight-gold)' : 'var(--text-muted)',
                       background: lp.examPassed
                         ? 'rgba(245,158,11,0.1)'
                         : 'rgba(255,255,255,0.04)',
@@ -98,7 +98,7 @@ export function LevelSelector() {
                     <span style={{ color: 'var(--text-muted)' }}>Дэвшил</span>
                     <span
                       className="nums-tabular font-medium"
-                      style={{ color: 'var(--champagne)' }}
+                      style={{ color: 'var(--vellum-champagne)' }}
                     >
                       {completed}/10
                     </span>

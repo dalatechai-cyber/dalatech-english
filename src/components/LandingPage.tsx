@@ -15,7 +15,7 @@ import {
 
 export function LandingPage() {
   return (
-    <div className="min-h-dvh bg-navy relative">
+    <div className="min-h-dvh bg-midnight-ink relative">
       <NavBar />
 
       {/* ─── Hero ─── */}
@@ -51,7 +51,7 @@ export function LandingPage() {
             <span
               lang="en"
               className="text-[11px] font-semibold tracking-[0.22em] uppercase"
-              style={{ color: 'var(--champagne)' }}
+              style={{ color: 'var(--vellum-champagne)' }}
             >
               AI · Dalatech Academy
             </span>
@@ -84,7 +84,7 @@ export function LandingPage() {
             style={{ color: '#94A3B8' }}
           >
             Монгол хэлтнүүдэд зориулсан{' '}
-            <span className="font-serif-display italic" style={{ color: 'var(--champagne)' }}>
+            <span className="font-serif-display italic" style={{ color: 'var(--vellum-champagne)' }}>
               дэлхийн стандартын
             </span>{' '}
             англи хэлний сургалт
@@ -101,12 +101,12 @@ export function LandingPage() {
                 key={s.label}
                 className="flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-medium backdrop-blur-sm"
                 style={{
-                  color: 'var(--champagne)',
+                  color: 'var(--vellum-champagne)',
                   background: 'rgba(245,158,11,0.04)',
                   border: '1px solid rgba(245,158,11,0.18)',
                 }}
               >
-                <span className="text-gold">{s.icon}</span>
+                <span className="text-candlelight-gold">{s.icon}</span>
                 <span>{s.label}</span>
               </div>
             ))}
@@ -129,7 +129,7 @@ export function LandingPage() {
             </a>
             <a
               href="/ielts"
-              className="inline-flex items-center gap-2 font-medium py-4 px-6 rounded-xl text-sm transition-colors hover:text-gold"
+              className="inline-flex items-center gap-2 font-medium py-4 px-6 rounded-xl text-sm transition-colors hover:text-candlelight-gold"
               style={{ color: 'var(--text-secondary)' }}
             >
               <TargetIcon size={15} />
@@ -159,12 +159,12 @@ export function LandingPage() {
             <div>
               <div
                 className="text-[11px] font-semibold tracking-[0.22em] uppercase mb-2"
-                style={{ color: 'var(--champagne)' }}
+                style={{ color: 'var(--vellum-champagne)' }}
               >
                 Философи
               </div>
               <h2 className="font-serif-display text-3xl sm:text-4xl text-white leading-tight">
-                Яагаад <em className="italic" style={{ color: 'var(--gold)' }}>Core English</em>?
+                Яагаад <em className="italic" style={{ color: 'var(--candlelight-gold)' }}>Core English</em>?
               </h2>
             </div>
             <div
@@ -199,7 +199,7 @@ export function LandingPage() {
             ].map(f => (
               <div
                 key={f.title}
-                className="bg-navy-surface p-7 transition-colors duration-300 hover:bg-navy-surface-2 group relative"
+                className="bg-midnight-ink-surface p-7 transition-colors duration-300 hover:bg-midnight-ink-elevated group relative"
               >
                 <div className="flex items-start justify-between mb-6">
                   <span
@@ -211,7 +211,7 @@ export function LandingPage() {
                   <span
                     className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
                     style={{
-                      color: 'var(--gold)',
+                      color: 'var(--candlelight-gold)',
                       background: 'rgba(245,158,11,0.06)',
                       border: '1px solid rgba(245,158,11,0.15)',
                     }}
@@ -239,12 +239,12 @@ export function LandingPage() {
             <div>
               <div
                 className="text-[11px] font-semibold tracking-[0.22em] uppercase mb-2"
-                style={{ color: 'var(--champagne)' }}
+                style={{ color: 'var(--vellum-champagne)' }}
               >
                 Сургалтын зам
               </div>
               <h2 className="font-serif-display text-3xl sm:text-4xl text-white leading-tight">
-                Түвшин <em className="italic" style={{ color: 'var(--gold)' }}>сонгох</em>
+                Түвшин <em className="italic" style={{ color: 'var(--candlelight-gold)' }}>сонгох</em>
               </h2>
             </div>
             <div
@@ -277,7 +277,7 @@ export function LandingPage() {
               href="https://dalatech.online/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gold hover:underline underline-offset-4"
+              className="text-candlelight-gold hover:underline underline-offset-4"
             >
               Dalatech.ai
             </a>

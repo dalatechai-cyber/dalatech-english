@@ -3,14 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --navy: #0B1222;
-  --navy-deep: #070C18;
-  --gold: #F59E0B;
-  --gold-light: #FCD34D;
-  --gold-dark: #D97706;
-  --champagne: #E4C08A;
-  --navy-surface: #141C30;
-  --navy-surface-2: #1F2940;
+  --midnight-ink: #0B1222;
+  --midnight-ink-deep: #070C18;
+  --candlelight-gold: #F59E0B;
+  --candlelight-gold-light: #FCD34D;
+  --candlelight-gold-dark: #D97706;
+  --vellum-champagne: #E4C08A;
+  --midnight-ink-surface: #141C30;
+  --midnight-ink-elevated: #1F2940;
   --hairline: rgba(255, 255, 255, 0.06);
   --hairline-gold: rgba(245, 158, 11, 0.18);
   --text-primary: #F8FAFC;
@@ -32,7 +32,7 @@ select {
 }
 
 body {
-  background-color: var(--navy);
+  background-color: var(--midnight-ink);
   background-image:
     radial-gradient(ellipse 70% 50% at 50% -10%, rgba(245, 158, 11, 0.08) 0%, transparent 60%),
     radial-gradient(ellipse 80% 60% at 50% 0%, #182038 0%, #0B1222 70%);
@@ -77,8 +77,8 @@ body::before {
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--navy-surface); }
-::-webkit-scrollbar-thumb { background: var(--navy-surface-2); border-radius: 3px; }
+::-webkit-scrollbar-track { background: var(--midnight-ink-surface); }
+::-webkit-scrollbar-thumb { background: var(--midnight-ink-elevated); border-radius: 3px; }
 
 /* Input area: base padding + iOS/Android safe area inset */
 .pb-input-area {
@@ -254,7 +254,7 @@ body::before {
 }
 
 *:focus-visible {
-  outline: 2px solid var(--gold);
+  outline: 2px solid var(--candlelight-gold);
   outline-offset: 2px;
 }
 
@@ -263,7 +263,7 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
 a:focus-visible {
-  outline: 2px solid var(--gold);
+  outline: 2px solid var(--candlelight-gold);
   outline-offset: 2px;
   border-radius: 4px;
 }

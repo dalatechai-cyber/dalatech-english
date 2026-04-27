@@ -207,12 +207,12 @@ export function QuizMode({ level }: QuizModeProps) {
   // ─── Error ───
   if (error) {
     return (
-      <div className="min-h-dvh bg-navy flex flex-col">
+      <div className="min-h-dvh bg-midnight-ink flex flex-col">
         <NavBar levelCode={level} lessonTitle="Тест" />
         <div className="flex-1 flex items-center justify-center p-8 text-center">
           <div>
             <p className="text-rose-400 mb-4">{error}</p>
-            <button onClick={loadQuiz} className="bg-gold text-navy font-semibold px-6 py-2.5 rounded-xl">
+            <button onClick={loadQuiz} className="bg-candlelight-gold text-midnight-ink font-semibold px-6 py-2.5 rounded-xl">
               {t('retry')}
             </button>
           </div>
@@ -224,13 +224,13 @@ export function QuizMode({ level }: QuizModeProps) {
   // ─── Loading ───
   if (phase === 'loading') {
     return (
-      <div className="min-h-dvh bg-navy flex flex-col">
+      <div className="min-h-dvh bg-midnight-ink flex flex-col">
         <NavBar levelCode={level} lessonTitle="Тест" />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="flex gap-1 justify-center mb-4">
               {[0, 1, 2].map(i => (
-                <span key={i} className="w-3 h-3 bg-gold rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                <span key={i} className="w-3 h-3 bg-candlelight-gold rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
               ))}
             </div>
             <p className="text-text-secondary text-sm">{t('quizLoading')}</p>
@@ -243,13 +243,13 @@ export function QuizMode({ level }: QuizModeProps) {
   // ─── Grading ───
   if (phase === 'grading') {
     return (
-      <div className="min-h-dvh bg-navy flex flex-col">
+      <div className="min-h-dvh bg-midnight-ink flex flex-col">
         <NavBar levelCode={level} lessonTitle="Тест — үнэлж байна" />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="flex gap-1 justify-center mb-4">
               {[0, 1, 2].map(i => (
-                <span key={i} className="w-3 h-3 bg-gold rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                <span key={i} className="w-3 h-3 bg-candlelight-gold rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
               ))}
             </div>
             <p className="text-text-secondary text-sm">{t('quizGrading')}</p>
@@ -263,7 +263,7 @@ export function QuizMode({ level }: QuizModeProps) {
   if (phase === 'mc') {
     const q = mcQuestions[mcIndex]
     return (
-      <div className="min-h-dvh bg-navy flex flex-col">
+      <div className="min-h-dvh bg-midnight-ink flex flex-col">
         <NavBar levelCode={level} lessonTitle={`${t('quizMC')} — ${mcIndex + 1}/15`} />
         <div className="flex-1 overflow-y-auto p-6 max-w-lg mx-auto w-full">
           {/* Progress bar — hairline segments */}
@@ -274,14 +274,14 @@ export function QuizMode({ level }: QuizModeProps) {
                 className={`flex-1 h-[3px] rounded-full transition-colors ${
                   i < mcIndex
                     ? mcAnswers[i] === mcQuestions[i].correctIndex ? 'bg-emerald-500/80' : 'bg-rose-500/80'
-                    : i === mcIndex ? 'bg-gold' : 'bg-white/[0.08]'
+                    : i === mcIndex ? 'bg-candlelight-gold' : 'bg-white/[0.08]'
                 }`}
               />
             ))}
           </div>
           {/* Section indicators */}
           <div className="flex items-center gap-2 text-[11px] mb-6" style={{ color: 'var(--text-muted)' }}>
-            <span className="font-semibold tracking-[0.15em] uppercase" style={{ color: 'var(--champagne)' }}>{t('quizMC')} 15</span>
+            <span className="font-semibold tracking-[0.15em] uppercase" style={{ color: 'var(--vellum-champagne)' }}>{t('quizMC')} 15</span>
             <span className="opacity-40">·</span>
             <span className="uppercase tracking-[0.15em]">{t('quizReading')} 4</span>
             <span className="opacity-40">·</span>
@@ -297,11 +297,11 @@ export function QuizMode({ level }: QuizModeProps) {
               <h2 className="text-lg font-semibold text-white mb-6 leading-snug" style={{ letterSpacing: '-0.01em' }}>{q.question}</h2>
               <div className="space-y-3 mb-6">
                 {q.options.map((opt, i) => {
-                  let style = 'border-navy-surface-2 text-text-primary hover:border-gold/40 cursor-pointer'
+                  let style = 'border-midnight-ink-elevated text-text-primary hover:border-candlelight-gold/40 cursor-pointer'
                   if (mcAnswered) {
                     if (i === q.correctIndex) style = 'border-emerald-500 bg-emerald-500/10 text-emerald-400 cursor-default'
                     else if (i === mcSelected) style = 'border-rose-500 bg-rose-500/10 text-rose-400 cursor-default'
-                    else style = 'border-navy-surface-2 text-text-secondary opacity-50 cursor-default'
+                    else style = 'border-midnight-ink-elevated text-text-secondary opacity-50 cursor-default'
                   }
                   return (
                     <button
@@ -327,7 +327,7 @@ export function QuizMode({ level }: QuizModeProps) {
                   </div>
                   <button
                     onClick={handleMCNext}
-                    className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-br from-gold to-gold-dark hover:shadow-gold-sm text-navy font-semibold py-3.5 min-h-[48px] rounded-xl transition-all"
+                    className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-br from-candlelight-gold to-candlelight-gold-dark hover:shadow-gold-sm text-midnight-ink font-semibold py-3.5 min-h-[48px] rounded-xl transition-all"
                   >
                     {mcIndex < mcQuestions.length - 1 ? t('next') : t('quizReading')}
                     <ArrowRightIcon size={16} />
@@ -345,14 +345,14 @@ export function QuizMode({ level }: QuizModeProps) {
   if (phase === 'reading' && quizData) {
     const q = readingQuestions[readingIndex]
     return (
-      <div className="min-h-dvh bg-navy flex flex-col">
+      <div className="min-h-dvh bg-midnight-ink flex flex-col">
         <NavBar levelCode={level} lessonTitle={`${t('quizReading')} — ${readingIndex + 1}/2`} />
         <div className="flex-1 overflow-y-auto p-6 max-w-lg mx-auto w-full">
           {/* Passage */}
-          <div className="bg-navy-surface border hairline rounded-xl p-5 mb-6 shadow-editorial">
+          <div className="bg-midnight-ink-surface border hairline rounded-xl p-5 mb-6 shadow-editorial">
             <div className="flex items-center gap-2 mb-3">
               <span className="h-px w-6" style={{ background: 'rgba(245,158,11,0.5)' }} />
-              <span className="text-[10px] font-semibold tracking-[0.22em] uppercase" style={{ color: 'var(--champagne)' }}>
+              <span className="text-[10px] font-semibold tracking-[0.22em] uppercase" style={{ color: 'var(--vellum-champagne)' }}>
                 {t('quizReading')}
               </span>
             </div>
@@ -367,11 +367,11 @@ export function QuizMode({ level }: QuizModeProps) {
               <h2 className="text-base font-semibold text-white mb-5 leading-snug" style={{ letterSpacing: '-0.01em' }}>{q.question}</h2>
               <div className="space-y-3 mb-6">
                 {q.options.map((opt, i) => {
-                  let style = 'border-navy-surface-2 text-text-primary hover:border-gold/40 cursor-pointer'
+                  let style = 'border-midnight-ink-elevated text-text-primary hover:border-candlelight-gold/40 cursor-pointer'
                   if (readingAnswered) {
                     if (i === q.correctIndex) style = 'border-emerald-500 bg-emerald-500/10 text-emerald-400 cursor-default'
                     else if (i === readingSelected) style = 'border-rose-500 bg-rose-500/10 text-rose-400 cursor-default'
-                    else style = 'border-navy-surface-2 text-text-secondary opacity-50 cursor-default'
+                    else style = 'border-midnight-ink-elevated text-text-secondary opacity-50 cursor-default'
                   }
                   return (
                     <button
@@ -397,7 +397,7 @@ export function QuizMode({ level }: QuizModeProps) {
                   </div>
                   <button
                     onClick={handleReadingNext}
-                    className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-br from-gold to-gold-dark hover:shadow-gold-sm text-navy font-semibold py-3.5 min-h-[48px] rounded-xl transition-all"
+                    className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-br from-candlelight-gold to-candlelight-gold-dark hover:shadow-gold-sm text-midnight-ink font-semibold py-3.5 min-h-[48px] rounded-xl transition-all"
                   >
                     {readingIndex < readingQuestions.length - 1 ? t('next') : t('quizWriting')}
                     <ArrowRightIcon size={16} />
@@ -414,7 +414,7 @@ export function QuizMode({ level }: QuizModeProps) {
   // ─── Writing Phase ───
   if (phase === 'writing' && quizData) {
     return (
-      <div className="min-h-dvh bg-navy flex flex-col">
+      <div className="min-h-dvh bg-midnight-ink flex flex-col">
         <NavBar levelCode={level} lessonTitle={t('quizWriting')} />
         <div className="flex-1 overflow-y-auto p-6 max-w-lg mx-auto w-full">
           <div className="rounded-xl p-5 mb-5 shadow-editorial" style={{
@@ -423,14 +423,14 @@ export function QuizMode({ level }: QuizModeProps) {
           }}>
             <div className="flex items-center gap-2 mb-3">
               <span className="h-px w-6" style={{ background: 'rgba(245,158,11,0.5)' }} />
-              <span className="text-[10px] font-semibold tracking-[0.22em] uppercase" style={{ color: 'var(--champagne)' }}>
+              <span className="text-[10px] font-semibold tracking-[0.22em] uppercase" style={{ color: 'var(--vellum-champagne)' }}>
                 {t('quizWriting')}
               </span>
             </div>
             <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--text-primary)' }}>{quizData.writing.prompt}</p>
             <div className="pt-3 border-t hairline text-[11px] flex items-center gap-2">
               <span className="uppercase tracking-[0.15em]" style={{ color: 'var(--text-muted)' }}>Грамматик</span>
-              <span style={{ color: 'var(--champagne)' }}>{quizData.writing.grammar_focus}</span>
+              <span style={{ color: 'var(--vellum-champagne)' }}>{quizData.writing.grammar_focus}</span>
             </div>
           </div>
 
@@ -439,7 +439,7 @@ export function QuizMode({ level }: QuizModeProps) {
             onChange={e => setWritingAnswer(e.target.value)}
             placeholder={t('quizWritingPlaceholder')}
             rows={6}
-            className="w-full bg-navy-surface border border-navy-surface-2 rounded-xl p-4 text-text-primary text-sm resize-none focus:outline-none focus:border-gold/50 focus:ring-2 focus:ring-amber-400"
+            className="w-full bg-midnight-ink-surface border border-midnight-ink-elevated rounded-xl p-4 text-text-primary text-sm resize-none focus:outline-none focus:border-candlelight-gold/50 focus:ring-2 focus:ring-amber-400"
           />
           {writingAnswer.trim().length < 20 && (
             <p className="text-amber-400 text-xs mt-1 mb-4">
@@ -451,7 +451,7 @@ export function QuizMode({ level }: QuizModeProps) {
           <button
             onClick={handleSubmitWriting}
             disabled={writingAnswer.trim().length < 5}
-            className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-br from-gold to-gold-dark hover:shadow-gold-sm disabled:opacity-40 disabled:cursor-not-allowed text-navy font-semibold py-3.5 min-h-[48px] rounded-xl transition-all"
+            className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-br from-candlelight-gold to-candlelight-gold-dark hover:shadow-gold-sm disabled:opacity-40 disabled:cursor-not-allowed text-midnight-ink font-semibold py-3.5 min-h-[48px] rounded-xl transition-all"
           >
             {t('quizSubmitWriting')}
             <ArrowRightIcon size={16} />
@@ -464,12 +464,12 @@ export function QuizMode({ level }: QuizModeProps) {
   // ─── Results ───
   if (phase === 'results') {
     return (
-      <div className="min-h-dvh bg-navy flex flex-col">
+      <div className="min-h-dvh bg-midnight-ink flex flex-col">
         <NavBar levelCode={level} lessonTitle="Тест — үр дүн" />
         <div className="flex-1 overflow-y-auto p-6 max-w-lg mx-auto w-full">
           {/* Score summary — editorial */}
           <div className="text-center mb-8 pt-2">
-            <div className="text-[10px] font-semibold tracking-[0.3em] uppercase mb-4" style={{ color: 'var(--champagne)' }}>
+            <div className="text-[10px] font-semibold tracking-[0.3em] uppercase mb-4" style={{ color: 'var(--vellum-champagne)' }}>
               Үр дүн
             </div>
             <div className="font-serif-display font-bold nums-tabular leading-none mb-3" style={{ fontSize: 'clamp(72px, 18vw, 112px)' }}>
@@ -507,7 +507,7 @@ export function QuizMode({ level }: QuizModeProps) {
 
           {/* Score breakdown */}
           <div className="rounded-xl p-5 mb-5 border hairline shadow-editorial" style={{ background: '#141C30' }}>
-            <div className="text-[10px] font-semibold tracking-[0.22em] uppercase mb-4 flex items-center gap-2" style={{ color: 'var(--champagne)' }}>
+            <div className="text-[10px] font-semibold tracking-[0.22em] uppercase mb-4 flex items-center gap-2" style={{ color: 'var(--vellum-champagne)' }}>
               <span className="h-px w-6" style={{ background: 'rgba(245,158,11,0.5)' }} />
               Задлал
             </div>
@@ -537,7 +537,7 @@ export function QuizMode({ level }: QuizModeProps) {
           {/* Writing feedback */}
           {writingFeedback && (
             <div className="rounded-xl p-5 mb-5 border hairline" style={{ background: '#141C30' }}>
-              <div className="text-[10px] font-semibold tracking-[0.22em] uppercase mb-2.5 flex items-center gap-2" style={{ color: 'var(--champagne)' }}>
+              <div className="text-[10px] font-semibold tracking-[0.22em] uppercase mb-2.5 flex items-center gap-2" style={{ color: 'var(--vellum-champagne)' }}>
                 <span className="h-px w-6" style={{ background: 'rgba(245,158,11,0.5)' }} />
                 {t('quizWritingFeedback')}
               </div>
@@ -550,7 +550,7 @@ export function QuizMode({ level }: QuizModeProps) {
             {passed && !alreadyHasCert && (
               <button
                 onClick={() => setShowCertificate(true)}
-                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-br from-gold to-gold-dark hover:shadow-gold-sm text-navy font-semibold py-3.5 min-h-[48px] rounded-xl transition-all"
+                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-br from-candlelight-gold to-candlelight-gold-dark hover:shadow-gold-sm text-midnight-ink font-semibold py-3.5 min-h-[48px] rounded-xl transition-all"
               >
                 <CertificateIcon size={18} />
                 Гэрчилгээ авах

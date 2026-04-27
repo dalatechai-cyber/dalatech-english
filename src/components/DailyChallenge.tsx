@@ -67,7 +67,7 @@ export function DailyChallenge() {
         background: '#141C30',
         border: '1px solid var(--hairline)',
         borderLeftWidth: '3px',
-        borderLeftColor: 'var(--gold)',
+        borderLeftColor: 'var(--candlelight-gold)',
       }}
     >
       <div
@@ -82,14 +82,14 @@ export function DailyChallenge() {
         <div className="flex items-start gap-3">
           <span
             className="flex items-center justify-center w-9 h-9 rounded-full flex-shrink-0 mt-0.5"
-            style={{ background: 'rgba(245,158,11,0.12)', color: 'var(--gold)' }}
+            style={{ background: 'rgba(245,158,11,0.12)', color: 'var(--candlelight-gold)' }}
           >
             <TrophyIcon size={18} />
           </span>
           <div>
             <div
               className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1"
-              style={{ color: 'var(--champagne)' }}
+              style={{ color: 'var(--vellum-champagne)' }}
             >
               Daily · Challenge
             </div>
@@ -105,7 +105,7 @@ export function DailyChallenge() {
           className="text-[10px] font-semibold uppercase tracking-[0.2em] rounded-full px-2.5 py-1 flex-shrink-0"
           style={{
             background: 'rgba(245,158,11,0.12)',
-            color: 'var(--gold)',
+            color: 'var(--candlelight-gold)',
             border: '1px solid rgba(245,158,11,0.25)',
           }}
         >
@@ -115,7 +115,7 @@ export function DailyChallenge() {
 
       <div
         className="h-px w-12 mb-5"
-        style={{ background: 'linear-gradient(90deg, var(--gold), transparent)' }}
+        style={{ background: 'linear-gradient(90deg, var(--candlelight-gold), transparent)' }}
       />
 
       <p
@@ -145,8 +145,8 @@ export function DailyChallenge() {
               }
             } else if (selected === i) {
               bg = 'rgba(245,158,11,0.10)'
-              border = 'var(--gold)'
-              color = 'var(--gold)'
+              border = 'var(--candlelight-gold)'
+              color = 'var(--candlelight-gold)'
             }
             return (
               <button
@@ -170,7 +170,7 @@ export function DailyChallenge() {
               >
                 <span
                   className="font-serif-display text-xs tracking-widest"
-                  style={{ color: 'var(--champagne)' }}
+                  style={{ color: 'var(--vellum-champagne)' }}
                 >
                   {String.fromCharCode(65 + i)}
                 </span>
@@ -197,7 +197,7 @@ export function DailyChallenge() {
               color: 'var(--text-primary)',
             }}
             onFocus={e => {
-              e.currentTarget.style.borderColor = 'var(--gold)'
+              e.currentTarget.style.borderColor = 'var(--candlelight-gold)'
               e.currentTarget.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.18)'
             }}
             onBlur={e => {
@@ -261,7 +261,7 @@ export function DailyChallenge() {
           </div>
           <p
             className="text-center text-[13px] font-serif-display italic mt-4"
-            style={{ color: 'var(--champagne)' }}
+            style={{ color: 'var(--vellum-champagne)' }}
           >
             Өнөөдрийн даалгавар дууссан. Маргааш дахин ирээрэй.
           </p>

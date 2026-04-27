@@ -126,7 +126,7 @@ function bandLabel(b: number) {
 }
 function Spinner({ label }: { label: string }) {
   return (
-    <div className="min-h-dvh bg-navy flex flex-col">
+    <div className="min-h-dvh bg-midnight-ink flex flex-col">
       <NavBar lessonTitle="IELTS" />
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
@@ -1146,12 +1146,12 @@ export function IELTSTest() {
   // ─── Intro ───
   if (phase === 'intro') {
     return (
-      <div className="min-h-dvh bg-navy flex flex-col">
+      <div className="min-h-dvh bg-midnight-ink flex flex-col">
         <NavBar lessonTitle="IELTS Mock Test" />
         <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 max-w-2xl mx-auto w-full text-center page-enter-up">
           <div
             className="text-[11px] font-semibold uppercase tracking-[0.22em] mb-4"
-            style={{ color: 'var(--champagne)' }}
+            style={{ color: 'var(--vellum-champagne)' }}
           >
             IELTS · Academic
           </div>
@@ -1169,7 +1169,7 @@ export function IELTSTest() {
           </h1>
           <div
             className="h-px w-16 mx-auto mb-5"
-            style={{ background: 'linear-gradient(90deg, transparent, var(--gold), transparent)' }}
+            style={{ background: 'linear-gradient(90deg, transparent, var(--candlelight-gold), transparent)' }}
           />
           <p
             className="text-sm sm:text-base leading-relaxed mb-10 max-w-md"
@@ -1207,7 +1207,7 @@ export function IELTSTest() {
               >
                 <div
                   className="font-serif-display text-xs nums-tabular tracking-widest mb-3"
-                  style={{ color: 'var(--champagne)' }}
+                  style={{ color: 'var(--vellum-champagne)' }}
                 >
                   {s.num}
                 </div>
@@ -1250,12 +1250,12 @@ export function IELTSTest() {
                 background: '#141C30',
                 border: '1px solid var(--hairline)',
                 borderLeftWidth: '3px',
-                borderLeftColor: 'var(--gold)',
+                borderLeftColor: 'var(--candlelight-gold)',
               }}
             >
               <div
                 className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2"
-                style={{ color: 'var(--champagne)' }}
+                style={{ color: 'var(--vellum-champagne)' }}
               >
                 Session · Restore
               </div>
@@ -1389,7 +1389,7 @@ export function IELTSTest() {
   if (phase === 'speaking') {
     if (!sttSupported) {
       return (
-        <div className="min-h-dvh bg-navy flex flex-col items-center justify-center p-8 text-center">
+        <div className="min-h-dvh bg-midnight-ink flex flex-col items-center justify-center p-8 text-center">
           <NavBar lessonTitle="Speaking" />
           <div className="flex-1 flex flex-col items-center justify-center gap-6">
             <div className="text-5xl">🎤</div>
@@ -1414,7 +1414,7 @@ export function IELTSTest() {
       '#8B5CF6'
 
     return (
-      <div className="min-h-dvh bg-navy flex flex-col" style={{ background: '#050D1A' }}>
+      <div className="min-h-dvh bg-midnight-ink flex flex-col" style={{ background: '#050D1A' }}>
         {/* Stop button — mobile: fixed bottom-center (clears hamburger); desktop: top-right */}
         {speakPhase !== 'ready' && (
           <>
@@ -1495,7 +1495,7 @@ export function IELTSTest() {
               {speakShowCard && (
                 <div className="text-left px-4 py-3 rounded-2xl w-full" style={{ background: '#0F172A', border: '1px solid #F59E0B55' }}>
                   <div className="flex items-center justify-between mb-2">
-                    <div className="text-xs font-semibold text-gold uppercase tracking-wide">📋 Topic Card</div>
+                    <div className="text-xs font-semibold text-candlelight-gold uppercase tracking-wide">📋 Topic Card</div>
                     {speakPart2Countdown !== null && (
                       <span className="text-sm font-extrabold tabular-nums" style={{ color: speakPart2Countdown === 0 ? '#F59E0B' : '#FCD34D' }}>
                         ⏱ {mmss(speakPart2Countdown)}
@@ -1557,7 +1557,7 @@ export function IELTSTest() {
     const passThreshold = Math.round(maxTotal * 0.7)
     const passedPts = totalPts >= passThreshold
     return (
-      <div className="min-h-dvh flex flex-col" style={{ background: 'var(--navy-deep)' }}>
+      <div className="min-h-dvh flex flex-col" style={{ background: 'var(--midnight-ink-deep)' }}>
         <NavBar lessonTitle="IELTS — Үр дүн" />
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 max-w-2xl mx-auto w-full page-enter-up">
           {isPartialResult && (
@@ -1567,13 +1567,13 @@ export function IELTSTest() {
                 background: 'rgba(245,158,11,0.08)',
                 border: '1px solid var(--hairline)',
                 borderLeftWidth: '3px',
-                borderLeftColor: 'var(--gold)',
+                borderLeftColor: 'var(--candlelight-gold)',
                 color: 'var(--text-primary)',
               }}
             >
               <div
                 className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1"
-                style={{ color: 'var(--champagne)' }}
+                style={{ color: 'var(--vellum-champagne)' }}
               >
                 Partial · Assessment
               </div>
@@ -1584,7 +1584,7 @@ export function IELTSTest() {
           <div className="text-center mb-8 py-8">
             <div
               className="text-[10px] font-semibold uppercase tracking-[0.28em] mb-3"
-              style={{ color: 'var(--champagne)' }}
+              style={{ color: 'var(--vellum-champagne)' }}
             >
               Overall · Band
             </div>
@@ -1603,7 +1603,7 @@ export function IELTSTest() {
             </div>
             <div
               className="h-px w-16 mx-auto mb-3"
-              style={{ background: 'linear-gradient(90deg, transparent, var(--gold), transparent)' }}
+              style={{ background: 'linear-gradient(90deg, transparent, var(--candlelight-gold), transparent)' }}
             />
             <div
               className="text-[11px] font-semibold uppercase tracking-[0.24em]"
@@ -1622,7 +1622,7 @@ export function IELTSTest() {
           >
             <div
               className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-4"
-              style={{ color: 'var(--champagne)' }}
+              style={{ color: 'var(--vellum-champagne)' }}
             >
               Section · Scores
             </div>
@@ -1645,7 +1645,7 @@ export function IELTSTest() {
                     className="inline-flex items-center justify-center w-9 h-9 rounded-full mb-2"
                     style={{
                       background: 'rgba(245,158,11,0.10)',
-                      color: 'var(--gold)',
+                      color: 'var(--candlelight-gold)',
                       border: '1px solid rgba(245,158,11,0.22)',
                     }}
                   >
@@ -1683,7 +1683,7 @@ export function IELTSTest() {
           >
             <div
               className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-3"
-              style={{ color: 'var(--champagne)' }}
+              style={{ color: 'var(--vellum-champagne)' }}
             >
               Raw · Scores
             </div>
@@ -1716,7 +1716,7 @@ export function IELTSTest() {
               className="font-sans text-sm leading-relaxed"
               style={{ color: 'var(--text-secondary)' }}
             >
-              Сонсох <span className="font-semibold not-italic nums-tabular" style={{ color: 'var(--text-primary)' }}>{listenCorrect}</span>/{listenTotal} · Уншлага <span className="font-semibold not-italic nums-tabular" style={{ color: 'var(--text-primary)' }}>{readCorrect}</span>/{readTotal} · Бичих <span className="font-semibold not-italic nums-tabular" style={{ color: 'var(--text-primary)' }}>{writingPts}</span>/6 · Ярих <span className="font-semibold not-italic nums-tabular" style={{ color: 'var(--text-primary)' }}>{speakPts}</span>/15 · Нийт: <span className="font-bold not-italic nums-tabular" style={{ color: passedPts ? '#34D399' : 'var(--gold)' }}>{totalPts}</span>/{maxTotal}
+              Сонсох <span className="font-semibold not-italic nums-tabular" style={{ color: 'var(--text-primary)' }}>{listenCorrect}</span>/{listenTotal} · Уншлага <span className="font-semibold not-italic nums-tabular" style={{ color: 'var(--text-primary)' }}>{readCorrect}</span>/{readTotal} · Бичих <span className="font-semibold not-italic nums-tabular" style={{ color: 'var(--text-primary)' }}>{writingPts}</span>/6 · Ярих <span className="font-semibold not-italic nums-tabular" style={{ color: 'var(--text-primary)' }}>{speakPts}</span>/15 · Нийт: <span className="font-bold not-italic nums-tabular" style={{ color: passedPts ? '#34D399' : 'var(--candlelight-gold)' }}>{totalPts}</span>/{maxTotal}
             </p>
             <p
               className="text-[11px] mt-2 uppercase tracking-[0.18em] font-semibold"
@@ -1733,14 +1733,14 @@ export function IELTSTest() {
                 background: '#141C30',
                 border: '1px solid var(--hairline)',
                 borderLeftWidth: '3px',
-                borderLeftColor: 'var(--gold)',
+                borderLeftColor: 'var(--candlelight-gold)',
               }}
             >
               <div className="flex items-center gap-2 mb-4">
-                <span style={{ color: 'var(--gold)' }}><PencilIcon size={16} /></span>
+                <span style={{ color: 'var(--candlelight-gold)' }}><PencilIcon size={16} /></span>
                 <div
                   className="text-[10px] font-semibold uppercase tracking-[0.22em]"
-                  style={{ color: 'var(--champagne)' }}
+                  style={{ color: 'var(--vellum-champagne)' }}
                 >
                   Writing · Criteria
                 </div>
@@ -1781,14 +1781,14 @@ export function IELTSTest() {
                 background: '#141C30',
                 border: '1px solid var(--hairline)',
                 borderLeftWidth: '3px',
-                borderLeftColor: 'var(--gold)',
+                borderLeftColor: 'var(--candlelight-gold)',
               }}
             >
               <div className="flex items-center gap-2 mb-4">
-                <span style={{ color: 'var(--gold)' }}><MicIcon size={16} /></span>
+                <span style={{ color: 'var(--candlelight-gold)' }}><MicIcon size={16} /></span>
                 <div
                   className="text-[10px] font-semibold uppercase tracking-[0.22em]"
-                  style={{ color: 'var(--champagne)' }}
+                  style={{ color: 'var(--vellum-champagne)' }}
                 >
                   Speaking · Criteria
                 </div>

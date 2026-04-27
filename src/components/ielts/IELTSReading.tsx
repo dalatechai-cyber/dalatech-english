@@ -45,7 +45,7 @@ export function IELTSReading({
   // generate-content request is in flight). Show skeleton until passages arrive.
   if (passages.length === 0) {
     return (
-      <div className="min-h-dvh bg-navy flex flex-col">
+      <div className="min-h-dvh bg-midnight-ink flex flex-col">
         <NavBar lessonTitle="Reading" />
         <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
           <SectionProgress idx={sectionIdx} />
@@ -55,7 +55,7 @@ export function IELTSReading({
             </div>
             <p className="text-xs font-semibold" style={{ color: '#F59E0B' }}>Нийтлэл ачааллаж байна...</p>
           </div>
-          <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 space-y-3">
+          <div className="bg-midnight-ink-surface border border-midnight-ink-elevated rounded-2xl p-4 space-y-3">
             {[100, 95, 88, 92, 80, 96, 85, 90, 75].map((w, i) => (
               <div key={i} className="h-3 rounded animate-pulse" style={{ width: `${w}%`, background: '#1E293B' }} />
             ))}
@@ -87,11 +87,11 @@ export function IELTSReading({
   const PassagePane = (
     <div
       data-reading-scroll="passage"
-      className="bg-navy-surface border border-navy-surface-2 rounded-2xl h-full overflow-y-auto"
+      className="bg-midnight-ink-surface border border-midnight-ink-elevated rounded-2xl h-full overflow-y-auto"
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
       <div
-        className="text-xs font-semibold text-gold uppercase tracking-wide"
+        className="text-xs font-semibold text-candlelight-gold uppercase tracking-wide"
         style={{
           position: 'sticky',
           top: 0,
@@ -124,7 +124,7 @@ export function IELTSReading({
   )
 
   const QuestionsPane = (
-    <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl h-full flex flex-col overflow-hidden">
+    <div className="bg-midnight-ink-surface border border-midnight-ink-elevated rounded-2xl h-full flex flex-col overflow-hidden">
       <div
         data-reading-scroll="questions"
         className="flex-1 overflow-y-auto p-4"
@@ -151,16 +151,16 @@ export function IELTSReading({
         </div>
       </div>
       {/* Desktop footer — stays pinned below the scroll area so the last question never hides behind it. Mobile uses a fixed bottom bar rendered outside this pane. */}
-      <div className="hidden md:block border-t border-navy-surface-2 p-4 bg-navy-surface">
+      <div className="hidden md:block border-t border-midnight-ink-elevated p-4 bg-midnight-ink-surface">
         {advanceButton}
       </div>
     </div>
   )
 
   return (
-    <div className="h-dvh bg-navy flex flex-col overflow-hidden">
+    <div className="h-dvh bg-midnight-ink flex flex-col overflow-hidden">
       <NavBar lessonTitle="Reading" />
-      <div className="px-4 pt-3 pb-2 max-w-6xl mx-auto w-full flex-shrink-0 sticky top-0 z-10 bg-navy md:static">
+      <div className="px-4 pt-3 pb-2 max-w-6xl mx-auto w-full flex-shrink-0 sticky top-0 z-10 bg-midnight-ink md:static">
         <SectionProgress idx={sectionIdx} />
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs font-semibold" style={{ color: '#F59E0B' }}>НИЙТЛЭЛ {pi + 1}/{passages.length}</p>
@@ -177,7 +177,7 @@ export function IELTSReading({
       <div className="md:hidden flex-1 flex flex-col px-4 pb-4 min-h-0" style={{ paddingBottom: readMobileTab === 'questions' ? 92 : 16 }}>
 
         <div
-          className="flex border-b border-navy-surface-2 mb-3 flex-shrink-0"
+          className="flex border-b border-midnight-ink-elevated mb-3 flex-shrink-0"
           style={{
             position: 'sticky',
             top: 48,
@@ -216,7 +216,7 @@ export function IELTSReading({
       {/* Mobile fixed advance bar — sits above tab bar, only on questions tab so it never covers the passage text. */}
       {readMobileTab === 'questions' && (
         <div
-          className="md:hidden fixed left-0 right-0 border-t border-navy-surface-2 px-4 py-3"
+          className="md:hidden fixed left-0 right-0 border-t border-midnight-ink-elevated px-4 py-3"
           style={{ bottom: 0, background: '#0F172A', zIndex: 40, paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
         >
           {advanceButton}

@@ -581,13 +581,13 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
 
           <p
             className="hidden md:block text-center text-[11px] uppercase tracking-[0.2em] mt-1 font-serif-display italic normal-case"
-            style={{ color: 'var(--champagne)', letterSpacing: 'normal' }}
+            style={{ color: 'var(--vellum-champagne)', letterSpacing: 'normal' }}
           >
             Гэрчилгээгээ татаж аваад найзуудтайгаа хуваалцаарай.
           </p>
           <p
             className="md:hidden text-center text-[12px] mt-1 leading-relaxed px-2 font-serif-display italic"
-            style={{ color: 'var(--champagne)' }}
+            style={{ color: 'var(--vellum-champagne)' }}
           >
             Утасны хэрэглэгчид: зургийг татсаны дараа галерейд хадгалахын тулд
             зургийг нээгээд &apos;Галерейд хадгалах&apos; дарна уу.
@@ -603,7 +603,7 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
             }}
             onMouseEnter={e => {
               e.currentTarget.style.borderColor = 'rgba(245,158,11,0.35)'
-              e.currentTarget.style.color = 'var(--gold)'
+              e.currentTarget.style.color = 'var(--candlelight-gold)'
             }}
             onMouseLeave={e => {
               e.currentTarget.style.borderColor = 'var(--hairline)'
