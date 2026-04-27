@@ -49,6 +49,7 @@ export function LandingPage() {
           <div className="inline-flex items-center gap-2.5 mb-10">
             <span className="h-px w-8" style={{ background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.6))' }} />
             <span
+              lang="en"
               className="text-[11px] font-semibold tracking-[0.22em] uppercase"
               style={{ color: 'var(--champagne)' }}
             >
@@ -268,7 +269,7 @@ export function LandingPage() {
         style={{ color: 'var(--text-muted)' }}
       >
         <div className="max-w-5xl mx-auto px-5 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span className="font-serif-display italic">Core English</span>
+          <span lang="en" className="font-serif-display italic">Core English</span>
           <span>
             Powered by{' '}
             <a

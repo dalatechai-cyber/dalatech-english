@@ -292,7 +292,7 @@ function IELTSHistoryRow({ entry }: { entry: TestHistoryEntry }) {
           {band}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-sans font-semibold text-white text-sm">IELTS Mock Test</div>
+          <div lang="en" className="font-sans font-semibold text-white text-sm">IELTS Mock Test</div>
           <div className="font-sans text-[11px] mt-0.5 nums-tabular" style={{ color: 'var(--text-muted)' }}>
             {formatMongolianDate(entry.date)}
           </div>

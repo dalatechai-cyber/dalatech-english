@@ -35,12 +35,14 @@ export function LevelPage({ levelCode }: LevelPageProps) {
         {/* Hero — editorial */}
         <div className="text-center mb-12">
           <div
+            lang="en"
             className="text-[11px] font-semibold uppercase tracking-[0.22em] mb-4"
             style={{ color: 'var(--champagne)' }}
           >
             CEFR · Level
           </div>
           <div
+            lang="en"
             className="font-serif-display text-7xl sm:text-8xl font-bold leading-none mb-4 nums-tabular"
             style={{
               background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 50%, #E4C08A 100%)',

@@ -50,6 +50,7 @@ export function LevelSelector() {
                 {/* Top row: status pill */}
                 <div className="flex items-center justify-between mb-4">
                   <span
+                    lang="en"
                     className="text-[10px] font-semibold tracking-[0.2em] uppercase"
                     style={{ color: lp.examPassed ? 'var(--champagne)' : 'var(--text-muted)' }}
                   >
@@ -70,6 +71,7 @@ export function LevelSelector() {
 
                 {/* Level code — serif, editorial */}
                 <div
+                  lang="en"
                   className="font-serif-display text-5xl font-bold leading-none mb-1 nums-tabular"
                   style={{
                     background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 50%, #E4C08A 100%)',

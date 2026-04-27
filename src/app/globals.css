@@ -17,6 +17,7 @@
   --text-secondary: #CBD5E1;
   --text-muted: #64748B;
   --serif: var(--font-playfair), 'EB Garamond', Georgia, serif;
+  --serif-garamond: var(--font-eb-garamond), Georgia, 'Times New Roman', serif;
 }
 
 html {
@@ -38,7 +39,6 @@ body {
   color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 16px;
-  font-feature-settings: 'ss01', 'cv11', 'calt';
   overflow-x: hidden;
   position: relative;
 }
@@ -254,7 +254,7 @@ body::before {
 }
 
 *:focus-visible {
-  outline: 2px solid #F59E0B;
+  outline: 2px solid var(--gold);
   outline-offset: 2px;
 }
 
@@ -263,7 +263,29 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
 a:focus-visible {
-  outline: 2px solid #F59E0B;
+  outline: 2px solid var(--gold);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+/* ─── Bilingual Typography Rules (DESIGN.md §3.4-§3.5) ─── */
+:lang(mn) {
+  /* DESIGN.md §3.5: Cyrillic reads heavier — slight weight reduction for parity */
+  font-weight: inherit;
+}
+
+:lang(en) {
+  font-weight: inherit;
+}
+
+/* DESIGN.md §3.4: Cyrillic uppercase needs more tracking than Latin */
+:lang(mn).uppercase,
+:lang(mn) .uppercase {
+  letter-spacing: 0.18em;
+}
+
+/* DESIGN.md §3.5: When Latin uppercase headings sit inside Mongolian context, hold tracking at 0.22em (the dominant eyebrow tracking from audit §4a) */
+:lang(en).uppercase,
+:lang(en) .uppercase {
+  letter-spacing: 0.22em;
 }

@@ -11,7 +11,7 @@ export function SectionProgress({ idx }: { idx: number }) {
   return (
     <div className="mb-5">
       <div className="flex items-center justify-between mb-2 text-[10px] uppercase tracking-[0.2em]">
-        <span style={{ color: 'var(--champagne)' }}>
+        <span lang="en" style={{ color: 'var(--champagne)' }}>
           Section {String(Math.min(idx + 1, 4)).padStart(2, '0')} · {labels[Math.min(idx, 3)]}
         </span>
         <span
