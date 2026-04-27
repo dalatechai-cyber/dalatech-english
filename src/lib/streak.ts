@@ -20,6 +20,12 @@ export interface StreakData {
   isFirstEver: boolean
 }
 
+export type StreakUpdatedDetail = {
+  current: number
+  longest: number
+  lastDate: string
+}
+
 export function loadStreak(): StreakData {
   if (typeof window === 'undefined') return { current: 0, longest: 0, lastDate: null, isNewDay: false, isFirstEver: true }
   const current = parseInt(localStorage.getItem(KEY_CURRENT) || '0')
@@ -57,6 +63,11 @@ export function recordStudySession(): StreakData {
     localStorage.setItem(KEY_LAST_DATE, today)
   } catch (e) {
     console.warn('Storage full:', e)
+  }
+
+  if (typeof window !== 'undefined') {
+    const detail: StreakUpdatedDetail = { current, longest, lastDate: today }
+    window.dispatchEvent(new CustomEvent('streak:updated', { detail }))
   }
 
   return { current, longest, lastDate: today, isNewDay: true, isFirstEver: lastDate === null }
