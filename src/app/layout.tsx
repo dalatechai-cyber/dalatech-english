@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Playfair_Display, EB_Garamond } from 'next/font/google'
+import { ErrorReporter } from '@/components/ErrorReporter'
 import './globals.css'
 
 const playfair = Playfair_Display({
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="mn" className={`${playfair.variable} ${ebGaramond.variable}`}>
       <body className="min-h-dvh bg-midnight-ink text-text-primary">
+        <ErrorReporter />
         <div className="page-enter">
           {children}
         </div>

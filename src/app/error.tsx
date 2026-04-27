@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { reportError } from '@/components/ErrorReporter'
 
 export default function GlobalError({
   error,
@@ -10,8 +11,13 @@ export default function GlobalError({
   reset: () => void
 }) {
   useEffect(() => {
-    // Surface to console — replaced by structured logging in PR B
     console.error('App error boundary caught:', error)
+    reportError({
+      type: 'errorboundary',
+      message: error.message,
+      stack: error.stack,
+      digest: error.digest,
+    })
   }, [error])
 
   return (
