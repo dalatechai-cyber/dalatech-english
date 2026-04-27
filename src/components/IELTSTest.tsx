@@ -462,6 +462,11 @@ export function IELTSTest() {
 
   // ── Persist session after content generates, on answer changes, on phase transitions ──
   // Writing text has its own debounced saver below to avoid thrashing localStorage.
+  // Refs let the persist effect read the latest writing values without re-firing on each keystroke.
+  const writingTask1Ref = useRef(writingTask1)
+  const writingTask2Ref = useRef(writingTask2)
+  useEffect(() => { writingTask1Ref.current = writingTask1 }, [writingTask1])
+  useEffect(() => { writingTask2Ref.current = writingTask2 }, [writingTask2])
   useEffect(() => {
     if (!contentFullyLoaded) return
     if (!content) return
@@ -479,8 +484,8 @@ export function IELTSTest() {
       content,
       listeningAnswers: listenAnswers,
       readingAnswers: readAnswers,
-      writingTask1,
-      writingTask2,
+      writingTask1: writingTask1Ref.current,
+      writingTask2: writingTask2Ref.current,
       currentPassage,
     })
   }, [phase, content, listenAnswers, readAnswers, readPassageIdx, contentFullyLoaded])
@@ -503,7 +508,7 @@ export function IELTSTest() {
       })
     }, 2000)
     return () => clearTimeout(id)
-  }, [writingTask1, writingTask2, phase, contentFullyLoaded])
+  }, [writingTask1, writingTask2, phase, contentFullyLoaded, content, listenAnswers, readAnswers, readPassageIdx])
 
   // ── Writing countdown timers ──
   const writingTaskViewRef = useRef<1 | 2>(1)
