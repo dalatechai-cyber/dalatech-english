@@ -3,12 +3,12 @@ name: Core English
 description: Editorial-premium dark-mode English tutor for Mongolian speakers — The Nocturnal Academy.
 colors:
   midnight-ink: "#0B1222"
-  deep-ink: "#070C18"
-  ink-surface: "#141C30"
-  ink-surface-raised: "#1F2940"
+  midnight-ink-deep: "#070C18"
+  midnight-ink-surface: "#141C30"
+  midnight-ink-elevated: "#1F2940"
   candlelight-gold: "#F59E0B"
-  candlelight-gold-bright: "#FCD34D"
-  candlelight-gold-deep: "#D97706"
+  candlelight-gold-light: "#FCD34D"
+  candlelight-gold-dark: "#D97706"
   vellum-champagne: "#E4C08A"
   text-primary: "#F8FAFC"
   text-secondary: "#CBD5E1"
@@ -71,7 +71,7 @@ components:
     padding: "16px 28px"
     typography: "{typography.title}"
   button-primary-hover:
-    backgroundColor: "{colors.candlelight-gold-deep}"
+    backgroundColor: "{colors.candlelight-gold-dark}"
     textColor: "{colors.midnight-ink}"
   button-ghost:
     backgroundColor: "transparent"
@@ -90,17 +90,17 @@ components:
     typography: "{typography.label}"
     padding: "0"
   card-surface:
-    backgroundColor: "{colors.ink-surface}"
+    backgroundColor: "{colors.midnight-ink-surface}"
     textColor: "{colors.text-primary}"
     rounded: "{rounded.xl}"
     padding: "24px"
   card-elevated:
-    backgroundColor: "{colors.ink-surface}"
+    backgroundColor: "{colors.midnight-ink-surface}"
     textColor: "{colors.text-primary}"
     rounded: "{rounded.xl}"
     padding: "24px"
   input-field:
-    backgroundColor: "{colors.ink-surface}"
+    backgroundColor: "{colors.midnight-ink-surface}"
     textColor: "{colors.text-primary}"
     rounded: "{rounded.lg}"
     padding: "12px 16px"
@@ -132,22 +132,24 @@ A three-voice palette: a deep ink ground, a single warm flame, and an aged-vellu
 
 ### Primary
 - **Candlelight Gold** (`#F59E0B`, oklch(75% 0.17 65)): the one lamp. Appears on primary CTAs, achievement borders on unlocked level cards, the streak flame, focus rings, the wordmark in the nav. Never a background fill on large surfaces; never a decorative accent. If you are using it for more than state or identity, you are using it wrong.
-- **Candlelight Gold Bright** (`#FCD34D`): the highlight on the lamp's glass. Used only as the top stop in gradients on the primary CTA and level-code serif (see The One Flame rule). Never standalone.
-- **Candlelight Gold Deep** (`#D97706`): the lamp's shadow side. Bottom stop in the CTA gradient and the active/press state of primary actions.
+- **Candlelight Gold Light** (`#FCD34D`): the highlight on the lamp's glass. Used only as the top stop in gradients on the primary CTA and level-code serif (see The One Flame rule). Never standalone.
+- **Candlelight Gold Dark** (`#D97706`): the lamp's shadow side. Bottom stop in the CTA gradient and the active/press state of primary actions.
 
 ### Secondary
 - **Vellum Champagne** (`#E4C08A`, oklch(82% 0.075 75)): aged paper. The editorial whisper: uppercase kicker labels, nav links, section eyebrows, progress counters. This is the color that carries identity when gold is being reserved for CTAs. If a screen feels visually empty, add Vellum Champagne, not Gold.
 
 ### Neutral
 - **Midnight Ink** (`#0B1222`, oklch(18% 0.025 260)): the room itself. Global body background, tinted 18% toward cool blue, never pure black (#000 is banned). Carries the radial-glow + grain-overlay composition in `body::before`.
-- **Deep Ink** (`#070C18`): shadow edges. Used in radial gradients and drop-shadows to push surfaces away from the ground.
-- **Ink Surface** (`#141C30`): the raised desk. Cards, nav, dropdown menus, chat bubbles (user side uses gold, AI side uses ink surface).
-- **Ink Surface Raised** (`#1F2940`): one level above. Scrollbar thumbs, pressed states, hover elevation.
+- **Midnight Ink Deep** (`#070C18`): shadow edges. Used in radial gradients and drop-shadows to push surfaces away from the ground.
+- **Midnight Ink Surface** (`#141C30`): the raised desk. Cards, nav, dropdown menus, chat bubbles (user side uses gold, AI side uses midnight-ink-surface).
+- **Midnight Ink Elevated** (`#1F2940`): one level above. Scrollbar thumbs, pressed states, hover elevation.
 - **Text Primary** (`#F8FAFC`, oklch(98% 0.005 260)): body and headline on dark ground. Never `#fff`; tinted 0.5% toward the ink hue.
 - **Text Secondary** (`#CBD5E1`): supporting body, descriptive paragraphs, most sub-labels.
-- **Text Muted** (`#64748B`): timestamps, footer, minor metadata, inactive states. Still passes AA on Ink Surface at ≥14px.
+- **Text Muted** (`#64748B`): timestamps, footer, minor metadata, inactive states. Still passes AA on Midnight Ink Surface at ≥14px.
 - **Hairline** (`rgba(255,255,255,0.06)`): the universal divider. Section breaks, card borders, nav bottom edge, grid gaps. Never a full-weight border; always this whisper.
 - **Hairline Gold** (`rgba(245,158,11,0.18)`): the accent divider. Stat pill borders, dropdown active edge. Reserved for gold-adjacent contexts.
+
+**Naming convention.** Base tokens use editorial vocabulary (`midnight-ink`, `candlelight-gold`, `vellum-champagne`) to reinforce the Nocturnal Academy design language. Variants use functional suffixes (`-deep`, `-surface`, `-elevated`, `-light`, `-dark`) so their relationship to the base token is mechanically obvious from the token name alone. The certificate sub-system (§7) uses its own naming convention scoped to that exception.
 
 ### Named Rules
 
@@ -268,7 +270,7 @@ The system uses **layered structural shadows + ambient gold glow**. Surfaces are
 ### Ambient Scene Glows (not shadows, but depth)
 - **`.orb-pulse`** radial gradient, 820×460 at hero center: `rgba(245,158,11,0.14) 0%, rgba(245,158,11,0.04) 40%, transparent 70%`, animated 6s ease-in-out. This is the lamp's light spilling into the room.
 - **`body::before` grain**: SVG fractal noise at 3.5% opacity, `mix-blend-mode: overlay`. The paper-texture signature. Subtle enough to miss, present enough to feel.
-- **`body` radial gradient**: a soft amber wash from the top, plus a navy-to-deep-ink falloff. The room has a ceiling.
+- **`body` radial gradient**: a soft amber wash from the top, plus a navy-to-midnight-ink-deep falloff. The room has a ceiling.
 
 ### Named Rules
 
@@ -294,7 +296,7 @@ The system uses **layered structural shadows + ambient gold glow**. Surfaces are
 ### Cards / Containers
 
 - **Corner Style:** `rounded-xl` (16px) on surface cards, `rounded-2xl` on featured grids.
-- **Background:** Ink Surface (`#141C30`) at rest. On achievement states, swap the border to a gold-gradient `padding-box / border-box` trick: `background: linear-gradient(#141C30, #141C30) padding-box, linear-gradient(135deg, #F59E0B, #E4C08A, #D97706) border-box; border: 1px solid transparent;`.
+- **Background:** Midnight Ink Surface (`#141C30`) at rest. On achievement states, swap the border to a gold-gradient `padding-box / border-box` trick: `background: linear-gradient(#141C30, #141C30) padding-box, linear-gradient(135deg, #F59E0B, #E4C08A, #D97706) border-box; border: 1px solid transparent;`.
 - **Shadow Strategy:** `shadow-editorial` default, promote to `shadow-gold` on achievement (unlocked / completed) or on hover.
 - **Border:** `1px solid rgba(255,255,255,0.06)` (hairline) default; gold-gradient border on achievement. Never a thick border, never a colored full-weight border.
 - **Internal Padding:** 20–28px (`p-5` to `p-7`). Never below 16px; never above 32px. Variation across the system is intentional rhythm.
@@ -305,11 +307,11 @@ The three-tile "Философи" grid on the landing is a **hairline-separated 
 ```
 grid-cols-3 gap-px bg-white/[0.04] rounded-2xl overflow-hidden border hairline
 ```
-The 1px gap is the shared background leaking through. Inside each tile: Playfair italic folio number (01 / 02 / 03) at Candlelight Gold 50% alpha in the top-left, icon in a gold-tinted rounded-lg square in the top-right, Title in white, body in `#94A3B8`. Hover swaps tile bg from `ink-surface` to `ink-surface-raised`.
+The 1px gap is the shared background leaking through. Inside each tile: Playfair italic folio number (01 / 02 / 03) at Candlelight Gold 50% alpha in the top-left, icon in a gold-tinted rounded-lg square in the top-right, Title in white, body in `#94A3B8`. Hover swaps tile bg from `midnight-ink-surface` to `midnight-ink-elevated`.
 
 ### Inputs / Fields
 
-- **Style:** Ink Surface (`#141C30`) background, hairline 1px border, `rounded-lg` (12px), padding 12px 16px.
+- **Style:** Midnight Ink Surface (`#141C30`) background, hairline 1px border, `rounded-lg` (12px), padding 12px 16px.
 - **Font:** Inter 16px (enforced, iOS auto-zoom prevention).
 - **Focus:** gold 2px outline via `*:focus-visible` global rule, `outline-offset: 2px`.
 - **Error / Disabled:** not yet consolidated in the codebase; when added, error uses `rgba(239, 68, 68, 0.18)` border + Text Secondary copy + error icon (never red background, never red text).
