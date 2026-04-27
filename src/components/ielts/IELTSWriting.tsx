@@ -63,7 +63,7 @@ export function IELTSWriting({
   onAdvance,
 }: IELTSWritingProps) {
   return (
-    <div className="min-h-dvh bg-midnight-ink flex flex-col">
+    <div className="min-h-screen bg-midnight-ink flex flex-col">
       <NavBar lessonTitle={`Writing — Task ${writingTaskView}/2`} />
       <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
         <SectionProgress idx={sectionIdx} />

@@ -70,7 +70,7 @@ export function IELTSListening({
   const canPlay = listenAudioReady || listenAudioError
 
   return (
-    <div className="min-h-dvh bg-midnight-ink flex flex-col">
+    <div className="min-h-screen bg-midnight-ink flex flex-col">
       <NavBar lessonTitle="Listening" />
       <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
         <SectionProgress idx={sectionIdx} />

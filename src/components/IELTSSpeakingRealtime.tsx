@@ -543,7 +543,7 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
   }, [orbState])
 
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: '#050D1A' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#050D1A' }}>
       {connState !== 'idle' && (
         <>
           <div className="hidden md:block fixed top-4 right-4 z-50">

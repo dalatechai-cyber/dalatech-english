@@ -15,7 +15,7 @@ import {
 
 export function LandingPage() {
   return (
-    <div className="min-h-dvh bg-midnight-ink relative">
+    <div className="min-h-screen bg-midnight-ink relative">
       <NavBar />
 
       {/* ─── Hero ─── */}
