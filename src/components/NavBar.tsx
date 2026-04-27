@@ -17,8 +17,39 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
   const menuRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    const data = loadStreak()
-    setStreak(data.current)
+    const refresh = () => {
+      const data = loadStreak()
+      setStreak(data.current)
+    }
+
+    refresh()
+
+    const handleStreakUpdate = () => refresh()
+    window.addEventListener('streak:updated', handleStreakUpdate)
+
+    const handleStorage = (e: StorageEvent) => {
+      if (
+        e.key === 'core-streak-current' ||
+        e.key === 'core-streak-longest' ||
+        e.key === 'core-streak-last-date'
+      ) {
+        refresh()
+      }
+    }
+    window.addEventListener('storage', handleStorage)
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        refresh()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      window.removeEventListener('streak:updated', handleStreakUpdate)
+      window.removeEventListener('storage', handleStorage)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
   }, [])
 
   useEffect(() => {
