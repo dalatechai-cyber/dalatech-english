@@ -10,20 +10,20 @@
         "canonical": "oklch(18% 0.025 260)",
         "tonalRamp": ["oklch(8% 0.015 260)", "oklch(12% 0.02 260)", "oklch(18% 0.025 260)", "oklch(24% 0.028 260)", "oklch(32% 0.03 260)", "oklch(48% 0.025 260)", "oklch(68% 0.018 260)", "oklch(92% 0.008 260)"]
       },
-      "deep-ink": {
+      "midnight-ink-deep": {
         "role": "neutral",
-        "displayName": "Deep Ink",
+        "displayName": "Midnight Ink Deep",
         "canonical": "oklch(12% 0.02 260)"
       },
-      "ink-surface": {
+      "midnight-ink-surface": {
         "role": "neutral",
-        "displayName": "Ink Surface",
+        "displayName": "Midnight Ink Surface",
         "canonical": "oklch(24% 0.028 260)",
         "tonalRamp": ["oklch(10% 0.018 260)", "oklch(15% 0.022 260)", "oklch(20% 0.026 260)", "oklch(24% 0.028 260)", "oklch(30% 0.03 260)", "oklch(42% 0.028 260)", "oklch(60% 0.02 260)", "oklch(88% 0.01 260)"]
       },
-      "ink-surface-raised": {
+      "midnight-ink-elevated": {
         "role": "neutral",
-        "displayName": "Ink Surface Raised",
+        "displayName": "Midnight Ink Elevated",
         "canonical": "oklch(30% 0.03 260)"
       },
       "candlelight-gold": {
@@ -32,14 +32,14 @@
         "canonical": "oklch(75% 0.17 65)",
         "tonalRamp": ["oklch(25% 0.08 65)", "oklch(38% 0.12 65)", "oklch(52% 0.15 65)", "oklch(65% 0.17 65)", "oklch(75% 0.17 65)", "oklch(83% 0.14 65)", "oklch(90% 0.09 65)", "oklch(96% 0.04 65)"]
       },
-      "candlelight-gold-bright": {
+      "candlelight-gold-light": {
         "role": "primary",
-        "displayName": "Candlelight Gold Bright",
+        "displayName": "Candlelight Gold Light",
         "canonical": "oklch(87% 0.14 85)"
       },
-      "candlelight-gold-deep": {
+      "candlelight-gold-dark": {
         "role": "primary",
-        "displayName": "Candlelight Gold Deep",
+        "displayName": "Candlelight Gold Dark",
         "canonical": "oklch(65% 0.16 55)"
       },
       "vellum-champagne": {
@@ -196,7 +196,7 @@
       "name": "Surface Card",
       "kind": "card",
       "refersTo": "card-surface",
-      "description": "Default Ink Surface card with hairline border and editorial shadow. The neutral container.",
+      "description": "Default Midnight Ink Surface card with hairline border and editorial shadow. The neutral container.",
       "html": "<div class=\"ds-card-surface\"><div class=\"ds-kicker\">Философи</div><h3 class=\"ds-card-title\">AI Багш</h3><p class=\"ds-card-body\">Хувийн AI багш таны алдааг тэр даруй засна. Монгол хэлээр тайлбар авна.</p></div>",
       "css": ".ds-card-surface{background:#141C30;color:#F8FAFC;padding:28px;border:1px solid rgba(255,255,255,0.06);border-radius:16px;box-shadow:0 1px 0 0 rgba(255,255,255,0.03) inset,0 2px 4px rgba(0,0,0,0.3),0 16px 40px -12px rgba(0,0,0,0.5);transition:background 300ms cubic-bezier(0.16,1,0.3,1);}.ds-card-surface:hover{background:#1F2940;}.ds-kicker{font-family:Inter,system-ui,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.22em;text-transform:uppercase;color:#E4C08A;margin-bottom:8px;}.ds-card-title{font-family:Inter,system-ui,sans-serif;font-size:18px;font-weight:600;letter-spacing:-0.015em;color:#F8FAFC;margin:0 0 10px 0;}.ds-card-body{font-family:Inter,system-ui,sans-serif;font-size:14px;line-height:1.6;color:#94A3B8;margin:0;}"
     },
