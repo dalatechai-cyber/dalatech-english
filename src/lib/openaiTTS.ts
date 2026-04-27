@@ -18,6 +18,10 @@ export function isOpenAITTSQuotaOrRateLimit(err: unknown): boolean {
 }
 
 const audioCache = new Map<string, string>()
+// In-flight requests share one Promise so concurrent callers for the same
+// (speaker, text) — e.g. Promise.all preload batches with repeated turns —
+// don't fire duplicate fetches before the resolved URL hits audioCache.
+const inflight = new Map<string, Promise<string>>()
 const MAX_CACHE = MAX_TTS_CACHE
 
 function cacheKey(text: string, speaker: OpenAISpeaker) {
@@ -36,6 +40,10 @@ function cacheSet(key: string, url: string) {
   audioCache.set(key, url)
 }
 
+// When a request for the same (speaker, text) is already in flight, the
+// supplied `signal` is ignored — the caller rides the original request's
+// signal. Acceptable here because all batched preload callers in
+// IELTSTest's Listening effect share the same AbortController.
 export async function generateOpenAITTS(
   text: string,
   speaker: OpenAISpeaker,
@@ -45,23 +53,35 @@ export async function generateOpenAITTS(
   const cached = audioCache.get(key)
   if (cached) return cached
 
-  const res = await fetch('/api/ielts/tts-openai', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, speaker }),
-    signal,
+  const pending = inflight.get(key)
+  if (pending) return pending
+
+  const request = (async () => {
+    const res = await fetch('/api/ielts/tts-openai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, speaker }),
+      signal,
+    })
+    if (!res.ok) {
+      const errorText = await res.text().catch(() => '')
+      throw new OpenAITTSError(res.status, `OpenAI TTS ${res.status}: ${errorText.slice(0, 200)}`)
+    }
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    cacheSet(key, url)
+    return url
+  })()
+
+  inflight.set(key, request)
+  request.finally(() => {
+    if (inflight.get(key) === request) inflight.delete(key)
   })
-  if (!res.ok) {
-    const errorText = await res.text().catch(() => '')
-    throw new OpenAITTSError(res.status, `OpenAI TTS ${res.status}: ${errorText.slice(0, 200)}`)
-  }
-  const blob = await res.blob()
-  const url = URL.createObjectURL(blob)
-  cacheSet(key, url)
-  return url
+  return request
 }
 
 export function clearOpenAITTSCache(): void {
   audioCache.forEach(url => URL.revokeObjectURL(url))
   audioCache.clear()
+  inflight.clear()
 }
