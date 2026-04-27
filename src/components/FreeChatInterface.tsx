@@ -136,7 +136,7 @@ export function FreeChatInterface({ level }: FreeChatInterfaceProps) {
   }
 
   return (
-    <div className="flex flex-col h-dvh bg-navy">
+    <div className="flex flex-col h-dvh bg-midnight-ink">
       <NavBar levelCode={level} lessonTitle="Чөлөөт яриа" />
 
       {/* Editorial header */}
@@ -151,13 +151,13 @@ export function FreeChatInterface({ level }: FreeChatInterfaceProps) {
         <div className="max-w-3xl mx-auto flex items-baseline gap-3">
           <span
             className="font-serif-display text-2xl sm:text-3xl font-bold leading-none nums-tabular"
-            style={{ color: 'var(--gold)', letterSpacing: '-0.02em' }}
+            style={{ color: 'var(--candlelight-gold)', letterSpacing: '-0.02em' }}
           >
             {level}
           </span>
           <span
             className="font-serif-display text-base sm:text-lg italic"
-            style={{ color: 'var(--champagne)' }}
+            style={{ color: 'var(--vellum-champagne)' }}
           >
             {levelMeta?.label.split(' — ')[1] ?? 'Чөлөөт яриа'}
           </span>
@@ -184,7 +184,7 @@ export function FreeChatInterface({ level }: FreeChatInterfaceProps) {
               </div>
               <div
                 className="rounded-2xl rounded-tl-sm px-5 py-3.5 shadow-editorial"
-                style={{ background: '#1E293B', borderLeft: '3px solid var(--gold)' }}
+                style={{ background: '#1E293B', borderLeft: '3px solid var(--candlelight-gold)' }}
               >
                 <div className="flex gap-1.5 items-center h-5">
                   {[0, 1, 2].map(i => (
@@ -192,7 +192,7 @@ export function FreeChatInterface({ level }: FreeChatInterfaceProps) {
                       key={i}
                       className="w-2 h-2 rounded-full"
                       style={{
-                        background: 'var(--gold)',
+                        background: 'var(--candlelight-gold)',
                         animation: 'orbIdleBreath 1.2s ease-in-out infinite',
                         animationDelay: `${i * 0.18}s`,
                       }}
@@ -222,7 +222,7 @@ export function FreeChatInterface({ level }: FreeChatInterfaceProps) {
               border: '1px solid var(--hairline)',
             }}
             onFocusCapture={e => {
-              e.currentTarget.style.borderColor = 'var(--gold)'
+              e.currentTarget.style.borderColor = 'var(--candlelight-gold)'
               e.currentTarget.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.18)'
             }}
             onBlurCapture={e => {

@@ -47,7 +47,7 @@ export function StreakPopup({ streak, onClose }: StreakPopupProps) {
         }}
         onMouseEnter={e => {
           e.currentTarget.style.borderColor = 'rgba(245,158,11,0.4)'
-          e.currentTarget.style.color = 'var(--gold)'
+          e.currentTarget.style.color = 'var(--candlelight-gold)'
         }}
         onMouseLeave={e => {
           e.currentTarget.style.borderColor = 'var(--hairline)'
@@ -84,7 +84,7 @@ export function StreakPopup({ streak, onClose }: StreakPopupProps) {
 
       <div
         className="mt-3 text-[10px] font-semibold uppercase tracking-[0.28em]"
-        style={{ color: 'var(--champagne)' }}
+        style={{ color: 'var(--vellum-champagne)' }}
       >
         хоног дараалал
       </div>

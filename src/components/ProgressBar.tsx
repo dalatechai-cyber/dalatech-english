@@ -14,9 +14,9 @@ export function ProgressBar({ completed, total, label }: ProgressBarProps) {
           <span>{completed}/{total}</span>
         </div>
       )}
-      <div className="w-full h-2 bg-navy-surface-2 rounded-full overflow-hidden">
+      <div className="w-full h-2 bg-midnight-ink-elevated rounded-full overflow-hidden">
         <div
-          className="h-full bg-gold rounded-full transition-all duration-500 ease-out"
+          className="h-full bg-candlelight-gold rounded-full transition-all duration-500 ease-out"
           style={{ width: `${pct}%` }}
         />
       </div>

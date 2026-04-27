@@ -643,7 +643,7 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
             {showCard && (
               <div className="text-left px-4 py-3 rounded-2xl w-full" style={{ background: '#0F172A', border: '1px solid #F59E0B55' }}>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-xs font-semibold text-gold uppercase tracking-wide">📋 Topic Card</div>
+                  <div className="text-xs font-semibold text-candlelight-gold uppercase tracking-wide">📋 Topic Card</div>
                   {part2Countdown !== null && (
                     <span className="text-sm font-extrabold tabular-nums" style={{ color: part2Countdown === 0 ? '#F59E0B' : '#FCD34D' }}>
                       ⏱ {mmss(part2Countdown)}

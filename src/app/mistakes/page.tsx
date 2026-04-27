@@ -3,7 +3,7 @@ import { MistakeDiary } from '@/components/MistakeDiary'
 
 export default function MistakesPage() {
   return (
-    <div className="min-h-screen bg-navy">
+    <div className="min-h-screen bg-midnight-ink">
       <NavBar />
       <MistakeDiary />
     </div>

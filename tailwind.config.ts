@@ -9,14 +9,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        navy: '#0B1222',
-        'navy-deep': '#070C18',
-        'navy-surface': '#141C30',
-        'navy-surface-2': '#1F2940',
-        gold: '#F59E0B',
-        'gold-light': '#FCD34D',
-        'gold-dark': '#D97706',
-        champagne: '#E4C08A',
+        'midnight-ink': '#0B1222',
+        'midnight-ink-deep': '#070C18',
+        'midnight-ink-surface': '#141C30',
+        'midnight-ink-elevated': '#1F2940',
+        'candlelight-gold': '#F59E0B',
+        'candlelight-gold-light': '#FCD34D',
+        'candlelight-gold-dark': '#D97706',
+        'vellum-champagne': '#E4C08A',
         'text-primary': 'var(--text-primary)',
         'text-secondary': 'var(--text-secondary)',
         // Certificate sub-system tokens — see DESIGN.md §7.

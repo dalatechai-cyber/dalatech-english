@@ -67,11 +67,11 @@ export function ExamScore({ content, level: _level, onPassConfirmed }: ExamScore
   const pct = result.total ? Math.round((result.score / result.total) * 100) : 0
 
   return (
-    <div className="mt-4 bg-navy-surface border border-navy-surface-2 rounded-2xl p-5 space-y-4 animate-slide-up">
+    <div className="mt-4 bg-midnight-ink-surface border border-midnight-ink-elevated rounded-2xl p-5 space-y-4 animate-slide-up">
       <div className="flex items-center gap-3">
-        <div className="text-3xl font-bold text-gold">{result.score}/{result.total ?? 15}</div>
+        <div className="text-3xl font-bold text-candlelight-gold">{result.score}/{result.total ?? 15}</div>
         <div className="flex-1">
-          <div className="w-full h-3 bg-navy-surface-2 rounded-full overflow-hidden">
+          <div className="w-full h-3 bg-midnight-ink-elevated rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-1000 ${result.passed ? 'bg-emerald-500' : 'bg-rose-500'}`}
               style={{ width: `${pct}%` }}
@@ -86,17 +86,17 @@ export function ExamScore({ content, level: _level, onPassConfirmed }: ExamScore
       {result.grammar !== undefined && (
         <div className="grid grid-cols-2 gap-2 text-sm">
           {([['Дүрэм', result.grammar], ['Хэв шинж', result.style], ['Нэгдэл', result.cohesion], ['Үгийн сан', result.vocabulary]] as [string, number | undefined][]).map(([label, val]) => (
-            <div key={label} className="bg-navy-surface-2 rounded-lg p-2 text-center">
+            <div key={label} className="bg-midnight-ink-elevated rounded-lg p-2 text-center">
               <div className="text-text-secondary text-xs">{label}</div>
-              <div className="text-gold font-bold">{val}/5</div>
+              <div className="text-candlelight-gold font-bold">{val}/5</div>
             </div>
           ))}
         </div>
       )}
 
       {result.certificate && (
-        <div className="border border-gold/40 bg-gold/5 rounded-xl p-4 text-center">
-          <div className="text-gold text-lg font-bold mb-2">🎓 Гэрчилгээ</div>
+        <div className="border border-candlelight-gold/40 bg-candlelight-gold/5 rounded-xl p-4 text-center">
+          <div className="text-candlelight-gold text-lg font-bold mb-2">🎓 Гэрчилгээ</div>
           <p className="text-sm text-text-primary">{result.certificate}</p>
         </div>
       )}
@@ -108,7 +108,7 @@ export function ExamScore({ content, level: _level, onPassConfirmed }: ExamScore
       {result.passed && (
         <button
           onClick={() => onPassConfirmed(result.score!)}
-          className="w-full py-3 bg-gold hover:bg-gold-dark text-navy font-bold rounded-xl transition-colors"
+          className="w-full py-3 bg-candlelight-gold hover:bg-candlelight-gold-dark text-midnight-ink font-bold rounded-xl transition-colors"
         >
           Дараагийн түвшин рүү →
         </button>

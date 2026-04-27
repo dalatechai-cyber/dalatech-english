@@ -46,7 +46,7 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
           href="/"
           lang="en"
           className="font-serif-display text-lg sm:text-xl font-bold tracking-tight transition-colors flex-shrink-0"
-          style={{ color: 'var(--gold)' }}
+          style={{ color: 'var(--candlelight-gold)' }}
         >
           {t('appName')}
         </Link>
@@ -56,7 +56,7 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
             <Link
               href={`/level/${levelCode}`}
               className="text-sm font-medium tracking-wider uppercase transition-colors hover:opacity-80"
-              style={{ color: 'var(--champagne)' }}
+              style={{ color: 'var(--vellum-champagne)' }}
             >
               {levelCode}
             </Link>
@@ -78,13 +78,13 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
           {streak > 0 && (
             <span
               className="text-sm font-medium flex items-center gap-1.5 flex-shrink-0 nums-tabular min-w-11 min-h-11"
-              style={{ color: 'var(--gold)' }}
+              style={{ color: 'var(--candlelight-gold)' }}
             >
               <FlameIcon size={20} />
               {streak}
               <span
                 className="hidden sm:inline text-[11px] uppercase tracking-wider"
-                style={{ color: 'var(--champagne)' }}
+                style={{ color: 'var(--vellum-champagne)' }}
               >
                 {t('streak')}
               </span>
@@ -94,22 +94,22 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
           <Link
             href="/ielts"
             lang="en"
-            className="text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors hidden sm:block hover:text-gold"
-            style={{ color: 'var(--champagne)' }}
+            className="text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors hidden sm:block hover:text-candlelight-gold"
+            style={{ color: 'var(--vellum-champagne)' }}
           >
             IELTS
           </Link>
           <Link
             href="/mistakes"
-            className="text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors hidden sm:block hover:text-gold"
-            style={{ color: 'var(--champagne)' }}
+            className="text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors hidden sm:block hover:text-candlelight-gold"
+            style={{ color: 'var(--vellum-champagne)' }}
           >
             {t('mistakes')}
           </Link>
           <Link
             href="/profile"
-            className="text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors hidden sm:block hover:text-gold"
-            style={{ color: 'var(--champagne)' }}
+            className="text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors hidden sm:block hover:text-candlelight-gold"
+            style={{ color: 'var(--vellum-champagne)' }}
           >
             {t('profile')}
           </Link>
@@ -118,7 +118,7 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
           <div className="sm:hidden relative" ref={menuRef}>
             <button
               className="w-11 h-11 flex items-center justify-center rounded-lg transition-colors"
-              style={{ color: 'var(--gold)' }}
+              style={{ color: 'var(--candlelight-gold)' }}
               onClick={() => setMenuOpen(o => !o)}
               aria-label="Цэс нээх"
               aria-expanded={menuOpen}
@@ -161,8 +161,8 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
                 <Link
                   href="/ielts"
                   lang="en"
-                  className="flex items-center gap-3 px-5 min-h-14 text-[12px] font-semibold uppercase tracking-[0.18em] active:bg-gold/10"
-                  style={{ color: 'var(--champagne)' }}
+                  className="flex items-center gap-3 px-5 min-h-14 text-[12px] font-semibold uppercase tracking-[0.18em] active:bg-candlelight-gold/10"
+                  style={{ color: 'var(--vellum-champagne)' }}
                   onClick={() => setMenuOpen(false)}
                 >
                   IELTS
@@ -170,8 +170,8 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
                 <div style={{ borderTop: '1px solid var(--hairline)' }} />
                 <Link
                   href="/mistakes"
-                  className="flex items-center gap-3 px-5 min-h-14 text-[12px] font-semibold uppercase tracking-[0.18em] active:bg-gold/10"
-                  style={{ color: 'var(--champagne)' }}
+                  className="flex items-center gap-3 px-5 min-h-14 text-[12px] font-semibold uppercase tracking-[0.18em] active:bg-candlelight-gold/10"
+                  style={{ color: 'var(--vellum-champagne)' }}
                   onClick={() => setMenuOpen(false)}
                 >
                   {t('mistakes')}
@@ -179,8 +179,8 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
                 <div style={{ borderTop: '1px solid var(--hairline)' }} />
                 <Link
                   href="/profile"
-                  className="flex items-center gap-3 px-5 min-h-14 text-[12px] font-semibold uppercase tracking-[0.18em] active:bg-gold/10"
-                  style={{ color: 'var(--champagne)' }}
+                  className="flex items-center gap-3 px-5 min-h-14 text-[12px] font-semibold uppercase tracking-[0.18em] active:bg-candlelight-gold/10"
+                  style={{ color: 'var(--vellum-champagne)' }}
                   onClick={() => setMenuOpen(false)}
                 >
                   {t('profile')}

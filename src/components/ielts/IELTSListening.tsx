@@ -70,15 +70,15 @@ export function IELTSListening({
   const canPlay = listenAudioReady || listenAudioError
 
   return (
-    <div className="min-h-dvh bg-navy flex flex-col">
+    <div className="min-h-dvh bg-midnight-ink flex flex-col">
       <NavBar lessonTitle="Listening" />
       <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
         <SectionProgress idx={sectionIdx} />
 
         {/* Audio player card */}
-        <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 mb-5">
+        <div className="bg-midnight-ink-surface border border-midnight-ink-elevated rounded-2xl p-4 mb-5">
           <div className="flex items-center justify-between mb-3">
-            <div className="text-xs font-semibold text-gold uppercase tracking-wide">🎧 Яриа сонсох</div>
+            <div className="text-xs font-semibold text-candlelight-gold uppercase tracking-wide">🎧 Яриа сонсох</div>
             {isPlaying && listenCurrentTurn >= 0 && (
               <div className="flex items-center gap-2">
                 {(['A', 'B'] as const).map(sp => {
@@ -150,7 +150,7 @@ export function IELTSListening({
         <p className="text-xs mb-3 font-semibold" style={{ color: '#64748B' }}>Бүх {content.listening.questions.length} асуултад хариулна уу</p>
         <div className="space-y-4 mb-6">
           {content.listening.questions.map((q, qi) => (
-            <div key={qi} className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4">
+            <div key={qi} className="bg-midnight-ink-surface border border-midnight-ink-elevated rounded-2xl p-4">
               <p className="text-sm font-semibold text-text-primary mb-3">
                 <span style={{ color: '#F59E0B' }}>{qi + 1}.</span> {q.question}
                 {(q.type === 'fill') && (
@@ -179,7 +179,7 @@ export function IELTSListening({
               {showTranscript ? '🙈 Яриа нуух' : '👁 Яриа харах'}
             </button>
             {showTranscript && (
-              <div className="bg-navy-surface border border-navy-surface-2 rounded-2xl p-4 space-y-2 max-h-52 overflow-y-auto">
+              <div className="bg-midnight-ink-surface border border-midnight-ink-elevated rounded-2xl p-4 space-y-2 max-h-52 overflow-y-auto">
                 {conv.map((turn, i) => (
                   <div key={i} className="flex gap-2 text-xs">
                     <span className="flex-shrink-0 w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center"

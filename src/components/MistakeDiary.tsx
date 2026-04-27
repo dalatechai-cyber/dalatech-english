@@ -34,7 +34,7 @@ export function MistakeDiary() {
       <div className="mb-10 sm:mb-12">
         <div
           className="text-[11px] font-semibold uppercase tracking-[0.22em] mb-3"
-          style={{ color: 'var(--champagne)' }}
+          style={{ color: 'var(--vellum-champagne)' }}
         >
           Mistake Journal
         </div>
@@ -52,7 +52,7 @@ export function MistakeDiary() {
         </h1>
         <div
           className="h-px w-16 mt-4"
-          style={{ background: 'linear-gradient(90deg, var(--gold), transparent)' }}
+          style={{ background: 'linear-gradient(90deg, var(--candlelight-gold), transparent)' }}
         />
       </div>
 
@@ -70,7 +70,7 @@ export function MistakeDiary() {
             color: 'var(--text-primary)',
           }}
           onFocus={e => {
-            e.currentTarget.style.borderColor = 'var(--gold)'
+            e.currentTarget.style.borderColor = 'var(--candlelight-gold)'
             e.currentTarget.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.18)'
           }}
           onBlur={e => {
@@ -106,7 +106,7 @@ export function MistakeDiary() {
             className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5"
             style={{
               background: 'rgba(245,158,11,0.08)',
-              color: 'var(--gold)',
+              color: 'var(--candlelight-gold)',
             }}
           >
             <NotebookIcon size={28} />
@@ -131,21 +131,21 @@ export function MistakeDiary() {
                 background: '#141C30',
                 border: '1px solid var(--hairline)',
                 borderLeftWidth: '3px',
-                borderLeftColor: 'var(--gold)',
+                borderLeftColor: 'var(--candlelight-gold)',
               }}
             >
               {/* Section number + meta */}
               <div className="flex items-center justify-between mb-4">
                 <span
                   className="font-serif-display text-xs nums-tabular tracking-widest"
-                  style={{ color: 'var(--champagne)' }}
+                  style={{ color: 'var(--vellum-champagne)' }}
                 >
                   {String(idx + 1).padStart(2, '0')}
                 </span>
                 <div className="flex items-center gap-3 text-[11px] uppercase tracking-wider">
                   <span
                     className="font-semibold rounded-full px-2.5 py-0.5"
-                    style={{ background: 'rgba(245,158,11,0.12)', color: 'var(--gold)' }}
+                    style={{ background: 'rgba(245,158,11,0.12)', color: 'var(--candlelight-gold)' }}
                   >
                     {m.level}
                   </span>
@@ -195,7 +195,7 @@ export function MistakeDiary() {
               <Link
                 href={`/level/${m.level}/chat?drill=${encodeURIComponent(m.corrected)}`}
                 className="inline-flex items-center gap-2 mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors hover:opacity-80"
-                style={{ color: 'var(--gold)' }}
+                style={{ color: 'var(--candlelight-gold)' }}
               >
                 {t('practiceAgain')}
                 <ArrowRightIcon size={14} />

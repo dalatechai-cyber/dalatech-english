@@ -67,7 +67,7 @@ function renderWithIPA(text: string) {
       <span
         key={i}
         className="font-serif-display italic"
-        style={{ color: 'var(--champagne)' }}
+        style={{ color: 'var(--vellum-champagne)' }}
       >
         {seg.content}
       </span>
@@ -99,12 +99,12 @@ export function ErrorCorrection({ content }: ErrorCorrectionProps) {
               background: 'rgba(245,158,11,0.06)',
               border: '1px solid var(--hairline)',
               borderLeftWidth: '3px',
-              borderLeftColor: 'var(--gold)',
+              borderLeftColor: 'var(--candlelight-gold)',
             }}
           >
             <div
               className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-2"
-              style={{ color: 'var(--champagne)' }}
+              style={{ color: 'var(--vellum-champagne)' }}
             >
               Correction
             </div>

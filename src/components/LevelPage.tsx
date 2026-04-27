@@ -29,7 +29,7 @@ export function LevelPage({ levelCode }: LevelPageProps) {
   const subtitle = meta.label.split(' — ')[1] ?? meta.label
 
   return (
-    <div className="min-h-screen bg-navy">
+    <div className="min-h-screen bg-midnight-ink">
       <NavBar levelCode={levelCode} />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14 page-enter-up">
         {/* Hero — editorial */}
@@ -37,7 +37,7 @@ export function LevelPage({ levelCode }: LevelPageProps) {
           <div
             lang="en"
             className="text-[11px] font-semibold uppercase tracking-[0.22em] mb-4"
-            style={{ color: 'var(--champagne)' }}
+            style={{ color: 'var(--vellum-champagne)' }}
           >
             CEFR · Level
           </div>
@@ -56,7 +56,7 @@ export function LevelPage({ levelCode }: LevelPageProps) {
           </div>
           <h1
             className="font-serif-display text-2xl sm:text-3xl font-medium mb-3"
-            style={{ color: 'var(--champagne)' }}
+            style={{ color: 'var(--vellum-champagne)' }}
           >
             {subtitle}
           </h1>
@@ -68,14 +68,14 @@ export function LevelPage({ levelCode }: LevelPageProps) {
           </p>
           <div
             className="h-px w-16 mx-auto mt-6"
-            style={{ background: 'linear-gradient(90deg, transparent, var(--gold), transparent)' }}
+            style={{ background: 'linear-gradient(90deg, transparent, var(--candlelight-gold), transparent)' }}
           />
 
           {/* Progress */}
           <div className="max-w-xs mx-auto mt-8">
             <div className="flex items-center justify-between mb-2 text-[11px] uppercase tracking-wider">
               <span style={{ color: 'var(--text-muted)' }}>Дэвшил</span>
-              <span className="nums-tabular font-medium" style={{ color: 'var(--champagne)' }}>
+              <span className="nums-tabular font-medium" style={{ color: 'var(--vellum-champagne)' }}>
                 {completed}/10
               </span>
             </div>
@@ -116,20 +116,20 @@ export function LevelPage({ levelCode }: LevelPageProps) {
             <div className="flex items-center justify-between mb-4 relative">
               <span
                 className="font-serif-display text-xs nums-tabular tracking-widest"
-                style={{ color: 'var(--champagne)' }}
+                style={{ color: 'var(--vellum-champagne)' }}
               >
                 01
               </span>
               <span
                 className="flex items-center justify-center w-8 h-8 rounded-full"
-                style={{ background: 'rgba(245,158,11,0.10)', color: 'var(--gold)' }}
+                style={{ background: 'rgba(245,158,11,0.10)', color: 'var(--candlelight-gold)' }}
               >
                 <BookIcon size={16} />
               </span>
             </div>
             <h2
               className="font-serif-display text-2xl font-bold mb-2 relative"
-              style={{ color: 'var(--gold)', letterSpacing: '-0.02em' }}
+              style={{ color: 'var(--candlelight-gold)', letterSpacing: '-0.02em' }}
             >
               {t('freeChat')}
             </h2>
@@ -141,7 +141,7 @@ export function LevelPage({ levelCode }: LevelPageProps) {
             </p>
             <span
               className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] transition-transform group-hover:translate-x-1"
-              style={{ color: 'var(--gold)' }}
+              style={{ color: 'var(--candlelight-gold)' }}
             >
               Эхлэх <ArrowRightIcon size={14} />
             </span>
@@ -166,20 +166,20 @@ export function LevelPage({ levelCode }: LevelPageProps) {
             <div className="flex items-center justify-between mb-4 relative">
               <span
                 className="font-serif-display text-xs nums-tabular tracking-widest"
-                style={{ color: 'var(--champagne)' }}
+                style={{ color: 'var(--vellum-champagne)' }}
               >
                 02
               </span>
               <span
                 className="flex items-center justify-center w-8 h-8 rounded-full"
-                style={{ background: 'rgba(245,158,11,0.10)', color: 'var(--gold)' }}
+                style={{ background: 'rgba(245,158,11,0.10)', color: 'var(--candlelight-gold)' }}
               >
                 <PencilIcon size={16} />
               </span>
             </div>
             <h2
               className="font-serif-display text-2xl font-bold mb-2 relative"
-              style={{ color: 'var(--gold)', letterSpacing: '-0.02em' }}
+              style={{ color: 'var(--candlelight-gold)', letterSpacing: '-0.02em' }}
             >
               {t('quiz')}
             </h2>
@@ -197,7 +197,7 @@ export function LevelPage({ levelCode }: LevelPageProps) {
             </p>
             <span
               className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] transition-transform group-hover:translate-x-1"
-              style={{ color: 'var(--gold)' }}
+              style={{ color: 'var(--candlelight-gold)' }}
             >
               Тест өгөх <ArrowRightIcon size={14} />
             </span>
@@ -211,7 +211,7 @@ export function LevelPage({ levelCode }: LevelPageProps) {
         >
           <summary
             className="px-5 py-4 cursor-pointer text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors list-none flex items-center justify-between"
-            style={{ color: 'var(--champagne)' }}
+            style={{ color: 'var(--vellum-champagne)' }}
           >
             <span>
               {t('lessons')} · {completed}/10 дууссан
@@ -232,7 +232,7 @@ export function LevelPage({ levelCode }: LevelPageProps) {
                 >
                   <span
                     className="font-serif-display text-sm nums-tabular tracking-widest flex-shrink-0 w-7"
-                    style={{ color: done ? 'var(--gold)' : 'var(--text-muted)' }}
+                    style={{ color: done ? 'var(--candlelight-gold)' : 'var(--text-muted)' }}
                   >
                     {String(lesson.id).padStart(2, '0')}
                   </span>
@@ -245,7 +245,7 @@ export function LevelPage({ levelCode }: LevelPageProps) {
                     </div>
                   </div>
                   {lesson.isExam && (
-                    <span style={{ color: 'var(--champagne)' }} className="flex-shrink-0">
+                    <span style={{ color: 'var(--vellum-champagne)' }} className="flex-shrink-0">
                       <TrophyIcon size={16} />
                     </span>
                   )}

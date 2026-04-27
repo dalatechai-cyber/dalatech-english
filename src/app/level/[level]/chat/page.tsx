@@ -15,7 +15,7 @@ export function generateStaticParams() {
 export default function FreeChatPage({ params }: Props) {
   if (!LEVEL_CODES.includes(params.level as LevelCode)) notFound()
   return (
-    <Suspense fallback={<div className="min-h-screen bg-navy flex items-center justify-center text-text-secondary">Ачаалж байна...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-midnight-ink flex items-center justify-center text-text-secondary">Ачаалж байна...</div>}>
       <FreeChatInterface level={params.level as LevelCode} />
     </Suspense>
   )

@@ -22,7 +22,7 @@ function Task1Prompt({ prompt }: { prompt: string }) {
       {before && <p className="text-sm text-text-primary leading-relaxed mb-3">{before}</p>}
       <div className="overflow-x-auto rounded-xl mb-3">
         <table className="w-full text-xs border-collapse min-w-[280px]">
-          <thead><tr>{headers.map((h, i) => <th key={i} className="px-3 py-2 text-left font-semibold text-navy whitespace-nowrap" style={{ background: '#F59E0B' }}>{h.trim()}</th>)}</tr></thead>
+          <thead><tr>{headers.map((h, i) => <th key={i} className="px-3 py-2 text-left font-semibold text-midnight-ink whitespace-nowrap" style={{ background: '#F59E0B' }}>{h.trim()}</th>)}</tr></thead>
           <tbody>{dataRows.map((row, ri) => (
             <tr key={ri} style={{ background: ri % 2 === 0 ? '#1E293B' : '#162032' }}>
               {row.map((cell, ci) => <td key={ci} className="px-3 py-2 text-text-primary whitespace-nowrap" style={{ borderTop: '1px solid #334155' }}>{cell.trim()}</td>)}
@@ -63,7 +63,7 @@ export function IELTSWriting({
   onAdvance,
 }: IELTSWritingProps) {
   return (
-    <div className="min-h-dvh bg-navy flex flex-col">
+    <div className="min-h-dvh bg-midnight-ink flex flex-col">
       <NavBar lessonTitle={`Writing — Task ${writingTaskView}/2`} />
       <div className="flex-1 overflow-y-auto p-4 max-w-xl mx-auto w-full">
         <SectionProgress idx={sectionIdx} />
@@ -101,13 +101,13 @@ export function IELTSWriting({
               <div>
                 <div
                   className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1"
-                  style={{ color: 'var(--champagne)' }}
+                  style={{ color: 'var(--vellum-champagne)' }}
                 >
                   Remaining
                 </div>
                 <span
                   className="font-serif-display text-3xl font-bold nums-tabular"
-                  style={{ color: task1Remaining === 0 ? 'var(--gold)' : 'var(--text-primary)', letterSpacing: '-0.02em' }}
+                  style={{ color: task1Remaining === 0 ? 'var(--candlelight-gold)' : 'var(--text-primary)', letterSpacing: '-0.02em' }}
                 >
                   {mmss(task1Remaining)}
                 </span>
@@ -115,7 +115,7 @@ export function IELTSWriting({
               {task1Remaining === 0 && (
                 <span
                   className="text-[11px] font-serif-display italic max-w-[60%] text-right"
-                  style={{ color: 'var(--gold)' }}
+                  style={{ color: 'var(--candlelight-gold)' }}
                 >
                   Цаг дууслаа — үргэлжлүүлж болно
                 </span>
@@ -127,12 +127,12 @@ export function IELTSWriting({
                 background: '#141C30',
                 border: '1px solid var(--hairline)',
                 borderLeftWidth: '3px',
-                borderLeftColor: 'var(--gold)',
+                borderLeftColor: 'var(--candlelight-gold)',
               }}
             >
               <div
                 className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-3"
-                style={{ color: 'var(--champagne)' }}
+                style={{ color: 'var(--vellum-champagne)' }}
               >
                 Task 01 · Minimum 150 words
               </div>
@@ -151,7 +151,7 @@ export function IELTSWriting({
                 lineHeight: 1.7,
               }}
               onFocus={e => {
-                e.target.style.borderColor = 'var(--gold)'
+                e.target.style.borderColor = 'var(--candlelight-gold)'
                 e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.18)'
               }}
               onBlur={e => {
@@ -161,7 +161,7 @@ export function IELTSWriting({
             />
             <div className="flex justify-between text-[11px] uppercase tracking-wider mb-5">
               <span style={{ color: 'var(--text-muted)' }}>
-                <span className="nums-tabular font-medium" style={{ color: 'var(--champagne)' }}>{wordCount(writingTask1)}</span> үг
+                <span className="nums-tabular font-medium" style={{ color: 'var(--vellum-champagne)' }}>{wordCount(writingTask1)}</span> үг
               </span>
               <span
                 className="font-medium"
@@ -188,13 +188,13 @@ export function IELTSWriting({
               <div>
                 <div
                   className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-1"
-                  style={{ color: 'var(--champagne)' }}
+                  style={{ color: 'var(--vellum-champagne)' }}
                 >
                   Remaining
                 </div>
                 <span
                   className="font-serif-display text-3xl font-bold nums-tabular"
-                  style={{ color: task2Remaining === 0 ? 'var(--gold)' : 'var(--text-primary)', letterSpacing: '-0.02em' }}
+                  style={{ color: task2Remaining === 0 ? 'var(--candlelight-gold)' : 'var(--text-primary)', letterSpacing: '-0.02em' }}
                 >
                   {mmss(task2Remaining)}
                 </span>
@@ -202,7 +202,7 @@ export function IELTSWriting({
               {task2Remaining === 0 && (
                 <span
                   className="text-[11px] font-serif-display italic max-w-[60%] text-right"
-                  style={{ color: 'var(--gold)' }}
+                  style={{ color: 'var(--candlelight-gold)' }}
                 >
                   Цаг дууслаа — үргэлжлүүлж болно
                 </span>
@@ -214,12 +214,12 @@ export function IELTSWriting({
                 background: '#141C30',
                 border: '1px solid var(--hairline)',
                 borderLeftWidth: '3px',
-                borderLeftColor: 'var(--gold)',
+                borderLeftColor: 'var(--candlelight-gold)',
               }}
             >
               <div
                 className="text-[10px] font-semibold uppercase tracking-[0.22em] mb-3"
-                style={{ color: 'var(--champagne)' }}
+                style={{ color: 'var(--vellum-champagne)' }}
               >
                 Task 02 · Minimum 250 words
               </div>
@@ -240,7 +240,7 @@ export function IELTSWriting({
                 lineHeight: 1.7,
               }}
               onFocus={e => {
-                e.target.style.borderColor = 'var(--gold)'
+                e.target.style.borderColor = 'var(--candlelight-gold)'
                 e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.18)'
               }}
               onBlur={e => {
@@ -250,7 +250,7 @@ export function IELTSWriting({
             />
             <div className="flex justify-between text-[11px] uppercase tracking-wider mb-5">
               <span style={{ color: 'var(--text-muted)' }}>
-                <span className="nums-tabular font-medium" style={{ color: 'var(--champagne)' }}>{wordCount(writingTask2)}</span> үг
+                <span className="nums-tabular font-medium" style={{ color: 'var(--vellum-champagne)' }}>{wordCount(writingTask2)}</span> үг
               </span>
               <span
                 className="font-medium"
