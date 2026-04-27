@@ -12,14 +12,20 @@ interface CertificateModalProps {
   onClose: () => void
 }
 
-// Refined, prestigious palette (antique gold + deep navy on warm ivory)
-const NAVY = '#0F1E3D'
-const NAVY_DEEP = '#081230'
-const GOLD = '#C9A55C'
-const GOLD_DARK = '#8B6F2E'
-const GOLD_LIGHT = '#E8D29A'
-const GOLD_PALE = '#F5E7C2'
-const IVORY = '#FDFCF5'
+// Certificate sub-system literals — see DESIGN.md §7 (Certificate Sub-System).
+// These hex values mirror the certificate-* tokens in tailwind.config.ts and
+// DESIGN.json. They live here as constants because nearly every usage is in
+// React inline `style={{...}}` or SVG fill/stroke/stop-color attributes,
+// where Tailwind class utilities (bg-certificate-navy, etc.) cannot apply.
+// Rule: these literals are deliberate and scoped to this file only.
+// Working product UI must NOT reference them — use main system tokens instead.
+const CERT_NAVY = '#0F1E3D'
+const CERT_NAVY_DEEP = '#081230'
+const CERT_GOLD = '#C9A55C'
+const CERT_GOLD_DEEP = '#8B6F2E'
+const CERT_GOLD_LIGHT = '#E8D29A'
+const CERT_GOLD_PALE = '#F5E7C2'
+const CERT_IVORY = '#FDFCF5'
 
 // A4 landscape at 72 dpi — exact A4 aspect (1.414:1)
 const CERT_W = 842
@@ -28,7 +34,7 @@ const CERT_H = 595
 // Subtle diamond damask in gold — layered repeating gradients read like a
 // faint guilloche pattern under text while staying print-ready.
 const PATTERN_BG: React.CSSProperties = {
-  backgroundColor: IVORY,
+  backgroundColor: CERT_IVORY,
   backgroundImage: [
     `repeating-linear-gradient(45deg,  transparent 0 26px, rgba(201,165,92,0.055) 26px 27px)`,
     `repeating-linear-gradient(-45deg, transparent 0 26px, rgba(201,165,92,0.055) 26px 27px)`,
@@ -61,24 +67,24 @@ function CornerFiligree({ corner }: { corner: 'tl' | 'tr' | 'bl' | 'br' }) {
       <g transform={transform} transformOrigin="75 75">
         <path
           d="M 6 6 L 90 6 Q 78 18 64 20 Q 46 22 34 34 Q 22 46 20 64 Q 18 78 6 90 Z"
-          fill={NAVY}
+          fill={CERT_NAVY}
         />
         <path
           d="M 12 12 L 78 12 Q 66 22 54 25 Q 40 28 30 38 Q 20 48 17 62 Q 14 74 12 80 Z"
           fill="none"
-          stroke={GOLD}
+          stroke={CERT_GOLD}
           strokeWidth={0.8}
           opacity={0.55}
         />
         <path
           d="M 22 22 Q 40 26 54 40 Q 60 46 58 56 Q 54 50 46 48 Q 38 46 34 50 Q 30 54 32 60 Q 28 54 28 46 Q 28 36 22 22 Z"
-          fill={GOLD}
+          fill={CERT_GOLD}
         />
-        <circle cx={24} cy={24} r={3} fill={GOLD_LIGHT} />
-        <circle cx={22} cy={22} r={1.2} fill={NAVY} />
-        <circle cx={70} cy={14} r={1.8} fill={GOLD} />
-        <circle cx={14} cy={70} r={1.8} fill={GOLD} />
-        <circle cx={50} cy={50} r={1.4} fill={GOLD_LIGHT} />
+        <circle cx={24} cy={24} r={3} fill={CERT_GOLD_LIGHT} />
+        <circle cx={22} cy={22} r={1.2} fill={CERT_NAVY} />
+        <circle cx={70} cy={14} r={1.8} fill={CERT_GOLD} />
+        <circle cx={14} cy={70} r={1.8} fill={CERT_GOLD} />
+        <circle cx={50} cy={50} r={1.4} fill={CERT_GOLD_LIGHT} />
       </g>
     </svg>
   )
@@ -94,18 +100,18 @@ function OrnamentDivider({ width = 320 }: { width?: number }) {
     >
       <defs>
         <linearGradient id="ceRule" x1="0" x2="1">
-          <stop offset="0%" stopColor={GOLD} stopOpacity="0" />
-          <stop offset="50%" stopColor={GOLD_DARK} stopOpacity="1" />
-          <stop offset="100%" stopColor={GOLD} stopOpacity="0" />
+          <stop offset="0%" stopColor={CERT_GOLD} stopOpacity="0" />
+          <stop offset="50%" stopColor={CERT_GOLD_DEEP} stopOpacity="1" />
+          <stop offset="100%" stopColor={CERT_GOLD} stopOpacity="0" />
         </linearGradient>
       </defs>
       <line x1="10" y1="10" x2="140" y2="10" stroke="url(#ceRule)" strokeWidth={1} />
       <line x1="180" y1="10" x2="310" y2="10" stroke="url(#ceRule)" strokeWidth={1} />
-      <circle cx={148} cy={10} r={1.5} fill={GOLD_DARK} />
-      <circle cx={172} cy={10} r={1.5} fill={GOLD_DARK} />
+      <circle cx={148} cy={10} r={1.5} fill={CERT_GOLD_DEEP} />
+      <circle cx={172} cy={10} r={1.5} fill={CERT_GOLD_DEEP} />
       <g transform="translate(160,10)">
-        <path d="M 0 -7 L 5 0 L 0 7 L -5 0 Z" fill={GOLD} stroke={GOLD_DARK} strokeWidth={0.6} />
-        <path d="M 0 -3 L 2 0 L 0 3 L -2 0 Z" fill={GOLD_PALE} />
+        <path d="M 0 -7 L 5 0 L 0 7 L -5 0 Z" fill={CERT_GOLD} stroke={CERT_GOLD_DEEP} strokeWidth={0.6} />
+        <path d="M 0 -3 L 2 0 L 0 3 L -2 0 Z" fill={CERT_GOLD_PALE} />
       </g>
     </svg>
   )
@@ -116,8 +122,8 @@ function Crest() {
     <svg width={64} height={64} viewBox="0 0 64 64" style={{ display: 'block' }}>
       <defs>
         <linearGradient id="ceCrest" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor={GOLD_LIGHT} />
-          <stop offset="100%" stopColor={GOLD_DARK} />
+          <stop offset="0%" stopColor={CERT_GOLD_LIGHT} />
+          <stop offset="100%" stopColor={CERT_GOLD_DEEP} />
         </linearGradient>
       </defs>
       <g stroke="url(#ceCrest)" strokeWidth={1.2} fill="none" strokeLinecap="round">
@@ -127,7 +133,7 @@ function Crest() {
           <path
             key={`L${i}`}
             d={`M ${13 - i * 0.4} ${24 + i * 5} q -4 1 -6 5 q 4 0 6 -5`}
-            fill={GOLD}
+            fill={CERT_GOLD}
             stroke="none"
           />
         ))}
@@ -135,15 +141,15 @@ function Crest() {
           <path
             key={`R${i}`}
             d={`M ${51 + i * 0.4} ${24 + i * 5} q 4 1 6 5 q -4 0 -6 -5`}
-            fill={GOLD}
+            fill={CERT_GOLD}
             stroke="none"
           />
         ))}
       </g>
       <path
         d="M 32 14 L 44 18 L 44 34 Q 44 46 32 52 Q 20 46 20 34 L 20 18 Z"
-        fill={NAVY_DEEP}
-        stroke={GOLD}
+        fill={CERT_NAVY_DEEP}
+        stroke={CERT_GOLD}
         strokeWidth={1}
       />
       <text
@@ -152,13 +158,13 @@ function Crest() {
         textAnchor="middle"
         fontSize={14}
         fontWeight={700}
-        fill={GOLD_LIGHT}
-        fontFamily='"Playfair Display", Georgia, serif'
+        fill={CERT_GOLD_LIGHT}
+        fontFamily="var(--serif)"
         letterSpacing={1}
       >
         CE
       </text>
-      <circle cx={32} cy={10} r={2} fill={GOLD} />
+      <circle cx={32} cy={10} r={2} fill={CERT_GOLD} />
     </svg>
   )
 }
@@ -168,42 +174,44 @@ function WaxSeal() {
     <svg width={120} height={150} viewBox="0 0 120 150" style={{ display: 'block' }}>
       <defs>
         <radialGradient id="ceWax" cx="0.35" cy="0.3" r="0.85">
+          {/* Deliberate one-off SVG gradient highlight — close to certificate-gold-pale
+              but tuned hotter to suggest wax sheen. Kept as a literal, not migrated. */}
           <stop offset="0%" stopColor="#FFF4D6" />
-          <stop offset="25%" stopColor={GOLD_LIGHT} />
-          <stop offset="70%" stopColor={GOLD} />
-          <stop offset="100%" stopColor={GOLD_DARK} />
+          <stop offset="25%" stopColor={CERT_GOLD_LIGHT} />
+          <stop offset="70%" stopColor={CERT_GOLD} />
+          <stop offset="100%" stopColor={CERT_GOLD_DEEP} />
         </radialGradient>
         <linearGradient id="ceRibbonL" x1="0" x2="1">
-          <stop offset="0%" stopColor={NAVY_DEEP} />
-          <stop offset="100%" stopColor={NAVY} />
+          <stop offset="0%" stopColor={CERT_NAVY_DEEP} />
+          <stop offset="100%" stopColor={CERT_NAVY} />
         </linearGradient>
         <linearGradient id="ceRibbonR" x1="1" x2="0">
-          <stop offset="0%" stopColor={NAVY_DEEP} />
-          <stop offset="100%" stopColor={NAVY} />
+          <stop offset="0%" stopColor={CERT_NAVY_DEEP} />
+          <stop offset="100%" stopColor={CERT_NAVY} />
         </linearGradient>
       </defs>
 
       <path d="M 42 56 L 22 140 L 42 128 L 52 140 L 62 86 Z" fill="url(#ceRibbonL)" />
       <path d="M 78 56 L 98 140 L 78 128 L 68 140 L 58 86 Z" fill="url(#ceRibbonR)" />
-      <path d="M 22 140 L 32 130 L 42 140 Z" fill={IVORY} />
-      <path d="M 98 140 L 88 130 L 78 140 Z" fill={IVORY} />
+      <path d="M 22 140 L 32 130 L 42 140 Z" fill={CERT_IVORY} />
+      <path d="M 98 140 L 88 130 L 78 140 Z" fill={CERT_IVORY} />
 
       <polygon
         points="60,12 64,30 80,22 70,38 88,42 70,46 80,62 64,54 60,72 56,54 40,62 50,46 32,42 50,38 40,22 56,30"
-        fill={GOLD_DARK}
+        fill={CERT_GOLD_DEEP}
         opacity={0.85}
       />
-      <circle cx={60} cy={42} r={30} fill="url(#ceWax)" stroke={GOLD_DARK} strokeWidth={1.4} />
-      <circle cx={60} cy={42} r={25} fill="none" stroke={GOLD_DARK} strokeWidth={0.7} opacity={0.6} />
-      <circle cx={60} cy={42} r={21} fill="none" stroke={GOLD_DARK} strokeWidth={0.4} opacity={0.4} />
+      <circle cx={60} cy={42} r={30} fill="url(#ceWax)" stroke={CERT_GOLD_DEEP} strokeWidth={1.4} />
+      <circle cx={60} cy={42} r={25} fill="none" stroke={CERT_GOLD_DEEP} strokeWidth={0.7} opacity={0.6} />
+      <circle cx={60} cy={42} r={21} fill="none" stroke={CERT_GOLD_DEEP} strokeWidth={0.4} opacity={0.4} />
       <text
         x={60}
         y={48}
         textAnchor="middle"
         fontSize={18}
         fontWeight={700}
-        fill={NAVY_DEEP}
-        fontFamily='"Playfair Display", Georgia, serif'
+        fill={CERT_NAVY_DEEP}
+        fontFamily="var(--serif)"
         letterSpacing={1.5}
       >
         CE
@@ -212,7 +220,7 @@ function WaxSeal() {
         const a = (i / 12) * Math.PI * 2
         const x = 60 + Math.cos(a) * 28
         const y = 42 + Math.sin(a) * 28
-        return <circle key={i} cx={x} cy={y} r={0.8} fill={NAVY_DEEP} opacity={0.5} />
+        return <circle key={i} cx={x} cy={y} r={0.8} fill={CERT_NAVY_DEEP} opacity={0.5} />
       })}
     </svg>
   )
@@ -264,7 +272,7 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
         scale: 3,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: IVORY,
+        backgroundColor: CERT_IVORY,
         logging: false,
       })
       const link = document.createElement('a')
@@ -299,8 +307,8 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
               transformOrigin: 'top left',
               ...PATTERN_BG,
               boxSizing: 'border-box',
-              fontFamily: '"EB Garamond", Georgia, "Times New Roman", serif',
-              color: NAVY,
+              fontFamily: 'var(--serif-garamond)',
+              color: CERT_NAVY,
               position: 'relative',
               boxShadow:
                 '0 1px 0 rgba(255,255,255,0.8) inset, 0 30px 60px -20px rgba(15,30,61,0.35)',
@@ -311,11 +319,11 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
               style={{
                 position: 'absolute',
                 inset: 14,
-                border: `3px solid ${GOLD_DARK}`,
+                border: `3px solid ${CERT_GOLD_DEEP}`,
                 boxSizing: 'border-box',
                 zIndex: 1,
                 pointerEvents: 'none',
-                boxShadow: `inset 0 0 0 1px ${GOLD_PALE}, 0 0 0 1px ${GOLD_PALE}`,
+                boxShadow: `inset 0 0 0 1px ${CERT_GOLD_PALE}, 0 0 0 1px ${CERT_GOLD_PALE}`,
               }}
             />
             <div
@@ -323,7 +331,7 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
               style={{
                 position: 'absolute',
                 inset: 26,
-                border: `1px solid ${GOLD}`,
+                border: `1px solid ${CERT_GOLD}`,
                 boxSizing: 'border-box',
                 zIndex: 1,
                 pointerEvents: 'none',
@@ -334,7 +342,7 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
               style={{
                 position: 'absolute',
                 inset: 34,
-                border: `1px solid ${GOLD_LIGHT}`,
+                border: `1px solid ${CERT_GOLD_LIGHT}`,
                 boxSizing: 'border-box',
                 zIndex: 1,
                 pointerEvents: 'none',
@@ -366,11 +374,11 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
               <div
                 lang="en"
                 style={{
-                  color: NAVY_DEEP,
+                  color: CERT_NAVY_DEEP,
                   fontSize: 26,
                   fontWeight: 700,
                   letterSpacing: 10,
-                  fontFamily: '"Playfair Display", Georgia, serif',
+                  fontFamily: 'var(--serif)',
                   lineHeight: 1,
                   marginTop: 4,
                 }}
@@ -381,12 +389,12 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
               <div
                 lang="en"
                 style={{
-                  color: GOLD_DARK,
+                  color: CERT_GOLD_DEEP,
                   fontSize: 9.5,
                   letterSpacing: 5.5,
                   textTransform: 'uppercase',
                   marginTop: 6,
-                  fontFamily: '"EB Garamond", Georgia, serif',
+                  fontFamily: 'var(--serif-garamond)',
                   fontStyle: 'italic',
                   fontWeight: 400,
                 }}
@@ -401,11 +409,11 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
               <div
                 lang="en"
                 style={{
-                  color: NAVY_DEEP,
+                  color: CERT_NAVY_DEEP,
                   fontSize: 14,
                   letterSpacing: 8,
                   textTransform: 'uppercase',
-                  fontFamily: '"Playfair Display", Georgia, serif',
+                  fontFamily: 'var(--serif)',
                   fontWeight: 400,
                   marginTop: 14,
                 }}
@@ -415,10 +423,10 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
 
               <div
                 style={{
-                  color: GOLD_DARK,
+                  color: CERT_GOLD_DEEP,
                   fontSize: 11,
                   fontStyle: 'italic',
-                  fontFamily: '"EB Garamond", Georgia, serif',
+                  fontFamily: 'var(--serif-garamond)',
                   opacity: 0.85,
                   marginTop: 10,
                   letterSpacing: 1,
@@ -429,14 +437,14 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
 
               <div
                 style={{
-                  color: NAVY_DEEP,
+                  color: CERT_NAVY_DEEP,
                   fontSize: 46,
                   fontStyle: 'italic',
                   fontWeight: 700,
                   lineHeight: 1.05,
-                  fontFamily: '"Playfair Display", Georgia, serif',
+                  fontFamily: 'var(--serif)',
                   marginTop: 10,
-                  textShadow: `0 1px 0 ${GOLD_PALE}`,
+                  textShadow: `0 1px 0 ${CERT_GOLD_PALE}`,
                 }}
               >
                 {levelDisplay}
@@ -446,7 +454,7 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
                 style={{
                   width: 260,
                   height: 1,
-                  background: `linear-gradient(to right, transparent, ${GOLD_DARK}, transparent)`,
+                  background: `linear-gradient(to right, transparent, ${CERT_GOLD_DEEP}, transparent)`,
                   marginTop: 14,
                   marginBottom: 12,
                 }}
@@ -454,15 +462,15 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
 
               <div
                 style={{
-                  color: NAVY,
+                  color: CERT_NAVY,
                   fontSize: 14,
                   lineHeight: 1.6,
                   maxWidth: 560,
-                  fontFamily: '"EB Garamond", Georgia, serif',
+                  fontFamily: 'var(--serif-garamond)',
                   fontStyle: 'italic',
                 }}
               >
-                Энэхүү гэрчилгээг <b style={{ fontStyle: 'normal', color: NAVY_DEEP }}>{level}</b>{' '}
+                Энэхүү гэрчилгээг <b style={{ fontStyle: 'normal', color: CERT_NAVY_DEEP }}>{level}</b>{' '}
                 түвшний шалгалтыг амжилттай давсны баталгаа болгон олгов.
               </div>
 
@@ -479,10 +487,10 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
                 <div style={{ textAlign: 'center', minWidth: 170 }}>
                   <div
                     style={{
-                      fontFamily: '"Playfair Display", Georgia, serif',
+                      fontFamily: 'var(--serif)',
                       fontStyle: 'italic',
                       fontSize: 18,
-                      color: NAVY_DEEP,
+                      color: CERT_NAVY_DEEP,
                       lineHeight: 1.1,
                     }}
                   >
@@ -492,7 +500,7 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
                     style={{
                       width: 150,
                       height: 1,
-                      background: GOLD_DARK,
+                      background: CERT_GOLD_DEEP,
                       margin: '6px auto 4px',
                     }}
                   />
@@ -502,8 +510,8 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
                       fontSize: 9,
                       letterSpacing: 3,
                       textTransform: 'uppercase',
-                      color: GOLD_DARK,
-                      fontFamily: '"EB Garamond", Georgia, serif',
+                      color: CERT_GOLD_DEEP,
+                      fontFamily: 'var(--serif-garamond)',
                     }}
                   >
                     Date of Issue
@@ -518,10 +526,10 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
                   <div
                     lang="en"
                     style={{
-                      fontFamily: '"Playfair Display", Georgia, serif',
+                      fontFamily: 'var(--serif)',
                       fontStyle: 'italic',
                       fontSize: 18,
-                      color: NAVY_DEEP,
+                      color: CERT_NAVY_DEEP,
                       lineHeight: 1.1,
                     }}
                   >
@@ -531,7 +539,7 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
                     style={{
                       width: 150,
                       height: 1,
-                      background: GOLD_DARK,
+                      background: CERT_GOLD_DEEP,
                       margin: '6px auto 4px',
                     }}
                   />
@@ -541,8 +549,8 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
                       fontSize: 9,
                       letterSpacing: 3,
                       textTransform: 'uppercase',
-                      color: GOLD_DARK,
-                      fontFamily: '"EB Garamond", Georgia, serif',
+                      color: CERT_GOLD_DEEP,
+                      fontFamily: 'var(--serif-garamond)',
                     }}
                   >
                     english.dalatech.online
@@ -554,6 +562,8 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
         </div>
 
         <div className="flex flex-col gap-3 mt-5">
+          {/* CTA uses system gold (UI element, not part of certificate artifact
+              per DESIGN.md §7 certificate sub-system rule). */}
           <button
             onClick={handleDownload}
             className="w-full font-semibold py-3.5 min-h-[48px] rounded-xl transition-all text-sm uppercase tracking-[0.18em] flex items-center justify-center gap-2.5"

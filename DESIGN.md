@@ -387,3 +387,31 @@ const playfair = Playfair_Display({
 ```
 
 Apply `playfair.variable` to the `<html>` className, then reference `var(--font-playfair)` from the `.font-serif-display` utility in `globals.css`. Delete the `@import` line. EB Garamond is a fallback only and does not require self-hosting. After the migration, verify no FOUT on the hero wordmark via a throttled-network reload.
+
+## 7. Certificate Sub-System (Documented Exception)
+
+The certificate is the only ceremonial artifact in Core English — it is a downloadable PNG users keep, screenshot, and share. It uses a deliberately distinct visual register from the working product surfaces: vintage-bullion gold on royal-navy with cream paper, designed as a printed diploma rather than a UI element. This sub-system applies ONLY to `CertificateModal` and any future downloadable achievement artifacts. It does NOT apply to in-app moments, transient states, streak popups, level-up animations, or working product screens.
+
+### Sub-system tokens
+
+| Token | Hex | Role |
+|-------|-----|------|
+| `certificate-navy` | `#0F1E3D` | Primary navy ground (deeper, more saturated than midnight-ink for printed-artifact contrast) |
+| `certificate-navy-deep` | `#081230` | Shadow navy (corner accents, ribbon depth) |
+| `certificate-gold` | `#C9A55C` | Vintage-bullion gold (primary metallic accent — distinct from candlelight-gold's bright UI hue) |
+| `certificate-gold-deep` | `#8B6F2E` | Antique brass (deepest gold for shadow/depth) |
+| `certificate-gold-light` | `#E8D29A` | Warm gold highlight |
+| `certificate-gold-pale` | `#F5E7C2` | Pale gold tint (background washes, gradient stops) |
+| `certificate-ivory` | `#FDFCF5` | Cream paper ground (warm off-white, never pure white) |
+
+### Typography
+
+The certificate sub-system uses BOTH display fonts:
+- Playfair Display (`var(--serif)`) for headers, wordmark, name display
+- EB Garamond (`var(--serif-garamond)`) for body text, dates, formal copy — chosen for its old-style figures and traditional book-typography register that reinforces the printed-diploma feel
+
+Both fonts are loaded via `next/font/google` in `src/app/layout.tsx`.
+
+### Rule
+
+The certificate sub-system applies ONLY to artifacts the user downloads and keeps. It does NOT apply to in-app UI. Any new ceremonial artifact (future achievement downloads, etc.) may opt into this sub-system. Working product screens, transient celebration states, and modals that don't produce a downloadable artifact MUST use the main design system tokens (midnight-ink, candlelight-gold, etc.), not `certificate-*` tokens.

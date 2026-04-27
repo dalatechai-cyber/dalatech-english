@@ -79,6 +79,62 @@
         "canonical": "oklch(28% 0.03 255)"
       }
     },
+    "certificateTokens": {
+      "_scope": "Sub-system tokens — apply ONLY to downloadable ceremonial artifacts (CertificateModal and future achievement downloads). NOT for in-app UI, transient states, or working product screens. See DESIGN.md §7.",
+      "certificate-navy": {
+        "role": "ground",
+        "displayName": "Certificate Navy",
+        "hex": "#0F1E3D",
+        "purpose": "Primary navy ground. Deeper and more saturated than midnight-ink for printed-artifact contrast."
+      },
+      "certificate-navy-deep": {
+        "role": "ground",
+        "displayName": "Certificate Navy Deep",
+        "hex": "#081230",
+        "purpose": "Shadow navy for corner accents and ribbon depth."
+      },
+      "certificate-gold": {
+        "role": "accent",
+        "displayName": "Certificate Gold",
+        "hex": "#C9A55C",
+        "purpose": "Vintage-bullion gold. Primary metallic accent — distinct from candlelight-gold's bright UI hue."
+      },
+      "certificate-gold-deep": {
+        "role": "accent",
+        "displayName": "Certificate Gold Deep",
+        "hex": "#8B6F2E",
+        "purpose": "Antique brass — deepest gold for shadow and depth."
+      },
+      "certificate-gold-light": {
+        "role": "accent",
+        "displayName": "Certificate Gold Light",
+        "hex": "#E8D29A",
+        "purpose": "Warm gold highlight."
+      },
+      "certificate-gold-pale": {
+        "role": "accent",
+        "displayName": "Certificate Gold Pale",
+        "hex": "#F5E7C2",
+        "purpose": "Pale gold tint for background washes and gradient stops."
+      },
+      "certificate-ivory": {
+        "role": "paper",
+        "displayName": "Certificate Ivory",
+        "hex": "#FDFCF5",
+        "purpose": "Cream paper ground — warm off-white, never pure white."
+      }
+    },
+    "certificateTypography": {
+      "_scope": "Certificate sub-system uses BOTH display fonts (the only place in the system where this is allowed).",
+      "display": {
+        "fontFamily": "var(--serif)",
+        "purpose": "Playfair Display — headers, wordmark, name display."
+      },
+      "body": {
+        "fontFamily": "var(--serif-garamond)",
+        "purpose": "EB Garamond — body text, dates, formal copy. Old-style figures and traditional book-typography register reinforce the printed-diploma feel."
+      }
+    },
     "typographyMeta": {
       "display": { "displayName": "Display", "purpose": "Hero wordmarks only, one per screen. Playfair italic at 52-96px." },
       "headline": { "displayName": "Headline", "purpose": "Section titles with italic em accent in Candlelight Gold." },
@@ -200,7 +256,8 @@
       { "name": "The 0.22em Tracking Rule", "body": "All-caps kicker labels always use letter-spacing 0.22em (0.18em for inline nav). Uppercase without aggressive tracking reads as shouting, not editorial.", "section": "typography" },
       { "name": "The Tabular Numerals Rule", "body": "Every counter (score, streak, progress, quiz result) uses font-variant-numeric: tabular-nums via the .nums-tabular utility.", "section": "typography" },
       { "name": "The Gold-Glow = Achievement Rule", "body": "Any shadow containing a gold channel is a state statement, never a decoration. Promote to shadow-gold-sm or shadow-gold only when the element has earned it.", "section": "elevation" },
-      { "name": "The Layered-Inset-Highlight Rule", "body": "Every premium shadow starts with a 1px inset white highlight (0.03-0.08 alpha). This is the top-edge catch-light that makes the surface read as physical.", "section": "elevation" }
+      { "name": "The Layered-Inset-Highlight Rule", "body": "Every premium shadow starts with a 1px inset white highlight (0.03-0.08 alpha). This is the top-edge catch-light that makes the surface read as physical.", "section": "elevation" },
+      { "name": "The Certificate Sub-System Scope Rule", "body": "The certificate-* tokens (certificate-navy, certificate-gold, certificate-ivory, etc.) apply ONLY to downloadable ceremonial artifacts — CertificateModal and any future achievement downloads. They MUST NOT be used in working product UI, transient celebration states, streak popups, level-up animations, or any in-app surface. Working product screens use the main design system tokens (midnight-ink, candlelight-gold, vellum-champagne). Conversely, main system tokens MUST NOT bleed into the certificate artifact (the CTA download button is UI chrome adjacent to the artifact, not part of it, and intentionally uses system gold). See DESIGN.md §7.", "section": "certificate" }
     ],
     "dos": [
       "Do use Candlelight Gold as a ceremony. Primary CTAs, achievement borders, focus rings, the streak flame, the wordmark. <=10% of any screen. If you want more gold, you want Vellum Champagne instead.",
