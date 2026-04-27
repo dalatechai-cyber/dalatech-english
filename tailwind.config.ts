@@ -19,6 +19,16 @@ const config: Config = {
         champagne: '#E4C08A',
         'text-primary': 'var(--text-primary)',
         'text-secondary': 'var(--text-secondary)',
+        // Certificate sub-system tokens — see DESIGN.md §7.
+        // Apply ONLY to downloadable ceremonial artifacts (CertificateModal).
+        // Do NOT use in working product UI.
+        'certificate-navy': '#0F1E3D',
+        'certificate-navy-deep': '#081230',
+        'certificate-gold': '#C9A55C',
+        'certificate-gold-deep': '#8B6F2E',
+        'certificate-gold-light': '#E8D29A',
+        'certificate-gold-pale': '#F5E7C2',
+        'certificate-ivory': '#FDFCF5',
       },
       fontFamily: {
         serif: ['var(--font-playfair)', 'EB Garamond', 'Georgia', 'serif'],
