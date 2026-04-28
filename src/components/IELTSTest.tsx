@@ -3,7 +3,9 @@ import { useState, useEffect, useRef } from 'react'
 import { NavBar } from './NavBar'
 import type { IELTSContent, IELTSAnswers, IELTSAnswer } from '@/lib/ielts'
 import { saveIELTSResult } from '@/lib/ielts'
-import { saveTestResult } from '@/lib/testHistory'
+import { saveTestResult as saveTestResultLocal } from '@/lib/testHistory'
+import { saveTestResult as saveTestResultRemote } from '@/lib/supabase/testHistory'
+import { createClient } from '@/lib/supabase/client'
 import {
   speakTurn,
   stopSpeech,
@@ -211,6 +213,7 @@ export function IELTSTest() {
   const [phase, setPhase] = useState<Phase>('intro')
   const [error, setError] = useState<string | null>(null)
   const [content, setContent] = useState<IELTSContent | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
   const [gradeResult, setGradeResult] = useState<GradeResult | null>(null)
   const [isPartialResult, setIsPartialResult] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -284,6 +287,13 @@ export function IELTSTest() {
       setSavedSession(session)
       setShowRestorePrompt(true)
     }
+  }, [])
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserId(user?.id ?? null)
+    })
   }, [])
 
   // ── Cleanup on unmount / phase change ──
@@ -790,8 +800,8 @@ export function IELTSTest() {
         // Swallow — empty feedback means profile shows the fallback message.
       }
 
-      saveTestResult({
-        type: 'ielts',
+      const ieltsEntry = {
+        type: 'ielts' as const,
         ieltsBand: overallBand,
         overallBand,
         listeningScore: lCorrect,
@@ -800,7 +810,12 @@ export function IELTSTest() {
         speakingBand,
         wrongAnswers,
         feedback: feedbackText,
-      })
+      }
+      if (userId) {
+        await saveTestResultRemote(userId, ieltsEntry)
+      } else {
+        saveTestResultLocal(ieltsEntry)
+      }
       clearSavedSession()
       setPhase('results')
     } catch {

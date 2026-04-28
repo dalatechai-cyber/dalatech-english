@@ -5,6 +5,7 @@ import { CertificateModal } from '@/components/CertificateModal'
 import { loadCertificates, formatMongolianDate, type CertificateEntry } from '@/lib/certificates'
 import { getCertificates } from '@/lib/supabase/certificates'
 import { loadTestHistory, type TestHistoryEntry } from '@/lib/testHistory'
+import { getTestHistory } from '@/lib/supabase/testHistory'
 import { loadStreak } from '@/lib/streak'
 import { getStreak } from '@/lib/supabase/streak'
 import { createClient } from '@/lib/supabase/client'
@@ -37,10 +38,11 @@ export default function ProfilePage() {
       try {
         if (user?.id) {
           setCerts(await getCertificates(user.id))
+          setHistory(await getTestHistory(user.id))
         } else {
           setCerts(loadCertificates())
+          setHistory(loadTestHistory())
         }
-        setHistory(loadTestHistory())
       } catch (e) {
         console.warn('Profile load failed:', e)
       }

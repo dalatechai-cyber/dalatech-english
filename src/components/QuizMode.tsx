@@ -10,7 +10,8 @@ import { updateStreak } from '@/lib/supabase/streak'
 import { getCertificates } from '@/lib/supabase/certificates'
 import { createClient } from '@/lib/supabase/client'
 import { t } from '@/lib/i18n'
-import { saveTestResult } from '@/lib/testHistory'
+import { saveTestResult as saveTestResultLocal } from '@/lib/testHistory'
+import { saveTestResult as saveTestResultRemote } from '@/lib/supabase/testHistory'
 import { CheckCircleIcon, XCircleIcon, CertificateIcon, TrophyIcon, ArrowRightIcon } from './Icon'
 
 interface MCQuestion {
@@ -207,7 +208,12 @@ export function QuizMode({ level }: QuizModeProps) {
       const currentMcScore = mcAnswers.filter((a, i) => i < mcQuestions.length && a != null && a === mcQuestions[i]?.correctIndex).length
       const currentReadingScore = readingAnswers.filter((a, i) => i < readingQuestions.length && a != null && a === readingQuestions[i]?.correctIndex).length * 2
       const currentTotal = currentMcScore + currentReadingScore + result.score
-      saveTestResult({ type: 'quiz', level, score: currentTotal, total: 25, passed: currentTotal >= 18 })
+      const entry = { type: 'quiz' as const, level, score: currentTotal, total: 25, passed: currentTotal >= 18 }
+      if (userId) {
+        await saveTestResultRemote(userId, entry)
+      } else {
+        saveTestResultLocal(entry)
+      }
       setPhase('results')
     } catch {
       setError('Засварлалт хийхэд алдаа гарлаа. Дахин оролдоно уу.')
