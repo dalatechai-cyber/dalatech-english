@@ -17,12 +17,6 @@ function yesterdayStr(): string {
   return d.toISOString().slice(0, 10)
 }
 
-function daysBetween(a: string, b: string): number {
-  const da = new Date(a + 'T00:00:00Z').getTime()
-  const db = new Date(b + 'T00:00:00Z').getTime()
-  return Math.round((db - da) / 86_400_000)
-}
-
 function rowToStreakData(row: StreakRow): StreakData {
   const today = todayStr()
   const lastDate = row.last_activity
