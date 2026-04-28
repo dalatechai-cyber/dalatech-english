@@ -197,7 +197,7 @@ async function sendWelcomeEmail(email: string, tier: 'book' | 'ai_only') {
 </html>`
 
   await resend.emails.send({
-    from: 'hello@english.dalatech.online',
+    from: 'Core English <hello@english.dalatech.online>',
     to: email,
     subject: 'Core English-д тавтай морил! 🎉',
     html,

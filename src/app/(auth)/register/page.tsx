@@ -19,6 +19,11 @@ export default function RegisterPage() {
     e.preventDefault()
     setError(null)
 
+    if (password.length < 6) {
+      setError('Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой')
+      return
+    }
+
     if (password !== confirm) {
       setError('Нууц үг таарахгүй байна')
       return
@@ -77,6 +82,8 @@ export default function RegisterPage() {
           value={password}
           onChange={setPassword}
           disabled={loading}
+          minLength={6}
+          hint="Доод тал нь 6 тэмдэгт"
         />
         <Field
           label="Нууц үг дахин"
@@ -86,6 +93,7 @@ export default function RegisterPage() {
           value={confirm}
           onChange={setConfirm}
           disabled={loading}
+          minLength={6}
         />
 
         {error && <ErrorMessage>{error}</ErrorMessage>}
@@ -144,8 +152,10 @@ function Field({
   disabled,
   autoComplete,
   maxLength,
+  minLength,
   mono,
   autoFocus,
+  hint,
 }: {
   label: string
   type: 'email' | 'password' | 'text'
@@ -155,9 +165,15 @@ function Field({
   disabled?: boolean
   autoComplete?: string
   maxLength?: number
+  minLength?: number
   mono?: boolean
   autoFocus?: boolean
+  hint?: string
 }) {
+  const [show, setShow] = useState(false)
+  const isPassword = type === 'password'
+  const inputType = isPassword && show ? 'text' : type
+
   return (
     <label className="block">
       <span
@@ -166,27 +182,105 @@ function Field({
       >
         {label}
       </span>
-      <input
-        type={type}
-        required={required}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
-        autoComplete={autoComplete}
-        maxLength={maxLength}
-        autoFocus={autoFocus}
-        className="block w-full rounded-lg px-4 py-3 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-        style={{
-          background: 'var(--midnight-ink-surface)',
-          border: '1px solid var(--hairline)',
-          color: 'var(--text-primary)',
-          fontFamily: mono
-            ? "ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
-            : undefined,
-          letterSpacing: mono ? '0.18em' : undefined,
-        }}
-      />
+      <div className="relative">
+        <input
+          type={inputType}
+          required={required}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          autoComplete={autoComplete}
+          maxLength={maxLength}
+          minLength={minLength}
+          autoFocus={autoFocus}
+          className="block w-full rounded-lg px-4 py-3 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          style={{
+            background: 'var(--midnight-ink-surface)',
+            border: '1px solid var(--hairline)',
+            color: 'var(--text-primary)',
+            fontFamily: mono
+              ? "ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
+              : undefined,
+            letterSpacing: mono ? '0.18em' : undefined,
+            paddingRight: isPassword ? '2.75rem' : undefined,
+          }}
+        />
+        {isPassword && (
+          <PasswordToggle show={show} onToggle={() => setShow((s) => !s)} disabled={disabled} />
+        )}
+      </div>
+      {hint && (
+        <span
+          className="block text-[12px] mt-1.5"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          {hint}
+        </span>
+      )}
     </label>
+  )
+}
+
+function PasswordToggle({
+  show,
+  onToggle,
+  disabled,
+}: {
+  show: boolean
+  onToggle: () => void
+  disabled?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={disabled}
+      aria-label={show ? 'Нууц үгийг нуух' : 'Нууц үгийг харуулах'}
+      className="absolute inset-y-0 right-0 flex items-center justify-center w-11 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      style={{ color: 'var(--text-secondary)' }}
+    >
+      {show ? <EyeOffIcon /> : <EyeIcon />}
+    </button>
+  )
+}
+
+function EyeIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+}
+
+function EyeOffIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+      <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+      <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+      <line x1="2" y1="2" x2="22" y2="22" />
+    </svg>
   )
 }
 
