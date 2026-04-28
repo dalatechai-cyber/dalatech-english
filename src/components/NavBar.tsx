@@ -11,7 +11,8 @@ interface NavBarProps {
   lessonTitle?: string
 }
 
-const COUNT_UP_MS = 400
+const COUNT_UP_MS = 600
+const FLAME_PULSE_MS = 600
 
 function prefersReducedMotion(): boolean {
   if (typeof window === 'undefined') return false
@@ -22,10 +23,12 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
   const [streak, setStreak] = useState(0)
   const [displayedStreak, setDisplayedStreak] = useState(0)
   const [absorbing, setAbsorbing] = useState(false)
+  const [pulsing, setPulsing] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
   const prevStreakRef = useRef(0)
   const absorbTimerRef = useRef<number | null>(null)
+  const pulseTimerRef = useRef<number | null>(null)
 
   useEffect(() => {
     const refresh = () => {
@@ -80,6 +83,9 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
       if (absorbTimerRef.current) {
         window.clearTimeout(absorbTimerRef.current)
       }
+      if (pulseTimerRef.current) {
+        window.clearTimeout(pulseTimerRef.current)
+      }
     }
   }, [])
 
@@ -97,6 +103,20 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
       return
     }
 
+    // Subtle pulse on the flame whenever the streak increments.
+    // Toggle off then on so back-to-back increments restart the animation cleanly.
+    if (pulseTimerRef.current) {
+      window.clearTimeout(pulseTimerRef.current)
+    }
+    setPulsing(false)
+    const pulseRaf = requestAnimationFrame(() => {
+      setPulsing(true)
+      pulseTimerRef.current = window.setTimeout(() => {
+        setPulsing(false)
+        pulseTimerRef.current = null
+      }, FLAME_PULSE_MS)
+    })
+
     const start = performance.now()
     let raf = 0
     const tick = (now: number) => {
@@ -106,7 +126,10 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
       if (t < 1) raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
+    return () => {
+      cancelAnimationFrame(raf)
+      cancelAnimationFrame(pulseRaf)
+    }
   }, [streak])
 
   useEffect(() => {
@@ -172,7 +195,11 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
                 id="navbar-streak-flame"
                 className={[
                   'inline-flex items-center justify-center',
-                  absorbing ? 'navbar-streak-flame-absorbing' : '',
+                  absorbing
+                    ? 'navbar-streak-flame-absorbing'
+                    : pulsing
+                    ? 'navbar-streak-flame-pulsing'
+                    : '',
                 ].filter(Boolean).join(' ')}
                 style={{ transform: 'translateY(1px)' }}
               >
