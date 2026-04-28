@@ -1,5 +1,4 @@
 'use server'
-
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 type RedeemResult =
@@ -24,14 +23,12 @@ export async function validateAndRedeemCode(
   password: string
 ): Promise<RedeemResult> {
   const normalizedCode = code.trim().toUpperCase()
-
   if (normalizedCode.length !== 8) {
     return { success: false, error: ERR_INVALID_CODE }
   }
 
   const admin = getAdminClient()
 
-  // 1. Validate access code is unredeemed.
   const { data: codeRow, error: codeError } = await admin
     .from('access_codes')
     .select('id, tier, used')
@@ -44,7 +41,6 @@ export async function validateAndRedeemCode(
 
   const tier = codeRow.tier as 'book' | 'ai_only'
 
-  // 2. Create the auth user (auto-confirmed so they can sign in immediately).
   const { data: created, error: createError } = await admin.auth.admin.createUser({
     email,
     password,
@@ -61,8 +57,6 @@ export async function validateAndRedeemCode(
 
   const userId = created.user.id
 
-  // 3. Mark the access code as redeemed. Guarded by `used = false` so a second
-  //    redeemer racing past the read above cannot double-spend the code.
   const { error: redeemError, data: redeemed } = await admin
     .from('access_codes')
     .update({
@@ -76,13 +70,10 @@ export async function validateAndRedeemCode(
     .maybeSingle()
 
   if (redeemError || !redeemed) {
-    // Race lost: roll back the freshly-created user so the email can be reused.
     await admin.auth.admin.deleteUser(userId)
     return { success: false, error: ERR_INVALID_CODE }
   }
 
-  // 4. Apply the redeemed tier to the auto-provisioned profile (the
-  //    handle_new_user trigger inserted the row with the default 'ai_only').
   const { error: profileError } = await admin
     .from('profiles')
     .update({ tier })
