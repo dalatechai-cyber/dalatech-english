@@ -11,10 +11,21 @@ interface NavBarProps {
   lessonTitle?: string
 }
 
+const COUNT_UP_MS = 400
+
+function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
 export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
   const [streak, setStreak] = useState(0)
+  const [displayedStreak, setDisplayedStreak] = useState(0)
+  const [absorbing, setAbsorbing] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
+  const prevStreakRef = useRef(0)
+  const absorbTimerRef = useRef<number | null>(null)
 
   useEffect(() => {
     const refresh = () => {
@@ -45,12 +56,58 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
     }
     document.addEventListener('visibilitychange', handleVisibility)
 
+    const handleArriving = () => {
+      if (absorbTimerRef.current) {
+        window.clearTimeout(absorbTimerRef.current)
+      }
+      // Toggle off then back on so a second arrival within the same animation window restarts cleanly.
+      setAbsorbing(false)
+      requestAnimationFrame(() => {
+        setAbsorbing(true)
+        absorbTimerRef.current = window.setTimeout(() => {
+          setAbsorbing(false)
+          absorbTimerRef.current = null
+        }, 540)
+      })
+    }
+    window.addEventListener('streak:flame-arriving', handleArriving)
+
     return () => {
       window.removeEventListener('streak:updated', handleStreakUpdate)
       window.removeEventListener('storage', handleStorage)
       document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('streak:flame-arriving', handleArriving)
+      if (absorbTimerRef.current) {
+        window.clearTimeout(absorbTimerRef.current)
+      }
     }
   }, [])
+
+  // Count-up the displayed streak number when the streak advances forward.
+  // Backwards changes and wide jumps (initial load, cross-tab sync, reset) snap so we don't
+  // replay the celebration on every navigation.
+  useEffect(() => {
+    const from = prevStreakRef.current
+    const to = streak
+    prevStreakRef.current = to
+
+    // Streaks advance by exactly 1 per day; any other delta is a load, sync, or reset.
+    if (prefersReducedMotion() || to - from !== 1) {
+      setDisplayedStreak(to)
+      return
+    }
+
+    const start = performance.now()
+    let raf = 0
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / COUNT_UP_MS)
+      const eased = 1 - Math.pow(1 - t, 3)
+      setDisplayedStreak(Math.round(from + (to - from) * eased))
+      if (t < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [streak])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -113,12 +170,15 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
             >
               <span
                 id="navbar-streak-flame"
-                className="inline-flex items-center justify-center"
+                className={[
+                  'inline-flex items-center justify-center',
+                  absorbing ? 'navbar-streak-flame-absorbing' : '',
+                ].filter(Boolean).join(' ')}
                 style={{ transform: 'translateY(1px)' }}
               >
                 <StreakFlame size={16} />
               </span>
-              <span className="leading-none">{streak}</span>
+              <span className="leading-none">{displayedStreak}</span>
               <span
                 className="hidden sm:inline text-[11px] uppercase tracking-wider leading-none"
                 style={{ color: 'var(--vellum-champagne)' }}
