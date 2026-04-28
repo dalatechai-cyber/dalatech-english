@@ -28,6 +28,10 @@ export function StreakFlame({ size = 24, className, animated = true }: StreakFla
         xmlns="http://www.w3.org/2000/svg"
         style={{ display: 'block', overflow: 'visible' }}
       >
+        {/* KEEP: flame gradient stops are scoped to this component's warm palette
+            (red/orange/yellow stops). They define the flame's color world and
+            are intentionally not migrated to design tokens — coupling them to
+            the system palette would mix registers per the audit's §2 KEEP rule. */}
         <defs>
           <radialGradient id={bodyId} cx="50%" cy="68%" r="65%" fx="50%" fy="78%">
             <stop offset="0%" stopColor="#FFB347" />

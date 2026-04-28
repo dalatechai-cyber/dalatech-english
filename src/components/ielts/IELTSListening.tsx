@@ -10,7 +10,7 @@ function ListeningWaveform() {
   return (
     <div className="flex items-end justify-center gap-1 h-10">
       {[0, 1, 2, 3, 4].map(i => (
-        <div key={i} style={{ width: 4, background: '#F59E0B', borderRadius: 2, height: `${12 + i * 6}px`, transformOrigin: 'bottom', animation: `waveBar ${0.6 + i * 0.1}s ease-in-out infinite alternate`, animationDelay: `${i * 0.12}s` }} />
+        <div key={i} style={{ width: 4, background: 'var(--candlelight-gold)', borderRadius: 2, height: `${12 + i * 6}px`, transformOrigin: 'bottom', animation: `waveBar ${0.6 + i * 0.1}s ease-in-out infinite alternate`, animationDelay: `${i * 0.12}s` }} />
       ))}
     </div>
   )
@@ -87,7 +87,7 @@ export function IELTSListening({
                     <span key={sp} className="text-xs font-bold rounded-full flex items-center justify-center transition-all"
                       style={{
                         width: 22, height: 22,
-                        background: active ? 'linear-gradient(135deg, #F59E0B, #D97706)' : '#1E293B',
+                        background: active ? 'linear-gradient(135deg, var(--candlelight-gold), var(--candlelight-gold-dark))' : '#1E293B',
                         color: active ? '#0F172A' : '#475569',
                         boxShadow: active ? '0 0 12px #F59E0B66' : 'none',
                         transform: active ? 'scale(1.1)' : 'scale(1)',
@@ -99,7 +99,7 @@ export function IELTSListening({
           </div>
 
           {listenNotice && (
-            <p className="text-xs mb-3 px-3 py-2 rounded-lg" style={{ background: '#1E293B', color: '#F59E0B', border: '1px solid #F59E0B33' }}>
+            <p className="text-xs mb-3 px-3 py-2 rounded-lg" style={{ background: '#1E293B', color: 'var(--candlelight-gold)', border: '1px solid #F59E0B33' }}>
               ⚠ {listenNotice}
             </p>
           )}
@@ -107,15 +107,15 @@ export function IELTSListening({
           {!canPlay && listenAudioLoading ? (
             <div className="flex flex-col items-center gap-3 py-6">
               <div className="flex gap-1.5">
-                {[0, 1, 2].map(i => <span key={i} className="w-2.5 h-2.5 rounded-full animate-bounce" style={{ background: '#F59E0B', animationDelay: `${i * 0.15}s` }} />)}
+                {[0, 1, 2].map(i => <span key={i} className="w-2.5 h-2.5 rounded-full animate-bounce" style={{ background: 'var(--candlelight-gold)', animationDelay: `${i * 0.15}s` }} />)}
               </div>
-              <p className="text-xs" style={{ color: '#F59E0B' }}>
+              <p className="text-xs" style={{ color: 'var(--candlelight-gold)' }}>
                 Яриа бэлтгэж байна...
                 {listenLoadProgress.total > 0 && ` (${listenLoadProgress.done}/${listenLoadProgress.total})`}
               </p>
               {listenLoadProgress.total > 0 && (
                 <div className="w-40 h-1.5 rounded-full overflow-hidden" style={{ background: '#334155' }}>
-                  <div className="h-full transition-all" style={{ width: `${(listenLoadProgress.done / listenLoadProgress.total) * 100}%`, background: '#F59E0B' }} />
+                  <div className="h-full transition-all" style={{ width: `${(listenLoadProgress.done / listenLoadProgress.total) * 100}%`, background: 'var(--candlelight-gold)' }} />
                 </div>
               )}
             </div>
@@ -124,7 +124,7 @@ export function IELTSListening({
               {isPlaying ? (
                 <div className="flex flex-col items-center py-2 gap-2">
                   <ListeningWaveform />
-                  <p className="text-xs" style={{ color: '#F59E0B' }}>{playStatusText}</p>
+                  <p className="text-xs" style={{ color: 'var(--candlelight-gold)' }}>{playStatusText}</p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-2 py-2">
@@ -132,11 +132,11 @@ export function IELTSListening({
                   {listenAudioReady && (
                     <button onClick={playConversationTwice}
                       className="px-6 py-2 rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5"
-                      style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+                      style={{ background: 'linear-gradient(135deg, var(--candlelight-gold), var(--candlelight-gold-dark))', color: '#0F172A' }}>
                       ▶ Тоглуулах
                     </button>
                   )}
-                  <p className="text-xs" style={{ color: '#64748B' }}>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                     {listenAudioError ? 'Аудио ачаалагдсангүй — дахин оролдоно уу' : 'Яриа 2 удаа автоматаар тоглуулна'}
                   </p>
                 </div>
@@ -147,12 +147,12 @@ export function IELTSListening({
         </div>
 
         {/* All questions at once */}
-        <p className="text-xs mb-3 font-semibold" style={{ color: '#64748B' }}>Бүх {content.listening.questions.length} асуултад хариулна уу</p>
+        <p className="text-xs mb-3 font-semibold" style={{ color: 'var(--text-muted)' }}>Бүх {content.listening.questions.length} асуултад хариулна уу</p>
         <div className="space-y-4 mb-6">
           {content.listening.questions.map((q, qi) => (
             <div key={qi} className="bg-midnight-ink-surface border border-midnight-ink-elevated rounded-2xl p-4">
               <p className="text-sm font-semibold text-text-primary mb-3">
-                <span style={{ color: '#F59E0B' }}>{qi + 1}.</span> {q.question}
+                <span style={{ color: 'var(--candlelight-gold)' }}>{qi + 1}.</span> {q.question}
                 {(q.type === 'fill') && (
                   <span className="ml-2 text-xs font-medium" style={{ color: '#94A3B8' }}>· Нөхөх</span>
                 )}
@@ -168,7 +168,7 @@ export function IELTSListening({
         {!listenSubmitted ? (
           <button onClick={() => setListenSubmitted(true)} disabled={!allAnswered}
             className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed mb-2"
-            style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+            style={{ background: 'linear-gradient(135deg, var(--candlelight-gold), var(--candlelight-gold-dark))', color: '#0F172A' }}>
             Хариултаа илгээх
           </button>
         ) : (
@@ -183,7 +183,7 @@ export function IELTSListening({
                 {conv.map((turn, i) => (
                   <div key={i} className="flex gap-2 text-xs">
                     <span className="flex-shrink-0 w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center"
-                      style={{ background: turn.speaker === 'A' ? 'linear-gradient(135deg, #F59E0B, #D97706)' : '#334155', color: turn.speaker === 'A' ? '#0F172A' : '#F8FAFC', fontSize: 9 }}>
+                      style={{ background: turn.speaker === 'A' ? 'linear-gradient(135deg, var(--candlelight-gold), var(--candlelight-gold-dark))' : '#334155', color: turn.speaker === 'A' ? '#0F172A' : 'var(--text-primary)', fontSize: 9 }}>
                       {turn.speaker}
                     </span>
                     <p className="flex-1 text-text-secondary leading-relaxed">{turn.text}</p>
@@ -193,7 +193,7 @@ export function IELTSListening({
             )}
             <button onClick={() => { stopSpeech(); listenCurrentHandleRef.current?.stop(); onAdvance() }}
               className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5"
-              style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+              style={{ background: 'linear-gradient(135deg, var(--candlelight-gold), var(--candlelight-gold-dark))', color: '#0F172A' }}>
               <span lang="en">Reading →</span>
             </button>
           </div>

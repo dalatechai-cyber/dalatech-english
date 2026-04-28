@@ -45,7 +45,7 @@ export function LevelPage({ levelCode }: LevelPageProps) {
             lang="en"
             className="font-serif-display text-7xl sm:text-8xl font-bold leading-none mb-4 nums-tabular"
             style={{
-              background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 50%, #E4C08A 100%)',
+              background: 'linear-gradient(135deg, var(--candlelight-gold) 0%, var(--candlelight-gold-light) 50%, var(--vellum-champagne) 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -88,7 +88,7 @@ export function LevelPage({ levelCode }: LevelPageProps) {
                 style={{
                   width: `${pct}%`,
                   background:
-                    'linear-gradient(90deg, #D97706 0%, #F59E0B 50%, #FCD34D 100%)',
+                    'linear-gradient(90deg, var(--candlelight-gold-dark) 0%, var(--candlelight-gold) 50%, var(--candlelight-gold-light) 100%)',
                 }}
               />
             </div>
@@ -102,7 +102,7 @@ export function LevelPage({ levelCode }: LevelPageProps) {
             href={`/level/${levelCode}/chat`}
             className="group block rounded-2xl p-6 shadow-editorial transition-all duration-300 hover:-translate-y-1 hover:shadow-gold relative overflow-hidden"
             style={{
-              background: '#141C30',
+              background: 'var(--midnight-ink-surface)',
               border: '1px solid var(--hairline)',
             }}
           >
@@ -152,7 +152,7 @@ export function LevelPage({ levelCode }: LevelPageProps) {
             href={`/level/${levelCode}/quiz`}
             className="group block rounded-2xl p-6 shadow-editorial transition-all duration-300 hover:-translate-y-1 hover:shadow-gold relative overflow-hidden"
             style={{
-              background: '#141C30',
+              background: 'var(--midnight-ink-surface)',
               border: '1px solid var(--hairline)',
             }}
           >
@@ -207,7 +207,7 @@ export function LevelPage({ levelCode }: LevelPageProps) {
         {/* Lesson list */}
         <details
           className="rounded-2xl overflow-hidden shadow-editorial"
-          style={{ background: '#141C30', border: '1px solid var(--hairline)' }}
+          style={{ background: 'var(--midnight-ink-surface)', border: '1px solid var(--hairline)' }}
         >
           <summary
             className="px-5 py-4 cursor-pointer text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors list-none flex items-center justify-between"

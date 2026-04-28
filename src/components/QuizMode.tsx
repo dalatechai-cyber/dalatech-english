@@ -418,7 +418,7 @@ export function QuizMode({ level }: QuizModeProps) {
         <NavBar levelCode={level} lessonTitle={t('quizWriting')} />
         <div className="flex-1 overflow-y-auto p-6 max-w-lg mx-auto w-full">
           <div className="rounded-xl p-5 mb-5 shadow-editorial" style={{
-            background: 'linear-gradient(#141C30, #141C30) padding-box, linear-gradient(135deg, rgba(245,158,11,0.4), rgba(228,192,138,0.2)) border-box',
+            background: 'linear-gradient(var(--midnight-ink-surface), var(--midnight-ink-surface)) padding-box, linear-gradient(135deg, rgba(245,158,11,0.4), rgba(228,192,138,0.2)) border-box',
             border: '1px solid transparent',
           }}>
             <div className="flex items-center gap-2 mb-3">
@@ -474,7 +474,7 @@ export function QuizMode({ level }: QuizModeProps) {
             </div>
             <div className="font-serif-display font-bold nums-tabular leading-none mb-3" style={{ fontSize: 'clamp(72px, 18vw, 112px)' }}>
               <span style={{
-                background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 50%, #E4C08A 100%)',
+                background: 'linear-gradient(135deg, var(--candlelight-gold) 0%, var(--candlelight-gold-light) 50%, var(--vellum-champagne) 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -506,7 +506,7 @@ export function QuizMode({ level }: QuizModeProps) {
           </div>
 
           {/* Score breakdown */}
-          <div className="rounded-xl p-5 mb-5 border hairline shadow-editorial" style={{ background: '#141C30' }}>
+          <div className="rounded-xl p-5 mb-5 border hairline shadow-editorial" style={{ background: 'var(--midnight-ink-surface)' }}>
             <div className="text-[10px] font-semibold tracking-[0.22em] uppercase mb-4 flex items-center gap-2" style={{ color: 'var(--vellum-champagne)' }}>
               <span className="h-px w-6" style={{ background: 'rgba(245,158,11,0.5)' }} />
               Задлал
@@ -536,7 +536,7 @@ export function QuizMode({ level }: QuizModeProps) {
 
           {/* Writing feedback */}
           {writingFeedback && (
-            <div className="rounded-xl p-5 mb-5 border hairline" style={{ background: '#141C30' }}>
+            <div className="rounded-xl p-5 mb-5 border hairline" style={{ background: 'var(--midnight-ink-surface)' }}>
               <div className="text-[10px] font-semibold tracking-[0.22em] uppercase mb-2.5 flex items-center gap-2" style={{ color: 'var(--vellum-champagne)' }}>
                 <span className="h-px w-6" style={{ background: 'rgba(245,158,11,0.5)' }} />
                 {t('quizWritingFeedback')}

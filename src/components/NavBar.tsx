@@ -251,7 +251,7 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
               <div
                 className="absolute top-full right-0 mt-3 rounded-2xl overflow-hidden z-50 w-[240px] shadow-editorial"
                 style={{
-                  background: '#141C30',
+                  background: 'var(--midnight-ink-surface)',
                   border: '1px solid rgba(245,158,11,0.35)',
                 }}
               >

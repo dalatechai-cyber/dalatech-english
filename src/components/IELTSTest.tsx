@@ -115,7 +115,7 @@ function collectWrongAnswers(content: IELTSContent, ans: IELTSAnswers): string[]
   return out
 }
 
-function bandColor(b: number) { return b >= 7 ? '#34D399' : b >= 5 ? '#F59E0B' : '#F87171' }
+function bandColor(b: number) { return b >= 7 ? '#34D399' : b >= 5 ? 'var(--candlelight-gold)' : '#F87171' }
 function bandLabel(b: number) {
   if (b >= 8) return 'Маш сайн'
   if (b >= 7) return 'Сайн'
@@ -131,9 +131,9 @@ function Spinner({ label }: { label: string }) {
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
           <div className="flex gap-1.5 justify-center mb-4">
-            {[0, 1, 2].map(i => <span key={i} className="w-3 h-3 rounded-full animate-bounce" style={{ background: '#F59E0B', animationDelay: `${i * 0.15}s` }} />)}
+            {[0, 1, 2].map(i => <span key={i} className="w-3 h-3 rounded-full animate-bounce" style={{ background: 'var(--candlelight-gold)', animationDelay: `${i * 0.15}s` }} />)}
           </div>
-          <p className="text-sm" style={{ color: '#64748B' }}>{label}</p>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{label}</p>
         </div>
       </div>
     </div>
@@ -185,7 +185,7 @@ type OrbState = 'idle' | 'speaking' | 'listening' | 'thinking'
 function SpeakOrb({ state }: { state: OrbState }) {
   const colors: Record<OrbState, string> = {
     idle: '#1E40AF',
-    speaking: '#F59E0B',
+    speaking: 'var(--candlelight-gold)',
     listening: '#38BDF8',
     thinking: '#8B5CF6',
   }
@@ -1158,7 +1158,7 @@ export function IELTSTest() {
           <h1
             className="font-serif-display text-5xl sm:text-6xl font-bold leading-none mb-4"
             style={{
-              background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 50%, #E4C08A 100%)',
+              background: 'linear-gradient(135deg, var(--candlelight-gold) 0%, var(--candlelight-gold-light) 50%, var(--vellum-champagne) 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -1201,7 +1201,7 @@ export function IELTSTest() {
                 key={s.label}
                 className="rounded-2xl p-5 text-left shadow-editorial"
                 style={{
-                  background: '#141C30',
+                  background: 'var(--midnight-ink-surface)',
                   border: '1px solid var(--hairline)',
                 }}
               >
@@ -1230,8 +1230,8 @@ export function IELTSTest() {
             onClick={startTest}
             className="w-full sm:w-auto sm:px-10 font-semibold py-3.5 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5 text-sm uppercase tracking-[0.18em]"
             style={{
-              background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-              color: '#0B1222',
+              background: 'linear-gradient(135deg, var(--candlelight-gold) 0%, var(--candlelight-gold-dark) 100%)',
+              color: 'var(--midnight-ink)',
               boxShadow: '0 6px 20px rgba(245,158,11,0.28)',
             }}
           >
@@ -1247,7 +1247,7 @@ export function IELTSTest() {
             <div
               className="max-w-sm w-full rounded-2xl p-6 shadow-editorial"
               style={{
-                background: '#141C30',
+                background: 'var(--midnight-ink-surface)',
                 border: '1px solid var(--hairline)',
                 borderLeftWidth: '3px',
                 borderLeftColor: 'var(--candlelight-gold)',
@@ -1276,8 +1276,8 @@ export function IELTSTest() {
                   onClick={resumeSavedSession}
                   className="w-full font-semibold py-3 min-h-[48px] rounded-xl text-sm uppercase tracking-[0.18em]"
                   style={{
-                    background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-                    color: '#0B1222',
+                    background: 'linear-gradient(135deg, var(--candlelight-gold) 0%, var(--candlelight-gold-dark) 100%)',
+                    color: 'var(--midnight-ink)',
                     boxShadow: '0 4px 14px rgba(245,158,11,0.25)',
                   }}
                 >
@@ -1408,9 +1408,9 @@ export function IELTSTest() {
       speakPhase === 'prep' ? 'thinking' : 'idle'
 
     const statusColor =
-      speakPhase === 'speaking' ? '#F59E0B' :
+      speakPhase === 'speaking' ? 'var(--candlelight-gold)' :
       speakPhase === 'listening' ? '#38BDF8' :
-      speakPhase === 'prep' ? '#FCD34D' :
+      speakPhase === 'prep' ? 'var(--candlelight-gold-light)' :
       '#8B5CF6'
 
     return (
@@ -1446,14 +1446,14 @@ export function IELTSTest() {
           {/* Status */}
           {speakPhase === 'ready' ? (
             <div className="mt-10 flex flex-col items-center gap-6 w-full max-w-xs">
-              <p className="text-sm text-center" style={{ color: '#64748B' }}>
+              <p className="text-sm text-center" style={{ color: 'var(--text-muted)' }}>
                 AI шалгагч таныг асуулт асуух болно. Автоматаар дуу бичнэ.
               </p>
-              {speakNotice && <p className="text-xs" style={{ color: '#F59E0B' }}>⚠ {speakNotice}</p>}
+              {speakNotice && <p className="text-xs" style={{ color: 'var(--candlelight-gold)' }}>⚠ {speakNotice}</p>}
               <button
                 onClick={handleStartSpeaking}
                 className="w-52 py-4 rounded-2xl font-bold text-base transition-all hover:-translate-y-1 shadow-lg"
-                style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+                style={{ background: 'linear-gradient(135deg, var(--candlelight-gold), var(--candlelight-gold-dark))', color: '#0F172A' }}>
                 🎤 Ярианы шалгалт эхлэх
               </button>
             </div>
@@ -1471,12 +1471,12 @@ export function IELTSTest() {
 
               {/* Continue prompt */}
               {speakPhase === 'listening' && speakContinue && (
-                <p className="text-xs" style={{ color: '#FCD34D' }}>Үргэлжлүүлнэ үү...</p>
+                <p className="text-xs" style={{ color: 'var(--candlelight-gold-light)' }}>Үргэлжлүүлнэ үү...</p>
               )}
 
               {/* Error notice */}
               {speakNotice && (
-                <p className="text-xs px-3 py-1.5 rounded-lg" style={{ background: '#1E293B', color: '#F59E0B', border: '1px solid #F59E0B33' }}>
+                <p className="text-xs px-3 py-1.5 rounded-lg" style={{ background: '#1E293B', color: 'var(--candlelight-gold)', border: '1px solid #F59E0B33' }}>
                   ⚠ {speakNotice}
                 </p>
               )}
@@ -1484,7 +1484,7 @@ export function IELTSTest() {
               {/* Prep countdown display */}
               {speakPhase === 'prep' && speakPrepCountdown !== null && (
                 <div className="text-center">
-                  <div className="text-5xl font-extrabold mb-2" style={{ color: '#FCD34D', letterSpacing: '-0.03em' }}>
+                  <div className="text-5xl font-extrabold mb-2" style={{ color: 'var(--candlelight-gold-light)', letterSpacing: '-0.03em' }}>
                     0:{String(speakPrepCountdown).padStart(2, '0')}
                   </div>
                   <p className="text-xs" style={{ color: '#94A3B8' }}>Бэлдэх хугацаа</p>
@@ -1497,7 +1497,7 @@ export function IELTSTest() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-xs font-semibold text-candlelight-gold uppercase tracking-wide">📋 Topic Card</div>
                     {speakPart2Countdown !== null && (
-                      <span className="text-sm font-extrabold tabular-nums" style={{ color: speakPart2Countdown === 0 ? '#F59E0B' : '#FCD34D' }}>
+                      <span className="text-sm font-extrabold tabular-nums" style={{ color: speakPart2Countdown === 0 ? 'var(--candlelight-gold)' : 'var(--candlelight-gold-light)' }}>
                         ⏱ {mmss(speakPart2Countdown)}
                       </span>
                     )}
@@ -1592,7 +1592,7 @@ export function IELTSTest() {
               className="font-serif-display font-medium leading-none nums-tabular mb-3"
               style={{
                 fontSize: 'clamp(5rem, 18vw, 8rem)',
-                background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 50%, #E4C08A 100%)',
+                background: 'linear-gradient(135deg, var(--candlelight-gold) 0%, var(--candlelight-gold-light) 50%, var(--vellum-champagne) 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -1616,7 +1616,7 @@ export function IELTSTest() {
           <div
             className="rounded-2xl p-5 mb-4 shadow-editorial"
             style={{
-              background: '#141C30',
+              background: 'var(--midnight-ink-surface)',
               border: '1px solid var(--hairline)',
             }}
           >
@@ -1677,7 +1677,7 @@ export function IELTSTest() {
           <div
             className="rounded-2xl p-5 mb-4 shadow-editorial"
             style={{
-              background: '#141C30',
+              background: 'var(--midnight-ink-surface)',
               border: '1px solid var(--hairline)',
             }}
           >
@@ -1730,7 +1730,7 @@ export function IELTSTest() {
             <div
               className="rounded-2xl p-5 mb-4 shadow-editorial"
               style={{
-                background: '#141C30',
+                background: 'var(--midnight-ink-surface)',
                 border: '1px solid var(--hairline)',
                 borderLeftWidth: '3px',
                 borderLeftColor: 'var(--candlelight-gold)',
@@ -1778,7 +1778,7 @@ export function IELTSTest() {
             <div
               className="rounded-2xl p-5 mb-6 shadow-editorial"
               style={{
-                background: '#141C30',
+                background: 'var(--midnight-ink-surface)',
                 border: '1px solid var(--hairline)',
                 borderLeftWidth: '3px',
                 borderLeftColor: 'var(--candlelight-gold)',
@@ -1827,8 +1827,8 @@ export function IELTSTest() {
               onClick={() => { stopSpeech(); setPhase('intro'); setGradeResult(null); setIsPartialResult(false) }}
               className="w-full font-semibold py-3 min-h-[48px] rounded-xl transition-all text-sm uppercase tracking-[0.18em]"
               style={{
-                background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-                color: '#0B1222',
+                background: 'linear-gradient(135deg, var(--candlelight-gold) 0%, var(--candlelight-gold-dark) 100%)',
+                color: 'var(--midnight-ink)',
                 boxShadow: '0 6px 20px rgba(245,158,11,0.28)',
               }}
             >

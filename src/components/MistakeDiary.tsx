@@ -41,7 +41,7 @@ export function MistakeDiary() {
         <h1
           className="font-serif-display text-4xl sm:text-5xl font-bold leading-none mb-3"
           style={{
-            background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 50%, #E4C08A 100%)',
+            background: 'linear-gradient(135deg, var(--candlelight-gold) 0%, var(--candlelight-gold-light) 50%, var(--vellum-champagne) 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
@@ -65,7 +65,7 @@ export function MistakeDiary() {
           placeholder={t('searchMistakes')}
           className="flex-1 rounded-xl px-4 py-3 text-sm outline-none transition-all"
           style={{
-            background: '#141C30',
+            background: 'var(--midnight-ink-surface)',
             border: '1px solid var(--hairline)',
             color: 'var(--text-primary)',
           }}
@@ -83,7 +83,7 @@ export function MistakeDiary() {
           onChange={e => setFilterLevel(e.target.value as LevelCode | 'all')}
           className="w-full sm:w-auto rounded-xl px-4 py-3 text-sm outline-none transition-colors"
           style={{
-            background: '#141C30',
+            background: 'var(--midnight-ink-surface)',
             border: '1px solid var(--hairline)',
             color: 'var(--text-primary)',
           }}
@@ -100,7 +100,7 @@ export function MistakeDiary() {
       {filtered.length === 0 ? (
         <div
           className="text-center py-20 px-6 rounded-2xl shadow-editorial"
-          style={{ background: '#141C30', border: '1px solid var(--hairline)' }}
+          style={{ background: 'var(--midnight-ink-surface)', border: '1px solid var(--hairline)' }}
         >
           <div
             className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5"
@@ -128,7 +128,7 @@ export function MistakeDiary() {
               key={m.id}
               className="rounded-2xl p-5 sm:p-6 shadow-editorial transition-all"
               style={{
-                background: '#141C30',
+                background: 'var(--midnight-ink-surface)',
                 border: '1px solid var(--hairline)',
                 borderLeftWidth: '3px',
                 borderLeftColor: 'var(--candlelight-gold)',
