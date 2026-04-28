@@ -28,12 +28,14 @@ export async function validateAndRedeemCode(
   }
 
   const admin = getAdminClient()
+  console.log('DEBUG: env URL present:', !!process.env.NEXT_PUBLIC_SUPABASE_URL, 'KEY present:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
 
   const { data: codeRow, error: codeError } = await admin
     .from('access_codes')
     .select('id, tier, used')
     .eq('code', normalizedCode)
     .maybeSingle()
+  console.log('DEBUG: codeRow result:', JSON.stringify(codeRow), 'error:', codeError?.message)
 
   if (codeError || !codeRow || codeRow.used) {
     return { success: false, error: ERR_INVALID_CODE }
