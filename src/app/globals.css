@@ -288,6 +288,47 @@ body::before {
   animation-delay: 80ms;
 }
 
+/* Streak celebration: warm ember particles drifting up from the flame */
+@keyframes streakEmberRise {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.6);
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--ember-dx, 0px), var(--ember-dy, -60px)) scale(0.4);
+  }
+}
+.streak-ember {
+  animation-name: streakEmberRise;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: both;
+  animation-iteration-count: 1;
+  filter: blur(0.5px);
+  will-change: transform, opacity;
+}
+
+/* NavBar streak flame: absorption pulse when traveling flame arrives */
+@keyframes navbarFlameAbsorb {
+  0%   { transform: translateY(1px) scale(1); }
+  35%  { transform: translateY(1px) scale(1.18); }
+  100% { transform: translateY(1px) scale(1); }
+}
+@keyframes navbarFlameGlow {
+  0%   { filter: drop-shadow(0 0 0 rgba(245, 158, 11, 0)); }
+  35%  { filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.65)) drop-shadow(0 0 22px rgba(245, 158, 11, 0.35)); }
+  100% { filter: drop-shadow(0 0 0 rgba(245, 158, 11, 0)); }
+}
+.navbar-streak-flame-absorbing {
+  animation:
+    navbarFlameAbsorb 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    navbarFlameGlow 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .streak-flame-animated .streak-flame-body {
     animation: none;
@@ -296,6 +337,13 @@ body::before {
   .streak-stage-enter {
     animation-duration: 1ms;
     animation-delay: 0ms;
+  }
+  .streak-ember {
+    animation: none;
+    opacity: 0;
+  }
+  .navbar-streak-flame-absorbing {
+    animation: none;
   }
 }
 
