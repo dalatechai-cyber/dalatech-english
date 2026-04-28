@@ -29,8 +29,8 @@ export function LevelSelector() {
               } group-hover:shadow-gold transition-shadow duration-300`}
               style={{
                 background: lp.examPassed
-                  ? 'linear-gradient(#141C30, #141C30) padding-box, linear-gradient(135deg, #F59E0B 0%, #E4C08A 50%, #D97706 100%) border-box'
-                  : '#141C30',
+                  ? 'linear-gradient(var(--midnight-ink-surface), var(--midnight-ink-surface)) padding-box, linear-gradient(135deg, var(--candlelight-gold) 0%, var(--vellum-champagne) 50%, var(--candlelight-gold-dark) 100%) border-box'
+                  : 'var(--midnight-ink-surface)',
                 border: lp.examPassed
                   ? '1px solid transparent'
                   : '1px solid rgba(255,255,255,0.06)',
@@ -74,7 +74,7 @@ export function LevelSelector() {
                   lang="en"
                   className="font-serif-display text-5xl font-bold leading-none mb-1 nums-tabular"
                   style={{
-                    background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 50%, #E4C08A 100%)',
+                    background: 'linear-gradient(135deg, var(--candlelight-gold) 0%, var(--candlelight-gold-light) 50%, var(--vellum-champagne) 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
@@ -114,7 +114,7 @@ export function LevelSelector() {
                       style={{
                         width: `${pct}%`,
                         background:
-                          'linear-gradient(90deg, #D97706 0%, #F59E0B 50%, #FCD34D 100%)',
+                          'linear-gradient(90deg, var(--candlelight-gold-dark) 0%, var(--candlelight-gold) 50%, var(--candlelight-gold-light) 100%)',
                       }}
                     />
                   </div>

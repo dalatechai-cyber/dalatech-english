@@ -72,7 +72,7 @@ function stripMarkers(text: string): string {
 
 const ORB_COLORS: Record<OrbState, string> = {
   idle: '#1E40AF',
-  speaking: '#F59E0B',
+  speaking: 'var(--candlelight-gold)',
   listening: '#38BDF8',
   thinking: '#8B5CF6',
 }
@@ -582,13 +582,13 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
 
         {connState === 'idle' && (
           <div className="mt-10 flex flex-col items-center gap-6 w-full max-w-xs">
-            <p className="text-sm text-center" style={{ color: '#64748B' }}>
+            <p className="text-sm text-center" style={{ color: 'var(--text-muted)' }}>
               AI шалгагч Sarah таныг асуулт асуух болно. Жинхэнэ IELTS адил яриа.
             </p>
             <button
               onClick={connect}
               className="w-52 py-4 rounded-2xl font-bold text-base transition-all hover:-translate-y-1 shadow-lg"
-              style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+              style={{ background: 'linear-gradient(135deg, var(--candlelight-gold), var(--candlelight-gold-dark))', color: '#0F172A' }}>
               🎤 Ярианы шалгалт эхлэх
             </button>
           </div>
@@ -597,7 +597,7 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
         {connState === 'connecting' && (
           <div className="mt-10 flex flex-col items-center gap-4 w-full max-w-xs">
             <div className="flex gap-1.5 justify-center">
-              {[0, 1, 2].map(i => <span key={i} className="w-3 h-3 rounded-full animate-bounce" style={{ background: '#F59E0B', animationDelay: `${i * 0.15}s` }} />)}
+              {[0, 1, 2].map(i => <span key={i} className="w-3 h-3 rounded-full animate-bounce" style={{ background: 'var(--candlelight-gold)', animationDelay: `${i * 0.15}s` }} />)}
             </div>
             <p className="text-sm text-center" style={{ color: '#94A3B8' }}>
               {statusLabel || 'AI шалгагчтай холбогдож байна...'}
@@ -616,13 +616,13 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
               <button
                 onClick={handleReconnect}
                 className="px-5 py-3 rounded-xl font-semibold text-sm transition-all"
-                style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+                style={{ background: 'linear-gradient(135deg, var(--candlelight-gold), var(--candlelight-gold-dark))', color: '#0F172A' }}>
                 🔄 Дахин оролдох
               </button>
               <button
                 onClick={onFallback}
                 className="px-5 py-3 rounded-xl font-semibold text-sm transition-all border"
-                style={{ background: '#1E293B', borderColor: '#334155', color: '#CBD5E1' }}>
+                style={{ background: '#1E293B', borderColor: '#334155', color: 'var(--text-secondary)' }}>
                 Хуучин хувилбар
               </button>
             </div>
@@ -633,7 +633,7 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
           <div className="mt-8 flex flex-col items-center gap-4 w-full max-w-md">
             {prepCountdown !== null && (
               <div className="text-center">
-                <div className="text-5xl font-extrabold mb-2" style={{ color: '#FCD34D', letterSpacing: '-0.03em' }}>
+                <div className="text-5xl font-extrabold mb-2" style={{ color: 'var(--candlelight-gold-light)', letterSpacing: '-0.03em' }}>
                   0:{String(prepCountdown).padStart(2, '0')}
                 </div>
                 <p className="text-xs" style={{ color: '#94A3B8' }}>Бэлдэх хугацаа</p>
@@ -645,7 +645,7 @@ export function IELTSSpeakingRealtime({ content, onComplete, onStop, onFallback 
                 <div className="flex items-center justify-between mb-2">
                   <div className="text-xs font-semibold text-candlelight-gold uppercase tracking-wide">📋 Topic Card</div>
                   {part2Countdown !== null && (
-                    <span className="text-sm font-extrabold tabular-nums" style={{ color: part2Countdown === 0 ? '#F59E0B' : '#FCD34D' }}>
+                    <span className="text-sm font-extrabold tabular-nums" style={{ color: part2Countdown === 0 ? 'var(--candlelight-gold)' : 'var(--candlelight-gold-light)' }}>
                       ⏱ {mmss(part2Countdown)}
                     </span>
                   )}

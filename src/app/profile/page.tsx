@@ -144,7 +144,7 @@ export default function ProfilePage() {
               <div
                 className="font-serif-display font-bold text-4xl sm:text-5xl nums-tabular leading-none mb-1.5"
                 style={{
-                  background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 60%, #E4C08A 100%)',
+                  background: 'linear-gradient(135deg, var(--candlelight-gold) 0%, var(--candlelight-gold-light) 60%, var(--vellum-champagne) 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
@@ -173,13 +173,13 @@ export default function ProfilePage() {
                 onClick={() => setSelectedCert(cert)}
                 className="rounded-2xl p-5 flex flex-col items-center text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-gold group"
                 style={{
-                  background: 'linear-gradient(#141C30, #141C30) padding-box, linear-gradient(135deg, #F59E0B 0%, #E4C08A 50%, #D97706 100%) border-box',
+                  background: 'linear-gradient(var(--midnight-ink-surface), var(--midnight-ink-surface)) padding-box, linear-gradient(135deg, var(--candlelight-gold) 0%, var(--vellum-champagne) 50%, var(--candlelight-gold-dark) 100%) border-box',
                   border: '2px solid transparent',
                 }}
               >
                 <div
                   className="w-14 h-14 rounded-xl flex items-center justify-center mb-3 font-serif-display font-bold text-midnight-ink nums-tabular"
-                  style={{ background: 'linear-gradient(135deg, #FCD34D, #D97706)', fontSize: 20 }}
+                  style={{ background: 'linear-gradient(135deg, var(--candlelight-gold-light), var(--candlelight-gold-dark))', fontSize: 20 }}
                 >
                   {cert.level}
                 </div>
@@ -226,7 +226,7 @@ export default function ProfilePage() {
                 <div
                   key={entry.id}
                   className="rounded-xl p-4 flex items-center gap-4 border hairline"
-                  style={{ background: '#141C30' }}
+                  style={{ background: 'var(--midnight-ink-surface)' }}
                 >
                   <span
                     className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] px-2.5 py-1 rounded-full flex-shrink-0"
@@ -312,7 +312,7 @@ function IELTSHistoryRow({ entry }: { entry: TestHistoryEntry }) {
   return (
     <div
       className="rounded-2xl border hairline overflow-hidden"
-      style={{ background: '#141C30' }}
+      style={{ background: 'var(--midnight-ink-surface)' }}
     >
       <button
         onClick={handleToggle}
@@ -321,8 +321,8 @@ function IELTSHistoryRow({ entry }: { entry: TestHistoryEntry }) {
         <div
           className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 font-serif-display font-bold nums-tabular"
           style={{
-            background: 'linear-gradient(135deg, #FCD34D, #D97706)',
-            color: '#0B1222',
+            background: 'linear-gradient(135deg, var(--candlelight-gold-light), var(--candlelight-gold-dark))',
+            color: 'var(--midnight-ink)',
             fontSize: 22,
             letterSpacing: '-0.02em',
           }}
@@ -404,8 +404,8 @@ function IELTSHistoryRow({ entry }: { entry: TestHistoryEntry }) {
             href="/ielts"
             className="inline-flex items-center justify-center font-sans text-[11px] font-semibold uppercase tracking-[0.18em] px-5 py-3 min-h-[44px] rounded-xl transition-transform hover:-translate-y-0.5"
             style={{
-              background: 'linear-gradient(135deg, #F59E0B, #D97706)',
-              color: '#0B1222',
+              background: 'linear-gradient(135deg, var(--candlelight-gold), var(--candlelight-gold-dark))',
+              color: 'var(--midnight-ink)',
               boxShadow: '0 6px 20px rgba(245,158,11,0.28)',
             }}
           >
@@ -453,7 +453,7 @@ function SectionHeader({ label, kicker, title }: { label: string; kicker: string
 
 function EmptyState({ Icon, primary, secondary }: { Icon: (p: { size?: number }) => JSX.Element; primary: string; secondary: string }) {
   return (
-    <div className="text-center py-12 mb-12 border hairline rounded-2xl" style={{ background: '#141C30' }}>
+    <div className="text-center py-12 mb-12 border hairline rounded-2xl" style={{ background: 'var(--midnight-ink-surface)' }}>
       <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl mb-4" style={{
         color: 'var(--text-muted)',
         background: 'rgba(255,255,255,0.03)',

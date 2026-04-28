@@ -67,7 +67,7 @@ export function LandingPage() {
             <span
               className="font-serif-display italic font-normal"
               style={{
-                background: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 45%, #E4C08A 100%)',
+                background: 'linear-gradient(135deg, var(--candlelight-gold) 0%, var(--candlelight-gold-light) 45%, var(--vellum-champagne) 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -118,8 +118,8 @@ export function LandingPage() {
               href="#levels"
               className="group inline-flex items-center gap-2.5 font-semibold py-4 px-7 rounded-xl transition-all duration-200 hover:-translate-y-0.5 shadow-gold-sm"
               style={{
-                background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-                color: '#0B1222',
+                background: 'linear-gradient(135deg, var(--candlelight-gold) 0%, var(--candlelight-gold-dark) 100%)',
+                color: 'var(--midnight-ink)',
                 fontSize: 15,
                 letterSpacing: '-0.01em',
               }}

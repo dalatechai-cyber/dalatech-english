@@ -64,7 +64,7 @@ export function DailyChallenge() {
     <section
       className="rounded-2xl p-6 sm:p-7 shadow-editorial relative overflow-hidden"
       style={{
-        background: '#141C30',
+        background: 'var(--midnight-ink-surface)',
         border: '1px solid var(--hairline)',
         borderLeftWidth: '3px',
         borderLeftColor: 'var(--candlelight-gold)',
@@ -214,8 +214,8 @@ export function DailyChallenge() {
           disabled={q.type === 'mc' ? selected === null : !fillInput.trim()}
           className="w-full font-semibold py-3 min-h-[48px] rounded-xl transition-all text-sm uppercase tracking-[0.18em] disabled:opacity-40 disabled:cursor-not-allowed"
           style={{
-            background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-            color: '#0B1222',
+            background: 'linear-gradient(135deg, var(--candlelight-gold) 0%, var(--candlelight-gold-dark) 100%)',
+            color: 'var(--midnight-ink)',
             boxShadow: '0 4px 14px rgba(245,158,11,0.25)',
           }}
         >

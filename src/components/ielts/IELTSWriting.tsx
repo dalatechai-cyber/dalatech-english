@@ -22,7 +22,7 @@ function Task1Prompt({ prompt }: { prompt: string }) {
       {before && <p className="text-sm text-text-primary leading-relaxed mb-3">{before}</p>}
       <div className="overflow-x-auto rounded-xl mb-3">
         <table className="w-full text-xs border-collapse min-w-[280px]">
-          <thead><tr>{headers.map((h, i) => <th key={i} className="px-3 py-2 text-left font-semibold text-midnight-ink whitespace-nowrap" style={{ background: '#F59E0B' }}>{h.trim()}</th>)}</tr></thead>
+          <thead><tr>{headers.map((h, i) => <th key={i} className="px-3 py-2 text-left font-semibold text-midnight-ink whitespace-nowrap" style={{ background: 'var(--candlelight-gold)' }}>{h.trim()}</th>)}</tr></thead>
           <tbody>{dataRows.map((row, ri) => (
             <tr key={ri} style={{ background: ri % 2 === 0 ? '#1E293B' : '#162032' }}>
               {row.map((cell, ci) => <td key={ci} className="px-3 py-2 text-text-primary whitespace-nowrap" style={{ borderTop: '1px solid #334155' }}>{cell.trim()}</td>)}
@@ -78,8 +78,8 @@ export function IELTSWriting({
                 style={
                   active
                     ? {
-                        background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-                        color: '#0B1222',
+                        background: 'linear-gradient(135deg, var(--candlelight-gold) 0%, var(--candlelight-gold-dark) 100%)',
+                        color: 'var(--midnight-ink)',
                         border: '1px solid transparent',
                         boxShadow: '0 4px 14px rgba(245,158,11,0.25)',
                       }
@@ -124,7 +124,7 @@ export function IELTSWriting({
             <div
               className="rounded-2xl p-5 mb-4 shadow-editorial"
               style={{
-                background: '#141C30',
+                background: 'var(--midnight-ink-surface)',
                 border: '1px solid var(--hairline)',
                 borderLeftWidth: '3px',
                 borderLeftColor: 'var(--candlelight-gold)',
@@ -174,8 +174,8 @@ export function IELTSWriting({
               onClick={() => setWritingTaskView(2)}
               className="w-full font-semibold py-3.5 min-h-[48px] rounded-xl text-sm uppercase tracking-[0.18em] transition-all hover:-translate-y-0.5"
               style={{
-                background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-                color: '#0B1222',
+                background: 'linear-gradient(135deg, var(--candlelight-gold) 0%, var(--candlelight-gold-dark) 100%)',
+                color: 'var(--midnight-ink)',
                 boxShadow: '0 6px 20px rgba(245,158,11,0.28)',
               }}
             >
@@ -211,7 +211,7 @@ export function IELTSWriting({
             <div
               className="rounded-2xl p-5 mb-4 shadow-editorial"
               style={{
-                background: '#141C30',
+                background: 'var(--midnight-ink-surface)',
                 border: '1px solid var(--hairline)',
                 borderLeftWidth: '3px',
                 borderLeftColor: 'var(--candlelight-gold)',
@@ -264,8 +264,8 @@ export function IELTSWriting({
               disabled={wordCount(writingTask2) < 250}
               className="w-full font-semibold py-3.5 min-h-[48px] rounded-xl text-sm uppercase tracking-[0.18em] transition-all hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
               style={{
-                background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-                color: '#0B1222',
+                background: 'linear-gradient(135deg, var(--candlelight-gold) 0%, var(--candlelight-gold-dark) 100%)',
+                color: 'var(--midnight-ink)',
                 boxShadow: '0 6px 20px rgba(245,158,11,0.28)',
               }}
             >

@@ -568,8 +568,8 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
             onClick={handleDownload}
             className="w-full font-semibold py-3.5 min-h-[48px] rounded-xl transition-all text-sm uppercase tracking-[0.18em] flex items-center justify-center gap-2.5"
             style={{
-              background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-              color: '#0B1222',
+              background: 'linear-gradient(135deg, var(--candlelight-gold) 0%, var(--candlelight-gold-dark) 100%)',
+              color: 'var(--midnight-ink)',
               boxShadow: '0 6px 20px rgba(245,158,11,0.28)',
             }}
           >

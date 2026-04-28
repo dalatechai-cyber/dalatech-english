@@ -34,9 +34,9 @@ export function SectionProgress({ idx }: { idx: number }) {
                 width: i <= idx ? '100%' : '0%',
                 background:
                   i < idx
-                    ? 'linear-gradient(90deg, #D97706 0%, #F59E0B 50%, #FCD34D 100%)'
+                    ? 'linear-gradient(90deg, var(--candlelight-gold-dark) 0%, var(--candlelight-gold) 50%, var(--candlelight-gold-light) 100%)'
                     : i === idx
-                    ? 'linear-gradient(90deg, #F59E0B, #E4C08A)'
+                    ? 'linear-gradient(90deg, var(--candlelight-gold), var(--vellum-champagne))'
                     : 'transparent',
               }}
             />
@@ -73,7 +73,7 @@ export function renderQuestionBody(
       return na === nt || nt.includes(na) || na.includes(nt)
     })
     const borderColor = !submitted ? '#334155' : isCorrect ? '#34D399' : '#F87171'
-    const textColor = !submitted ? '#F8FAFC' : isCorrect ? '#34D399' : '#F87171'
+    const textColor = !submitted ? 'var(--text-primary)' : isCorrect ? '#34D399' : '#F87171'
     return (
       <div>
         <input
@@ -110,8 +110,8 @@ export function renderQuestionBody(
             className="w-full text-left px-4 py-2.5 min-h-[44px] flex items-center rounded-xl border text-sm transition-all"
             style={{
               background: correct ? 'rgba(52,211,153,0.1)' : wrong ? 'rgba(248,113,113,0.1)' : selected ? 'rgba(245,158,11,0.08)' : 'transparent',
-              borderColor: correct ? '#34D399' : wrong ? '#F87171' : selected ? '#F59E0B' : '#334155',
-              color: neutral ? '#64748B' : correct ? '#34D399' : wrong ? '#F87171' : '#F8FAFC',
+              borderColor: correct ? '#34D399' : wrong ? '#F87171' : selected ? 'var(--candlelight-gold)' : '#334155',
+              color: neutral ? 'var(--text-muted)' : correct ? '#34D399' : wrong ? '#F87171' : 'var(--text-primary)',
             }}>
             <span className="font-medium mr-2">{String.fromCharCode(65 + oi)}.</span>{opt}
           </button>

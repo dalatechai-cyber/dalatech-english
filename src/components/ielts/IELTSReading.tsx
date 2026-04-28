@@ -51,9 +51,9 @@ export function IELTSReading({
           <SectionProgress idx={sectionIdx} />
           <div className="flex items-center gap-2 mb-4">
             <div className="flex gap-1">
-              {[0, 1, 2].map(i => <span key={i} className="w-2 h-2 rounded-full animate-bounce" style={{ background: '#F59E0B', animationDelay: `${i * 0.15}s` }} />)}
+              {[0, 1, 2].map(i => <span key={i} className="w-2 h-2 rounded-full animate-bounce" style={{ background: 'var(--candlelight-gold)', animationDelay: `${i * 0.15}s` }} />)}
             </div>
-            <p className="text-xs font-semibold" style={{ color: '#F59E0B' }}>Нийтлэл ачааллаж байна...</p>
+            <p className="text-xs font-semibold" style={{ color: 'var(--candlelight-gold)' }}>Нийтлэл ачааллаж байна...</p>
           </div>
           <div className="bg-midnight-ink-surface border border-midnight-ink-elevated rounded-2xl p-4 space-y-3">
             {[100, 95, 88, 92, 80, 96, 85, 90, 75].map((w, i) => (
@@ -111,14 +111,14 @@ export function IELTSReading({
   const advanceButton = !readSubmitted ? (
     <button onClick={advance} disabled={!pageAnswered}
       className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed"
-      style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+      style={{ background: 'linear-gradient(135deg, var(--candlelight-gold), var(--candlelight-gold-dark))', color: '#0F172A' }}>
       {isLastPassage ? 'Хариултаа илгээх' : 'Дараагийн нийтлэл →'}
     </button>
   ) : (
     <button onClick={onAdvance}
       disabled={!allReadAnswered}
       className="w-full font-bold py-3 min-h-[48px] rounded-xl transition-all hover:-translate-y-0.5 disabled:opacity-40"
-      style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#0F172A' }}>
+      style={{ background: 'linear-gradient(135deg, var(--candlelight-gold), var(--candlelight-gold-dark))', color: '#0F172A' }}>
       <span lang="en">Writing →</span>
     </button>
   )
@@ -141,7 +141,7 @@ export function IELTSReading({
             return (
               <div key={globalIdx}>
                 <p className="text-sm font-semibold text-text-primary mb-3">
-                  <span style={{ color: '#F59E0B' }}>{globalIdx + 1}.</span> {q.question}
+                  <span style={{ color: 'var(--candlelight-gold)' }}>{globalIdx + 1}.</span> {q.question}
                   {typeLabel && <span className="ml-2 text-xs font-medium" style={{ color: '#94A3B8' }}>{typeLabel}</span>}
                 </p>
                 {renderQuestionBody(q, globalIdx, readAnswers, setReadAnswers, readSubmitted)}
@@ -163,12 +163,12 @@ export function IELTSReading({
       <div className="px-4 pt-3 pb-2 max-w-6xl mx-auto w-full flex-shrink-0 sticky top-0 z-10 bg-midnight-ink md:static">
         <SectionProgress idx={sectionIdx} />
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold" style={{ color: '#F59E0B' }}>НИЙТЛЭЛ {pi + 1}/{passages.length}</p>
-          <p className="text-xs font-semibold" style={{ color: '#64748B' }}>{totalAnswered}/{totalReadQs} хариулсан · Буцах боломжгүй</p>
+          <p className="text-xs font-semibold" style={{ color: 'var(--candlelight-gold)' }}>НИЙТЛЭЛ {pi + 1}/{passages.length}</p>
+          <p className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>{totalAnswered}/{totalReadQs} хариулсан · Буцах боломжгүй</p>
         </div>
         <div className="flex gap-1">
           {passages.map((_, i) => (
-            <div key={i} className="flex-1 h-1 rounded-full" style={{ background: i < pi ? '#34D39988' : i === pi ? '#F59E0B' : '#334155' }} />
+            <div key={i} className="flex-1 h-1 rounded-full" style={{ background: i < pi ? '#34D39988' : i === pi ? 'var(--candlelight-gold)' : '#334155' }} />
           ))}
         </div>
       </div>
@@ -188,16 +188,16 @@ export function IELTSReading({
           <button onClick={() => setReadMobileTab('passage')}
             className="flex-1 py-2.5 min-h-[44px] text-sm font-semibold transition-colors"
             style={{
-              color: readMobileTab === 'passage' ? '#F59E0B' : '#64748B',
-              borderBottom: readMobileTab === 'passage' ? '2px solid #F59E0B' : '2px solid transparent',
+              color: readMobileTab === 'passage' ? 'var(--candlelight-gold)' : 'var(--text-muted)',
+              borderBottom: readMobileTab === 'passage' ? '2px solid var(--candlelight-gold)' : '2px solid transparent',
             }}>
             📖 Нийтлэл
           </button>
           <button onClick={() => setReadMobileTab('questions')}
             className="flex-1 py-2.5 min-h-[44px] text-sm font-semibold transition-colors"
             style={{
-              color: readMobileTab === 'questions' ? '#F59E0B' : '#64748B',
-              borderBottom: readMobileTab === 'questions' ? '2px solid #F59E0B' : '2px solid transparent',
+              color: readMobileTab === 'questions' ? 'var(--candlelight-gold)' : 'var(--text-muted)',
+              borderBottom: readMobileTab === 'questions' ? '2px solid var(--candlelight-gold)' : '2px solid transparent',
             }}>
             ❓ Асуулт ({answeredOnPage}/{pg?.questions.length ?? 0})
           </button>

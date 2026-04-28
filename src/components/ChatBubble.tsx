@@ -23,7 +23,7 @@ export function ChatBubble({ message, isStreaming = false }: ChatBubbleProps) {
       {isAI && (
         <div
           className="w-9 h-9 rounded-full flex items-center justify-center text-midnight-ink text-xs font-bold mr-2 flex-shrink-0 mt-1"
-          style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)' }}
+          style={{ background: 'linear-gradient(135deg, var(--candlelight-gold), var(--candlelight-gold-dark))' }}
         >
           AI
         </div>
@@ -34,11 +34,11 @@ export function ChatBubble({ message, isStreaming = false }: ChatBubbleProps) {
           isAI
             ? {
                 background: '#1E293B',
-                borderLeft: '3px solid #F59E0B',
-                color: '#F8FAFC',
+                borderLeft: '3px solid var(--candlelight-gold)',
+                color: 'var(--text-primary)',
               }
             : {
-                background: 'linear-gradient(135deg, #F59E0B, #D97706)',
+                background: 'linear-gradient(135deg, var(--candlelight-gold), var(--candlelight-gold-dark))',
                 color: '#0F172A',
               }
         }

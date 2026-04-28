@@ -176,8 +176,8 @@ export function FreeChatInterface({ level }: FreeChatInterfaceProps) {
               <div
                 className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold mr-2 flex-shrink-0 mt-1"
                 style={{
-                  background: 'linear-gradient(135deg, #F59E0B, #D97706)',
-                  color: '#0B1222',
+                  background: 'linear-gradient(135deg, var(--candlelight-gold), var(--candlelight-gold-dark))',
+                  color: 'var(--midnight-ink)',
                 }}
               >
                 AI
@@ -218,7 +218,7 @@ export function FreeChatInterface({ level }: FreeChatInterfaceProps) {
           <div
             className="flex items-end gap-2 rounded-full px-5 py-2 transition-all"
             style={{
-              background: '#141C30',
+              background: 'var(--midnight-ink-surface)',
               border: '1px solid var(--hairline)',
             }}
             onFocusCapture={e => {
@@ -245,7 +245,7 @@ export function FreeChatInterface({ level }: FreeChatInterfaceProps) {
               disabled={isLoading || !input.trim()}
               className="w-10 h-10 disabled:opacity-40 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:-translate-y-0.5"
               style={{
-                background: 'linear-gradient(135deg, #F59E0B, #D97706)',
+                background: 'linear-gradient(135deg, var(--candlelight-gold), var(--candlelight-gold-dark))',
                 color: '#0F172A',
               }}
               aria-label="Илгээх"
