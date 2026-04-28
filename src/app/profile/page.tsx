@@ -3,8 +3,11 @@ import { useState, useEffect, useMemo } from 'react'
 import { NavBar } from '@/components/NavBar'
 import { CertificateModal } from '@/components/CertificateModal'
 import { loadCertificates, formatMongolianDate, type CertificateEntry } from '@/lib/certificates'
+import { getCertificates } from '@/lib/supabase/certificates'
 import { loadTestHistory, type TestHistoryEntry } from '@/lib/testHistory'
 import { loadStreak } from '@/lib/streak'
+import { getStreak } from '@/lib/supabase/streak'
+import { createClient } from '@/lib/supabase/client'
 import { t } from '@/lib/i18n'
 import type { LevelCode } from '@/lib/types'
 import {
@@ -29,25 +32,43 @@ export default function ProfilePage() {
   const [quizVisible, setQuizVisible] = useState(QUIZ_PAGE_SIZE)
 
   useEffect(() => {
-    try {
-      setCerts(loadCertificates())
-      setHistory(loadTestHistory())
-    } catch (e) {
-      console.warn('Profile load failed:', e)
-    }
+    const supabase = createClient()
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      try {
+        if (user?.id) {
+          setCerts(await getCertificates(user.id))
+        } else {
+          setCerts(loadCertificates())
+        }
+        setHistory(loadTestHistory())
+      } catch (e) {
+        console.warn('Profile load failed:', e)
+      }
+    })
   }, [])
 
   useEffect(() => {
-    const refresh = () => {
+    const supabase = createClient()
+    let userId: string | null = null
+
+    const refresh = async () => {
       try {
-        const s = loadStreak()
-        setStreak({ current: s.current, longest: s.longest })
+        if (userId) {
+          const row = await getStreak(userId)
+          setStreak({ current: row.current_streak, longest: row.longest_streak })
+        } else {
+          const s = loadStreak()
+          setStreak({ current: s.current, longest: s.longest })
+        }
       } catch (e) {
         console.warn('Streak refresh failed:', e)
       }
     }
 
-    refresh()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      userId = user?.id ?? null
+      refresh()
+    })
 
     const handleStreakUpdate = () => refresh()
     window.addEventListener('streak:updated', handleStreakUpdate)

@@ -8,6 +8,9 @@ import { NavBar } from './NavBar'
 import { StreakPopup } from './StreakPopup'
 import { parseCorrectionsFromContent, saveMistake } from '@/lib/mistakes'
 import { recordStudySession } from '@/lib/streak'
+import { addMistake } from '@/lib/supabase/mistakes'
+import { updateStreak } from '@/lib/supabase/streak'
+import { createClient } from '@/lib/supabase/client'
 
 interface FreeChatInterfaceProps {
   level: LevelCode
@@ -24,8 +27,16 @@ export function FreeChatInterface({ level }: FreeChatInterfaceProps) {
   const [streamingId, setStreamingId] = useState<string | null>(null)
   const [streakData, setStreakData] = useState<{ current: number; isNewDay: boolean } | null>(null)
   const [hasRecordedStreak, setHasRecordedStreak] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserId(user?.id ?? null)
+    })
+  }, [])
 
   useEffect(() => {
     const greeting = drillTopic
@@ -54,7 +65,7 @@ export function FreeChatInterface({ level }: FreeChatInterfaceProps) {
     if (!text || isLoading) return
 
     if (!hasRecordedStreak) {
-      const data = recordStudySession()
+      const data = userId ? await updateStreak(userId) : recordStudySession()
       setStreakData({ current: data.current, isNewDay: data.isNewDay })
       setHasRecordedStreak(true)
     }
@@ -107,7 +118,11 @@ export function FreeChatInterface({ level }: FreeChatInterfaceProps) {
       )
 
       const corrections = parseCorrectionsFromContent(fullText, level)
-      corrections.forEach(c => saveMistake(c))
+      if (userId) {
+        await Promise.all(corrections.map(c => addMistake(userId, c)))
+      } else {
+        corrections.forEach(c => saveMistake(c))
+      }
     } catch {
       setStreamingId(null)
       setMessages(prev =>
@@ -120,7 +135,7 @@ export function FreeChatInterface({ level }: FreeChatInterfaceProps) {
     } finally {
       setIsLoading(false)
     }
-  }, [input, isLoading, messages, level, hasRecordedStreak])
+  }, [input, isLoading, messages, level, hasRecordedStreak, userId])
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {

@@ -11,6 +11,9 @@ import { NavBar } from './NavBar'
 import { StreakPopup } from './StreakPopup'
 import { parseCorrectionsFromContent, saveMistake } from '@/lib/mistakes'
 import { recordStudySession } from '@/lib/streak'
+import { addMistake } from '@/lib/supabase/mistakes'
+import { updateStreak } from '@/lib/supabase/streak'
+import { createClient } from '@/lib/supabase/client'
 
 interface ChatInterfaceProps {
   level: LevelCode
@@ -32,7 +35,15 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
   const [lastExamContent, setLastExamContent] = useState<string | null>(null)
   const [streakData, setStreakData] = useState<{ current: number; isNewDay: boolean } | null>(null)
   const [hasRecordedStreak, setHasRecordedStreak] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserId(user?.id ?? null)
+    })
+  }, [])
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -56,7 +67,7 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
     if (!text || isLoading) return
 
     if (!hasRecordedStreak) {
-      const data = recordStudySession()
+      const data = userId ? await updateStreak(userId) : recordStudySession()
       setStreakData({ current: data.current, isNewDay: data.isNewDay })
       setHasRecordedStreak(true)
     }
@@ -110,7 +121,11 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
 
       // Save corrections to mistake diary
       const corrections = parseCorrectionsFromContent(fullText, level)
-      corrections.forEach(c => saveMistake(c))
+      if (userId) {
+        await Promise.all(corrections.map(c => addMistake(userId, c)))
+      } else {
+        corrections.forEach(c => saveMistake(c))
+      }
 
       if (fullText.includes('<exam-result>')) {
         setLastExamContent(fullText)
@@ -139,7 +154,7 @@ export function ChatInterface({ level, lessonId }: ChatInterfaceProps) {
     } finally {
       setIsLoading(false)
     }
-  }, [input, isLoading, messages, level, lessonId, lessonMeta, isComplete, completeLesson, hasRecordedStreak])
+  }, [input, isLoading, messages, level, lessonId, lessonMeta, isComplete, completeLesson, hasRecordedStreak, userId])
 
   const handlePassConfirmed = useCallback((score: number) => {
     passExam(level, score)

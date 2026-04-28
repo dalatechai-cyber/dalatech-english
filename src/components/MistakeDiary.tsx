@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { loadMistakes, type MistakeEntry } from '@/lib/mistakes'
+import { getMistakes } from '@/lib/supabase/mistakes'
+import { createClient } from '@/lib/supabase/client'
 import { t } from '@/lib/i18n'
 import type { LevelCode } from '@/lib/types'
 import { NotebookIcon, CheckCircleIcon, XCircleIcon, ArrowRightIcon } from './Icon'
@@ -14,7 +16,15 @@ export function MistakeDiary() {
   const [search, setSearch] = useState('')
 
   useEffect(() => {
-    setMistakes(loadMistakes())
+    const supabase = createClient()
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (user?.id) {
+        const data = await getMistakes(user.id)
+        setMistakes(data)
+      } else {
+        setMistakes(loadMistakes())
+      }
+    })
   }, [])
 
   const filtered = mistakes.filter(m => {

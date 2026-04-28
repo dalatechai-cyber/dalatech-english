@@ -2,6 +2,8 @@
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { loadStreak } from '@/lib/streak'
+import { getStreak } from '@/lib/supabase/streak'
+import { createClient } from '@/lib/supabase/client'
 import { t } from '@/lib/i18n'
 import { StreakFlame } from './StreakFlame'
 
@@ -31,12 +33,27 @@ export function NavBar({ levelCode, lessonId, lessonTitle }: NavBarProps) {
   const pulseTimerRef = useRef<number | null>(null)
 
   useEffect(() => {
-    const refresh = () => {
+    const supabase = createClient()
+    let userId: string | null = null
+
+    const refresh = async () => {
+      if (userId) {
+        try {
+          const row = await getStreak(userId)
+          setStreak(row.current_streak)
+          return
+        } catch {
+          // fall through to local
+        }
+      }
       const data = loadStreak()
       setStreak(data.current)
     }
 
-    refresh()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      userId = user?.id ?? null
+      refresh()
+    })
 
     const handleStreakUpdate = () => refresh()
     window.addEventListener('streak:updated', handleStreakUpdate)

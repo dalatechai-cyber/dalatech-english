@@ -6,6 +6,9 @@ import { CertificateModal } from './CertificateModal'
 import { StreakPopup } from './StreakPopup'
 import { recordStudySession } from '@/lib/streak'
 import { hasEverPassedLevel } from '@/lib/certificates'
+import { updateStreak } from '@/lib/supabase/streak'
+import { getCertificates } from '@/lib/supabase/certificates'
+import { createClient } from '@/lib/supabase/client'
 import { t } from '@/lib/i18n'
 import { saveTestResult } from '@/lib/testHistory'
 import { CheckCircleIcon, XCircleIcon, CertificateIcon, TrophyIcon, ArrowRightIcon } from './Icon'
@@ -57,6 +60,7 @@ function shuffleQuestion(q: MCQuestion): ShuffledQuestion {
 }
 
 export function QuizMode({ level }: QuizModeProps) {
+  const [userId, setUserId] = useState<string | null>(null)
   const [phase, setPhase] = useState<QuizPhase>('loading')
   const [error, setError] = useState<string | null>(null)
   const [quizData, setQuizData] = useState<QuizData | null>(null)
@@ -125,6 +129,13 @@ export function QuizMode({ level }: QuizModeProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadQuiz() }, [level])
 
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserId(user?.id ?? null)
+    })
+  }, [])
+
   const handleMCSelect = (idx: number) => {
     if (mcAnswered) return
     setMcSelected(idx)
@@ -169,9 +180,14 @@ export function QuizMode({ level }: QuizModeProps) {
   const handleSubmitWriting = async () => {
     if (!quizData) return
     setPhase('grading')
-    const data = recordStudySession()
+    const data = userId ? await updateStreak(userId) : recordStudySession()
     setStreakData({ current: data.current, isNewDay: data.isNewDay })
-    setAlreadyHasCert(hasEverPassedLevel(level))
+    if (userId) {
+      const certs = await getCertificates(userId)
+      setAlreadyHasCert(certs.some(c => c.level === level && c.type === 'quiz'))
+    } else {
+      setAlreadyHasCert(hasEverPassedLevel(level))
+    }
 
     try {
       const res = await fetch('/api/quiz/grade-writing', {

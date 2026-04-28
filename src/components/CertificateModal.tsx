@@ -2,6 +2,8 @@
 import { useRef, useEffect } from 'react'
 import type { LevelCode } from '@/lib/types'
 import { formatMongolianDate, saveCertificate } from '@/lib/certificates'
+import { saveCertificate as saveCertificateRemote } from '@/lib/supabase/certificates'
+import { createClient } from '@/lib/supabase/client'
 import { getLevelMeta } from '@/lib/levels'
 import { t } from '@/lib/i18n'
 
@@ -235,7 +237,14 @@ export function CertificateModal({ level, score, total, onClose }: CertificateMo
   const levelDisplay = shortName ? `${level} — ${shortName}` : level
 
   useEffect(() => {
-    saveCertificate({ level, score, total, type: 'quiz' })
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.id) {
+        saveCertificateRemote(user.id, { level, score, total, type: 'quiz' })
+      } else {
+        saveCertificate({ level, score, total, type: 'quiz' })
+      }
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
